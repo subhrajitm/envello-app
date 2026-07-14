@@ -48,6 +48,17 @@
         </button>
       </div>
 
+      <!-- Summaries -->
+      <button class="rs-type-item"
+        [class.active]="sidebarType() === 'SUMMARIES'"
+        (click)="showSummaries()">
+        <span class="material-symbols-outlined rs-type-icon">summarize</span>
+        <span class="rs-type-label">Summaries</span>
+        @if (typeCountMap()['SUMMARIES'] > 0) {
+          <span class="rs-lib-count">{{ typeCountMap()['SUMMARIES'] }}</span>
+        }
+      </button>
+
       @if (sidebarNewColOpen()) {
         <div class="rs-sb-new-col-form">
           <input class="rs-sb-new-col-input" type="text" placeholder="Collection name…" autofocus
@@ -103,17 +114,7 @@
     <!-- Toolbar — always visible -->
     <div class="rs-toolbar">
       @if (viewMode() === 'sources') {
-        <div class="rs-quick-capture">
-          <span class="material-symbols-outlined rs-qc-icon">link</span>
-          <input class="rs-qc-input" type="text" placeholder="Paste a URL to save instantly…"
-            [ngModel]="quickUrl()" (ngModelChange)="quickUrl.set($event)"
-            (keydown.enter)="quickCaptureSource()"
-            (paste)="onQuickUrlPaste($event)">
-          @if (quickCapturing()) {
-            <span class="rs-spinner rs-qc-spinner"></span>
-          }
-        </div>
-        <div class="rs-search-wrap toolbar-search-wrap">
+<div class="rs-search-wrap toolbar-search-wrap">
           <span class="material-symbols-outlined rs-search-icon toolbar-search-icon">search</span>
           <input class="rs-search-input toolbar-search-input" type="text"
             placeholder="Search sources…"
@@ -152,6 +153,12 @@
         </button>
         }
         <div class="rs-tb-divider"></div>
+        @if (viewMode() === 'sources') {
+          <button class="rs-add-btn btn-add-primary" (click)="openAddModal()">
+            <span class="material-symbols-outlined">add</span>
+            New Source
+          </button>
+        }
         @if (viewMode() === 'summaries') {
           <button class="rs-add-btn btn-add-primary" (click)="openSummaryModal()">
             <span class="material-symbols-outlined">add</span>
@@ -161,93 +168,29 @@
       </div>
     </div>
 
-    <!-- ── UNIFIED MAIN VIEW ── -->
-    <div class="rs-tabs-bar">
-      <div class="rs-tabs">
-        <button class="rs-tab" [class.active]="viewMode() === 'sources'" (click)="switchView('sources')">
-          <span class="material-symbols-outlined">article</span>
-          Sources
-          @if (sourceTableRows().length > 0) {
-            <span class="rs-tab-count">{{ sourceTableRows().length }}</span>
-          }
-        </button>
-        <button class="rs-tab" [class.active]="viewMode() === 'summaries'" (click)="switchView('summaries')">
-          <span class="material-symbols-outlined">summarize</span>
-          Summaries
-          @if (summaries().length > 0) {
-            <span class="rs-tab-count">{{ summaries().length }}</span>
-          }
-        </button>
-      </div>
-    </div>
+    <div class="rs-content"
+      (dragover)="onDragOver($event)"
+      (dragleave)="onDragLeave()"
+      (drop)="onFileDrop($event)">
 
-    <div class="rs-content">
+      @if (isDraggingOver()) {
+        <div class="rs-qa-drop-hint">
+          <span class="material-symbols-outlined">cloud_upload</span>
+          Drop to add
+        </div>
+      }
 
       @if (viewMode() === 'sources') {
-
-        <!-- Quick-add: 2×2 grid when empty, compact strip when sources exist -->
-        @if (sidebarType() !== 'COLLECTION') {
-          <div class="rs-qa-section"
-            (dragover)="onDragOver($event)"
-            (dragleave)="onDragLeave()"
-            (drop)="onFileDrop($event)"
-            [class.rs-qa-section--dragging]="isDraggingOver()">
-            @if (isDraggingOver()) {
-              <div class="rs-qa-drop-hint">
-                <span class="material-symbols-outlined">cloud_upload</span>
-                Drop to add
-              </div>
-            } @else if (sources().length === 0) {
-              @if (selectedCollection()) {
-                <p class="rs-qa-context">Adding to <strong>{{ selectedCollection()!.name }}</strong></p>
-              }
-              <div class="rs-qa-grid">
-                <button class="rs-qa-card" (click)="openAddModal('url')">
-                  <span class="rs-qa-icon"><span class="material-symbols-outlined">link</span></span>
-                  <span class="rs-qa-label">Web link</span>
-                </button>
-                <button class="rs-qa-card" (click)="openAddModal('file')">
-                  <span class="rs-qa-icon"><span class="material-symbols-outlined">upload_file</span></span>
-                  <span class="rs-qa-label">Upload PDF / file</span>
-                </button>
-                <button class="rs-qa-card rs-qa-card--record" (click)="openAddModal('audio')">
-                  <span class="rs-qa-icon rs-qa-icon--record"><span class="material-symbols-outlined">mic</span></span>
-                  <span class="rs-qa-label">Record audio</span>
-                </button>
-                <button class="rs-qa-card" (click)="openAddModal('note')">
-                  <span class="rs-qa-icon"><span class="material-symbols-outlined">edit_note</span></span>
-                  <span class="rs-qa-label">Write note</span>
-                </button>
-              </div>
-            } @else {
-              <div class="rs-qa-strip">
-                @if (selectedCollection()) {
-                  <span class="rs-qa-strip-context">{{ selectedCollection()!.name }}</span>
-                  <span class="rs-qa-strip-sep"></span>
-                }
-                <button class="rs-qa-strip-btn" (click)="openAddModal('url')">
-                  <span class="material-symbols-outlined">link</span>Web link
-                </button>
-                <button class="rs-qa-strip-btn" (click)="openAddModal('file')">
-                  <span class="material-symbols-outlined">upload_file</span>Upload
-                </button>
-                <button class="rs-qa-strip-btn rs-qa-strip-btn--record" (click)="openAddModal('audio')">
-                  <span class="material-symbols-outlined">mic</span>Record
-                </button>
-                <button class="rs-qa-strip-btn" (click)="openAddModal('note')">
-                  <span class="material-symbols-outlined">edit_note</span>Note
-                </button>
-              </div>
-            }
-          </div>
-        }
 
         <!-- Unified list: sources + collection rows -->
         @if (sourceTableRows().length === 0 && sidebarType() === 'COLLECTION') {
           <env-empty-state icon="folder" title="No collections yet"
             description="Create a collection to organise your sources."></env-empty-state>
-        } @else if (sourceTableRows().length === 0) {
+        } @else if (sourceTableRows().length === 0 && hasActiveFilters()) {
           <env-empty-state [compact]="true" icon="search_off" title="No sources match your filters"></env-empty-state>
+        } @else if (sourceTableRows().length === 0) {
+          <env-empty-state icon="layers" title="No sources yet"
+            description="Use the New Source button to add your first source."></env-empty-state>
         } @else {
           <env-table
             class="env-table--compact"
@@ -258,6 +201,7 @@
             rowIdKey="id"
             (rowClick)="onSourceRowClick($any($event))"
             (actionClick)="onSourceAction($event)"
+            (bulkActionClick)="onSourceBulkAction($any($event))"
             (sortChange)="onSourceSort($event)">
           </env-table>
         }
@@ -280,6 +224,7 @@
             rowIdKey="id"
             (rowClick)="onSummaryRowClick($any($event))"
             (actionClick)="onSummaryAction($event)"
+            (bulkActionClick)="onSummaryBulkAction($any($event))"
             (sortChange)="onSummarySort($event)">
           </env-table>
         }
@@ -437,299 +382,215 @@
 
 </env-slider-panel>
 
-<!-- ── UNIFIED ADD MODAL ── -->
-<env-slider-panel [isOpen]="showAddModal()" (closed)="closeAddModal()" width="600px">
+<!-- ── UNIFIED ADD MODAL (Batch) ── -->
+<env-slider-panel [isOpen]="showAddModal()" (closed)="closeAddModal()" width="520px">
   <div class="rsa-slider-inner">
 
-      <div class="rsa-header">
-        <div class="rsa-header-left">
-          <span class="material-symbols-outlined rsa-header-icon">add_circle</span>
-          <h2 class="rsa-header-title">Add to Knowledge</h2>
-        </div>
-        <div class="rsa-header-right">
-          <kbd class="rsa-esc-key">Esc</kbd>
-          <button class="rsa-close-btn" (click)="closeAddModal()">
-            <span class="material-symbols-outlined">close</span>
-          </button>
-        </div>
+    <div class="rsa-header">
+      <div class="rsa-header-left">
+        <span class="material-symbols-outlined rsa-header-icon">add_circle</span>
+        <h2 class="rsa-header-title">Add to Knowledge</h2>
       </div>
-
-      <!-- Tab switcher -->
-      <div class="rsa-add-tabs">
-        <button class="rsa-add-tab" [class.active]="addTab() === 'url'" (click)="addTab.set('url')">
-          <span class="material-symbols-outlined">link</span>URL
-        </button>
-        <button class="rsa-add-tab" [class.active]="addTab() === 'file'" (click)="addTab.set('file')">
-          <span class="material-symbols-outlined">upload_file</span>File
-        </button>
-        <button class="rsa-add-tab" [class.active]="addTab() === 'note'" (click)="addTab.set('note')">
-          <span class="material-symbols-outlined">edit_note</span>Note
-        </button>
-        <button class="rsa-add-tab" [class.active]="addTab() === 'audio'" (click)="addTab.set('audio')">
-          <span class="material-symbols-outlined">mic</span>Audio
+      <div class="rsa-header-right">
+        <kbd class="rsa-esc-key">Esc</kbd>
+        <button class="rsa-close-btn" (click)="closeAddModal()">
+          <span class="material-symbols-outlined">close</span>
         </button>
       </div>
+    </div>
 
-      <!-- URL Tab -->
-      @if (addTab() === 'url') {
-        <div class="rsa-form-pane rsa-form-pane--solo">
-          <div class="rsa-name-bar">
-            <div class="rsa-name-icon-wrap" [style.color]="getSourceTypeMeta(newSourceType()).color">
-              <span class="material-symbols-outlined">{{ getSourceTypeMeta(newSourceType()).icon }}</span>
-            </div>
-            <div class="rsa-url-row" style="flex:1">
-              <input type="text" class="rsa-name-input" placeholder="https://…" autofocus
-                [ngModel]="newSourceUrl()" (ngModelChange)="newSourceUrl.set($event)"
-                (blur)="fetchMetadata()"
-                (paste)="onUrlPaste($event)">
-              <button class="rsa-fetch-btn" [class.loading]="fetchingMeta()"
-                [disabled]="!newSourceUrl() || fetchingMeta()"
-                (click)="fetchMetadata()" title="Auto-fill metadata from URL">
-                @if (fetchingMeta()) { <span class="rs-spinner"></span> }
-                @else { <span class="material-symbols-outlined">auto_awesome</span> }
-                Fill
-              </button>
-            </div>
-          </div>
-          <div class="rsa-fields">
-            <div class="rsa-field-group rsa-field-group--wide">
-              <label class="rsa-label">Title</label>
-              <input type="text" class="rsa-input" placeholder="Source title…"
-                [ngModel]="newSourceTitle()" (ngModelChange)="newSourceTitle.set($event)">
-            </div>
-            <div class="rsa-field-group">
-              <label class="rsa-label">Type</label>
-              <select class="rsa-input rsa-select"
-                [ngModel]="newSourceType()" (ngModelChange)="newSourceType.set($event)">
-                @for (t of sourceTypeOptions; track t.id) {
-                  <option [value]="t.id">{{ t.label }}</option>
-                }
-              </select>
-            </div>
-            <div class="rsa-field-group">
-              <label class="rsa-label">Author</label>
-              <input type="text" class="rsa-input" placeholder="Author name"
-                [ngModel]="newSourceAuthor()" (ngModelChange)="newSourceAuthor.set($event)">
-            </div>
-            <div class="rsa-field-group rsa-field-group--wide">
-              <label class="rsa-label">Tags</label>
-              <div class="rsa-tag-row">
-                <input type="text" class="rsa-input" placeholder="tag1, tag2, …"
-                  [ngModel]="newSourceTags()" (ngModelChange)="newSourceTags.set($event)">
-                @if (aiEnabled()) {
-                <button class="rsa-suggest-btn"
-                  [disabled]="suggestingTags() || (!newSourceTitle() && !newSourceUrl())"
-                  (click)="suggestTags()" title="AI suggest tags">
-                  @if (suggestingTags()) { <span class="rs-spinner"></span> }
-                  @else { <span class="material-symbols-outlined">auto_awesome</span> }
-                </button>
-                }
-              </div>
-            </div>
-            <div class="rsa-field-group rsa-field-group--wide">
-              <label class="rsa-label">Description</label>
-              <textarea class="rsa-textarea" rows="2" placeholder="Brief summary…"
-                [ngModel]="newSourceDesc()" (ngModelChange)="newSourceDesc.set($event)"></textarea>
-            </div>
-          </div>
-          <!-- Collection picker -->
-          <div class="rsa-collection-bar rsa-collection-bar--inline">
-            <label class="rsa-label">Collection</label>
-            <select class="rsa-input rsa-select rsa-collection-select"
-              [ngModel]="newSourceCollectionId()" (ngModelChange)="newSourceCollectionId.set($event)">
-              <option value="">No collection</option>
-              @for (lib of collections(); track lib.id) {
-                <option [value]="lib.id">{{ lib.name }}</option>
-              }
-            </select>
-          </div>
+    <div class="rsa-batch-body">
+
+      <!-- URL input row -->
+      <div class="rsa-batch-url-row">
+        <span class="material-symbols-outlined rsa-batch-url-icon">link</span>
+        <input type="text" class="rsa-batch-url-input" placeholder="Paste a URL and press Enter…" autofocus
+          [ngModel]="pendingUrl()" (ngModelChange)="pendingUrl.set($event)"
+          (keydown)="onPendingUrlKeydown($event)"
+          (blur)="fetchPendingUrlMeta()"
+          (paste)="onPendingUrlPaste($event)">
+        <button class="rsa-batch-url-add" [disabled]="!pendingUrl()" (click)="addUrlToQueue()" title="Add URL">
+          @if (pendingUrlFetching()) { <span class="rs-spinner"></span> }
+          @else { <span class="material-symbols-outlined">add</span> }
+        </button>
+      </div>
+
+      @if (pendingUrlTitle()) {
+        <div class="rsa-batch-url-preview">
+          <span class="material-symbols-outlined">web</span>
+          {{ pendingUrlTitle() }}
         </div>
-        <div class="rsa-footer">
-          <div class="rsa-footer-actions">
-            <button class="rsa-cancel-btn" (click)="closeAddModal()">Cancel</button>
-            <button class="rsa-create-btn" [disabled]="!newSourceTitle()" (click)="saveSource()">
-              <span class="material-symbols-outlined">add</span>
-              Add Source
+      }
+
+      <!-- File drop zone -->
+      <div class="rsa-batch-file-zone"
+        [class.dragging]="isDraggingOver()"
+        (dragover)="onDragOver($event)"
+        (dragleave)="onDragLeave()"
+        (drop)="onFileDrop($event)"
+        (click)="openFileInputFromModal()">
+        <span class="material-symbols-outlined">cloud_upload</span>
+        <span>Drop files or click to browse</span>
+      </div>
+
+      <!-- Note + Audio expandable buttons -->
+      <div class="rsa-batch-actions">
+        <button class="rsa-batch-action-btn" [class.active]="showNoteForm()"
+          (click)="showNoteForm.set(!showNoteForm()); showAudioForm.set(false)">
+          <span class="material-symbols-outlined">edit_note</span>
+          Write note
+        </button>
+        <button class="rsa-batch-action-btn" [class.active]="showAudioForm()"
+          (click)="showAudioForm.set(!showAudioForm()); showNoteForm.set(false)">
+          <span class="material-symbols-outlined">mic</span>
+          Record audio
+        </button>
+      </div>
+
+      <!-- Inline note form -->
+      @if (showNoteForm()) {
+        <div class="rsa-batch-inline-form">
+          <input class="rsa-input" type="text" placeholder="Note title…" autofocus
+            [ngModel]="inlineNoteTitle()" (ngModelChange)="inlineNoteTitle.set($event)">
+          <textarea class="rsa-textarea" rows="4" placeholder="Write your note…"
+            [ngModel]="inlineNoteContent()" (ngModelChange)="inlineNoteContent.set($event)"></textarea>
+          <div class="rsa-batch-inline-actions">
+            <button class="rsa-cancel-btn" (click)="showNoteForm.set(false); inlineNoteTitle.set(''); inlineNoteContent.set('')">Cancel</button>
+            <button class="rsa-create-btn" [disabled]="!inlineNoteTitle()" (click)="addNoteToQueue()">
+              <span class="material-symbols-outlined">add</span>Add to queue
             </button>
           </div>
         </div>
       }
 
-      <!-- File Tab -->
-      @if (addTab() === 'file') {
-        <div class="rsa-form-pane rsa-form-pane--solo rsa-form-pane--file">
-          <div class="rs-files-drop-zone rsa-file-drop"
-            [class.dragging]="isDraggingOver()"
-            [class.uploading]="fileStorage.uploading()"
-            (dragover)="onDragOver($event)"
-            (dragleave)="onDragLeave()"
-            (drop)="onFileDrop($event); closeAddModal()"
-            (click)="fileStorage.uploading() ? null : openFileInputFromModal()">
-            @if (fileStorage.uploading()) {
-              <span class="rs-spinner"></span>
-              <p>Uploading…</p>
-            } @else {
-              <span class="material-symbols-outlined">cloud_upload</span>
-              <p>Drop files here or click to browse</p>
-              <span class="rs-files-drop-hint">Supports documents, images, video, audio — up to 50 MB each</span>
-            }
-          </div>
-        </div>
-        <div class="rsa-footer rsa-footer--with-collection">
-          <!-- Collection picker -->
-          <div class="rsa-collection-bar rsa-collection-bar--inline">
-            <label class="rsa-label">Collection</label>
-            <select class="rsa-input rsa-select rsa-collection-select"
-              [ngModel]="newSourceCollectionId()" (ngModelChange)="newSourceCollectionId.set($event)">
-              <option value="">No collection</option>
-              @for (lib of collections(); track lib.id) {
-                <option [value]="lib.id">{{ lib.name }}</option>
-              }
-            </select>
-          </div>
-          <div class="rsa-footer-actions">
-            <button class="rsa-cancel-btn" (click)="closeAddModal()">Cancel</button>
-          </div>
-        </div>
-      }
-
-      <!-- Note Tab -->
-      @if (addTab() === 'note') {
-        <div class="rsa-form-pane rsa-form-pane--solo">
-          <div class="rsa-name-bar">
-            <span class="material-symbols-outlined" style="color:var(--accent-primary)">edit_note</span>
-            <input class="rsa-name-input" type="text" placeholder="Note title…"
-              [ngModel]="newSourceTitle()" (ngModelChange)="newSourceTitle.set($event)">
-          </div>
-          <div class="rsa-field-group">
-            <label class="rsa-label">Content</label>
-            <textarea class="rsa-textarea rsa-textarea--tall" rows="6" placeholder="Write your note here…"
-              [ngModel]="addNoteContent()" (ngModelChange)="addNoteContent.set($event)"></textarea>
-          </div>
-          <div class="rsa-fields">
-            <div class="rsa-field-group">
-              <label class="rsa-label">Tags</label>
-              <div class="rsa-tag-row">
-                <input type="text" class="rsa-input" placeholder="tag1, tag2, …"
-                  [ngModel]="newSourceTags()" (ngModelChange)="newSourceTags.set($event)">
-                @if (aiEnabled()) {
-                <button class="rsa-suggest-btn"
-                  [disabled]="suggestingTags() || !newSourceTitle()"
-                  (click)="suggestTags()" title="AI suggest tags">
-                  @if (suggestingTags()) { <span class="rs-spinner"></span> }
-                  @else { <span class="material-symbols-outlined">auto_awesome</span> }
-                </button>
-                }
-              </div>
-            </div>
-          </div>
-          <!-- Collection picker -->
-          <div class="rsa-collection-bar rsa-collection-bar--inline">
-            <label class="rsa-label">Collection</label>
-            <select class="rsa-input rsa-select rsa-collection-select"
-              [ngModel]="newSourceCollectionId()" (ngModelChange)="newSourceCollectionId.set($event)">
-              <option value="">No collection</option>
-              @for (lib of collections(); track lib.id) {
-                <option [value]="lib.id">{{ lib.name }}</option>
-              }
-            </select>
-          </div>
-        </div>
-        <div class="rsa-footer">
-          <div class="rsa-footer-actions">
-            <button class="rsa-cancel-btn" (click)="closeAddModal()">Cancel</button>
-            <button class="rsa-create-btn" [disabled]="!newSourceTitle()" (click)="saveNote()">
-              <span class="material-symbols-outlined">save</span>
-              Save Note
-            </button>
-          </div>
-        </div>
-      }
-
-      <!-- Audio Tab -->
-      @if (addTab() === 'audio') {
-        <div class="rsa-form-pane rsa-form-pane--solo rsa-form-pane--audio">
-
-          <!-- Title -->
-          <div class="rsa-field-group">
-            <label class="rsa-label">Title</label>
-            <input type="text" class="rsa-input" placeholder="Recording title…"
-              [ngModel]="audioTitle()" (ngModelChange)="audioTitle.set($event)">
-          </div>
-
-          <!-- Error -->
+      <!-- Inline audio form -->
+      @if (showAudioForm()) {
+        <div class="rsa-batch-inline-form">
           @if (recordingError()) {
             <div class="rsa-audio-error">
-              <span class="material-symbols-outlined">mic_off</span>
-              {{ recordingError() }}
+              <span class="material-symbols-outlined">mic_off</span>{{ recordingError() }}
             </div>
           }
-
-          <!-- Idle: record button + upload option -->
+          <input class="rsa-input" type="text" placeholder="Recording title…"
+            [ngModel]="audioTitle()" (ngModelChange)="audioTitle.set($event)">
           @if (!isRecording() && !recordedBlob()) {
-            <div class="rsa-audio-stage">
-              <button class="rsa-mic-btn" (click)="startRecording()" title="Start recording">
+            <div class="rsa-batch-audio-idle">
+              <button class="rsa-mic-btn" (click)="startRecording()">
                 <span class="material-symbols-outlined">mic</span>
               </button>
-              <p class="rsa-audio-hint">Click to start recording from microphone</p>
               <div class="rsa-audio-divider"><span>or</span></div>
               <button class="rsa-audio-upload-btn" (click)="openAudioFileInput()">
-                <span class="material-symbols-outlined">upload_file</span>
-                Upload audio file
+                <span class="material-symbols-outlined">upload_file</span>Upload audio file
               </button>
             </div>
           }
-
-          <!-- Recording in progress -->
           @if (isRecording()) {
-            <div class="rsa-audio-stage">
+            <div class="rsa-batch-audio-recording">
               <div class="rsa-recording-live">
                 <span class="rsa-recording-dot"></span>
                 <span class="rsa-recording-time">{{ formatDuration(recordingDuration()) }}</span>
               </div>
               <button class="rsa-stop-btn" (click)="stopRecording()">
-                <span class="material-symbols-outlined">stop_circle</span>
-                Stop Recording
+                <span class="material-symbols-outlined">stop_circle</span>Stop Recording
               </button>
             </div>
           }
-
-          <!-- Preview after recording -->
           @if (recordedBlob() && !isRecording()) {
-            <div class="rsa-audio-preview">
-              <audio class="rsa-audio-player" [src]="recordedUrl()" controls></audio>
-              <button class="rsa-audio-discard-btn" (click)="discardRecording()" title="Discard recording">
-                <span class="material-symbols-outlined">delete</span>
-                Discard
+            <audio class="rsa-audio-player" [src]="recordedUrl()" controls></audio>
+            <div class="rsa-batch-inline-actions">
+              <button class="rsa-cancel-btn" (click)="discardRecording()">
+                <span class="material-symbols-outlined">delete</span>Discard
+              </button>
+              <button class="rsa-create-btn" (click)="addAudioToQueue()">
+                <span class="material-symbols-outlined">add</span>Add to queue
               </button>
             </div>
           }
-
-          <!-- Collection picker -->
-          <div class="rsa-collection-bar rsa-collection-bar--inline">
-            <label class="rsa-label">Collection</label>
-            <select class="rsa-input rsa-select rsa-collection-select"
-              [ngModel]="newSourceCollectionId()" (ngModelChange)="newSourceCollectionId.set($event)">
-              <option value="">No collection</option>
-              @for (lib of collections(); track lib.id) {
-                <option [value]="lib.id">{{ lib.name }}</option>
-              }
-            </select>
-          </div>
-
+          @if (!recordedBlob() && !isRecording()) {
+            <div class="rsa-batch-inline-actions">
+              <button class="rsa-cancel-btn" (click)="showAudioForm.set(false); recordingError.set('')">Cancel</button>
+            </div>
+          }
         </div>
-        <div class="rsa-footer">
-          <div class="rsa-footer-actions">
-            <button class="rsa-cancel-btn" (click)="closeAddModal()">Cancel</button>
-            @if (recordedBlob()) {
-              <button class="rsa-create-btn" (click)="saveAudioRecording()">
-                <span class="material-symbols-outlined">save</span>
-                Save Recording
-              </button>
+      }
+
+      <!-- Queue -->
+      @if (queue().length > 0) {
+        <div class="rsa-queue">
+          <div class="rsa-queue-header">
+            <span class="rsa-queue-label">Queue <span class="rsa-queue-count">{{ queue().length }}</span></span>
+            <button class="rsa-queue-clear" (click)="clearQueue()">
+              <span class="material-symbols-outlined">close</span>Clear all
+            </button>
+          </div>
+          <div class="rsa-queue-list">
+            @for (item of queue(); track item.id) {
+              <div class="rsa-queue-item">
+                <span class="material-symbols-outlined rsa-queue-item-icon"
+                  [style.color]="item.type === 'url' ? '#3b82f6' : item.type === 'file' ? '#ef4444' : item.type === 'note' ? '#8b5cf6' : '#10b981'">
+                  {{ item.type === 'url' ? 'link' : item.type === 'file' ? 'upload_file' : item.type === 'note' ? 'edit_note' : 'mic' }}
+                </span>
+                <span class="rsa-queue-item-title">
+                  @if (item.fetchingMeta) { <span class="rs-spinner"></span> }
+                  {{ item.title }}
+                </span>
+                <button class="rsa-queue-item-remove" (click)="removeFromQueue(item.id)">
+                  <span class="material-symbols-outlined">close</span>
+                </button>
+              </div>
             }
           </div>
         </div>
+
+        <!-- Collection assignment — appears once queue has items -->
+        <div class="rsa-batch-collection">
+          <span class="rsa-label">Collection</span>
+          <div class="rsa-batch-col-options">
+            <label class="rsa-batch-col-opt">
+              <input type="radio" name="batchCol" value="none"
+                [ngModel]="batchCollectionMode()" (ngModelChange)="batchCollectionMode.set($any($event))">
+              None
+            </label>
+            @if (collections().length > 0) {
+              <label class="rsa-batch-col-opt">
+                <input type="radio" name="batchCol" value="existing"
+                  [ngModel]="batchCollectionMode()" (ngModelChange)="batchCollectionMode.set($any($event))">
+                Add to existing
+              </label>
+            }
+            <label class="rsa-batch-col-opt">
+              <input type="radio" name="batchCol" value="new"
+                [ngModel]="batchCollectionMode()" (ngModelChange)="batchCollectionMode.set($any($event))">
+              Create new collection
+            </label>
+          </div>
+          @if (batchCollectionMode() === 'existing' && collections().length > 0) {
+            <select class="rsa-input rsa-select rsa-batch-col-select"
+              [ngModel]="batchExistingColId()" (ngModelChange)="batchExistingColId.set($event)">
+              @for (col of collections(); track col.id) {
+                <option [value]="col.id">{{ col.name }}</option>
+              }
+            </select>
+          }
+          @if (batchCollectionMode() === 'new') {
+            <input class="rsa-input" type="text" placeholder="Collection name…"
+              [ngModel]="batchNewColName()" (ngModelChange)="batchNewColName.set($event)">
+          }
+        </div>
       }
+
+    </div>
+
+    <div class="rsa-footer">
+      <div class="rsa-footer-actions" style="margin-left:auto">
+        <button class="rsa-cancel-btn" (click)="closeAddModal()">Cancel</button>
+        <button class="rsa-create-btn" [disabled]="!queue().length || savingBatch()" (click)="saveAll()">
+          @if (savingBatch()) { <span class="rs-spinner"></span> }
+          @else { <span class="material-symbols-outlined">add</span> }
+          {{ saveLabel() }}
+        </button>
+      </div>
+    </div>
 
   </div>
 </env-slider-panel>
@@ -936,6 +797,30 @@
 </env-confirm-dialog>
 
 
+
+<!-- ── BULK DELETE SOURCES ── -->
+<env-confirm-dialog
+  [isOpen]="showBulkDeleteSources()"
+  title="Delete Sources"
+  icon="delete"
+  variant="danger"
+  [confirmLabel]="'Delete ' + bulkDeleteSourceIds().length + (bulkDeleteSourceIds().length === 1 ? ' Source' : ' Sources')"
+  (confirmed)="confirmBulkDeleteSources()"
+  (cancelled)="showBulkDeleteSources.set(false); bulkDeleteSourceIds.set([])">
+  Permanently delete <strong>{{ bulkDeleteSourceIds().length }} source{{ bulkDeleteSourceIds().length !== 1 ? 's' : '' }}</strong>? This cannot be undone.
+</env-confirm-dialog>
+
+<!-- ── BULK DELETE SUMMARIES ── -->
+<env-confirm-dialog
+  [isOpen]="showBulkDeleteSummaries()"
+  title="Delete Summaries"
+  icon="delete"
+  variant="danger"
+  [confirmLabel]="'Delete ' + bulkDeleteSummaryIds().length + (bulkDeleteSummaryIds().length === 1 ? ' Summary' : ' Summaries')"
+  (confirmed)="confirmBulkDeleteSummaries()"
+  (cancelled)="showBulkDeleteSummaries.set(false); bulkDeleteSummaryIds.set([])">
+  Permanently delete <strong>{{ bulkDeleteSummaryIds().length }} summary{{ bulkDeleteSummaryIds().length !== 1 ? 'ies' : '' }}</strong>? This cannot be undone.
+</env-confirm-dialog>
 
 <!-- ── UNSAVED NOTES WARNING ── -->
 <env-confirm-dialog
