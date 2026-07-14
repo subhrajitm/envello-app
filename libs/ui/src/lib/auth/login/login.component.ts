@@ -444,9 +444,15 @@ export class LoginComponent implements AfterViewInit, OnDestroy {
     return map[theme] ?? map['light'];
   }
 
+  private readonly emailRe = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
   async handleLogin() {
     if (!this.email || !this.password) {
       this.error.set('Please fill in all fields');
+      return;
+    }
+    if (!this.emailRe.test(this.email)) {
+      this.error.set('Please enter a valid email address');
       return;
     }
 
@@ -466,6 +472,14 @@ export class LoginComponent implements AfterViewInit, OnDestroy {
   async handleSignUp() {
     if (!this.email || !this.password) {
       this.error.set('Please fill in all fields to sign up');
+      return;
+    }
+    if (!this.emailRe.test(this.email)) {
+      this.error.set('Please enter a valid email address');
+      return;
+    }
+    if (this.password.length < 8) {
+      this.error.set('Password must be at least 8 characters');
       return;
     }
 

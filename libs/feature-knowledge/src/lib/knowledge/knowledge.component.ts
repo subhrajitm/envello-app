@@ -1,7 +1,7 @@
 import { Component, signal, computed, inject, HostListener, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { ResearchService, ResearchCollection, ResearchSource, ResearchSummary, FileStorageService, StorageFile, AiService, ContextService } from '@envello/core';
+import { ResearchService, ResearchCollection, ResearchSource, ResearchSummary, FileStorageService, StorageFile, AiService, ContextService, NotificationService } from '@envello/core';
 import { AiAssistantPanelComponent, AiPanelMessage, BadgeComponent, ConfirmDialogComponent, FeatureSidebarComponent, TableComponent, EnvTableColumn, EnvTableAction, EnvTableActionEvent, EnvTableSortEvent, EnvTableRow, EmptyStateComponent, SliderPanelComponent } from '@envello/ui';
 
 type ViewMode = 'sources' | 'summaries';
@@ -38,10 +38,11 @@ const SOURCE_TYPE_META: Record<string, { label: string; icon: string; color: str
   styleUrl: './knowledge.component.css'
 })
 export class KnowledgeComponent implements OnDestroy {
-  researchService    = inject(ResearchService);
-  fileStorage        = inject(FileStorageService);
-  private aiService  = inject(AiService);
+  researchService        = inject(ResearchService);
+  fileStorage            = inject(FileStorageService);
+  private aiService      = inject(AiService);
   private contextService = inject(ContextService);
+  private notify         = inject(NotificationService);
 
   protected aiEnabled = computed(() => this.aiService.aiEnabled());
 
@@ -662,7 +663,9 @@ export class KnowledgeComponent implements OnDestroy {
       ].filter(Boolean).join('\n');
       const notes = await this.aiService.sendMessage(prompt);
       if (notes) this.editNotes.set(notes);
-    } catch { /* silently fail */ }
+    } catch {
+      this.notify.error('AI failed', 'Could not generate notes. Check your AI configuration in Settings.');
+    }
     this.generatingNotes.set(false);
   }
 
@@ -708,7 +711,9 @@ export class KnowledgeComponent implements OnDestroy {
       ].join('\n');
       const result = await this.aiService.sendMessage(prompt);
       if (result) this.newSummaryContent.set(result);
-    } catch { /* silently fail */ }
+    } catch {
+      this.notify.error('AI failed', 'Could not generate summary. Check your AI configuration in Settings.');
+    }
     this.generatingSummary.set(false);
   }
 
