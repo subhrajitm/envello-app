@@ -1,11 +1,11 @@
 import { Component, signal, computed, inject, HostListener, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { ResearchService, ResearchCollection, ResearchSource, ResearchSummary, FileStorageService, StorageFile, AiService, StoreService, ContextService } from '@envello/core';
+import { ResearchService, ResearchCollection, ResearchSource, ResearchSummary, FileStorageService, StorageFile, AiService, ContextService } from '@envello/core';
 import { AiAssistantPanelComponent, AiPanelMessage, BadgeComponent, ChipComponent, ConfirmDialogComponent, FeatureSidebarComponent, TableComponent, EnvTableColumn, EnvTableAction, EnvTableActionEvent, EnvTableSortEvent, EnvTableRow, EmptyStateComponent, SliderPanelComponent } from '@envello/ui';
 
-type ViewMode = 'sources' | 'summaries' | 'files';
-type SortField = 'title' | 'status' | 'type' | 'date';
+type ViewMode = 'sources' | 'summaries';
+type SortField = 'title' | 'type' | 'date';
 
 const SOURCE_TYPE_META: Record<string, { label: string; icon: string; color: string }> = {
   WEB:       { label: 'Web',       icon: 'language',       color: '#3b82f6' },
@@ -14,6 +14,7 @@ const SOURCE_TYPE_META: Record<string, { label: string; icon: string; color: str
   INTERVIEW: { label: 'Interview', icon: 'mic',            color: '#10b981' },
   PHYSICAL:  { label: 'Physical',  icon: 'menu_book',      color: '#f59e0b' },
   ARTICLE:   { label: 'Article',   icon: 'article',        color: '#06b6d4' },
+  NOTE:      { label: 'Note',      icon: 'edit_note',      color: '#8b5cf6' },
 };
 
 
@@ -25,49 +26,26 @@ const SOURCE_TYPE_META: Record<string, { label: string; icon: string; color: str
   styleUrl: './knowledge.component.css'
 })
 export class KnowledgeComponent implements OnDestroy {
-  researchService = inject(ResearchService);
-  fileStorage     = inject(FileStorageService);
-  store           = inject(StoreService);
+  researchService   = inject(ResearchService);
+  fileStorage       = inject(FileStorageService);
   private aiService = inject(AiService);
   private contextService = inject(ContextService);
 
   protected aiEnabled = computed(() => this.aiService.aiEnabled());
 
   // ── View state ────────────────────────────────────────────────────────────
-  viewMode        = signal<ViewMode>('sources');
+  viewMode           = signal<ViewMode>('sources');
   selectedCollection = signal<ResearchCollection | null>(null);
+  sidebarType        = signal<string>('ALL');
 
-  // ── Files ─────────────────────────────────────────────────────────────────
-  fileFilterType = signal<'all' | 'image' | 'document' | 'video' | 'audio'>('all');
-  isDraggingOver   = signal(false);
-  fileToDelete     = signal<StorageFile | null>(null);
-  showDeleteFile   = signal(false);
-
-  filteredFiles = computed(() => {
-    let list = this.fileStorage.files();
-    const selectedLib = this.selectedCollection();
-    if (selectedLib) list = list.filter(f => f.collectionId === selectedLib.id);
-    const q = this.searchQuery().toLowerCase().trim();
-    if (q) list = list.filter(f => f.name.toLowerCase().includes(q));
-    const type = this.fileFilterType();
-    if (type === 'image')    list = list.filter(f => f.mimeType.startsWith('image/'));
-    if (type === 'video')    list = list.filter(f => f.mimeType.startsWith('video/'));
-    if (type === 'document') list = list.filter(f => {
-      const m = f.mimeType;
-      return m === 'application/pdf'
-        || m.includes('word') || m.includes('document')
-        || m.includes('sheet') || m.includes('excel')
-        || m.includes('presentation') || m.includes('powerpoint')
-        || m.startsWith('text/');
-    });
-    if (type === 'audio') list = list.filter(f => f.mimeType.startsWith('audio/'));
-    return list;
-  });
+  isDraggingOver = signal(false);
 
   // ── Filter & Search ───────────────────────────────────────────────────────
-  searchQuery  = signal('');
-  filterStatus = signal<'ALL' | 'UNREAD' | 'READING' | 'PROCESSED'>('ALL');
-  filterType   = signal<'ALL' | 'WEB' | 'PDF' | 'VIDEO' | 'INTERVIEW' | 'PHYSICAL' | 'ARTICLE'>('ALL');
+  searchQuery = signal('');
+
+  // ── Tag filter (Change 3) ─────────────────────────────────────────────────
+  selectedTag        = signal<string | null>(null);
+  sidebarTagsExpanded = signal(false);
 
   // ── Sort (feature 6) ──────────────────────────────────────────────────────
   sortField = signal<SortField>('date');
@@ -76,9 +54,8 @@ export class KnowledgeComponent implements OnDestroy {
   // ── Bulk actions handled by env-table ────────────────────────────────────
 
   // ── Modals ────────────────────────────────────────────────────────────────
-  showAddModal           = signal(false);
-  showNewCollectionForm  = signal(false);
-  addTab                 = signal<'url' | 'file' | 'note' | 'audio'>('url');
+  showAddModal = signal(false);
+  addTab       = signal<'url' | 'file' | 'note' | 'audio'>('url');
   addNoteContent      = signal('');
 
   // ── Audio recording ───────────────────────────────────────────────────────
@@ -101,12 +78,22 @@ export class KnowledgeComponent implements OnDestroy {
   sourceToDelete      = signal<ResearchSource | null>(null);
   summaryToDelete     = signal<ResearchSummary | null>(null);
 
-  // ── Collection form ──────────────────────────────────────────────────────────
-  newCollectionName  = signal('');
-  newCollectionDesc  = signal('');
-  newCollectionColor = signal('#8b5cf6');
+  // ── Summary detail panel (Change 1) ──────────────────────────────────────
+  showSummaryDetail  = signal(false);
+  selectedSummary    = signal<ResearchSummary | null>(null);
+  editSummaryTitle   = signal('');
+  editSummaryContent = signal('');
+  editSummaryTags    = signal('');
 
-  readonly collectionColors = ['#8b5cf6','#f97316','#10b981','#3b82f6','#ec4899','#f59e0b','#06b6d4','#ef4444'];
+  // ── Quick URL capture (Change 7) ──────────────────────────────────────────
+  quickUrl       = signal('');
+  quickCapturing = signal(false);
+
+  // ── Bulk move to collection (Change 8) ────────────────────────────────────
+  showBulkMove     = signal(false);
+  bulkMoveTargetId = signal('');
+  pendingMoveIds   = signal<string[]>([]);
+
 
   // ── Source form ───────────────────────────────────────────────────────────
   newSourceTitle     = signal('');
@@ -120,36 +107,41 @@ export class KnowledgeComponent implements OnDestroy {
   suggestingTags     = signal(false);
 
   // ── Summary form ──────────────────────────────────────────────────────────
-  newSummaryTitle    = signal('');
-  newSummaryContent  = signal('');
-  newSummaryTags     = signal('');
-  selectedSourceIds  = signal<string[]>([]);
-  selectedFileIds    = signal<string[]>([]);
-  generatingSummary  = signal(false);
+  newSummaryTitle   = signal('');
+  newSummaryContent = signal('');
+  newSummaryTags    = signal('');
+  selectedSourceIds = signal<string[]>([]);
+  generatingSummary = signal(false);
 
   // ── Sidebar new collection inline form ────────────────────────────────────
-  sidebarNewColOpen = signal(false);
-  sidebarNewColName = signal('');
+  sidebarNewColOpen  = signal(false);
+  sidebarNewColName  = signal('');
+  sidebarNewColColor = signal('#8b5cf6');
+
+  readonly sidebarColors = ['#8b5cf6','#f97316','#10b981','#3b82f6','#ec4899','#f59e0b','#06b6d4','#ef4444'];
 
   openSidebarNewCol() { this.sidebarNewColOpen.set(true); }
   saveSidebarNewCol() {
     if (!this.sidebarNewColName()) return;
-    this.researchService.addCollection({ name: this.sidebarNewColName(), color: '#8b5cf6', description: '' });
+    this.researchService.addCollection({ name: this.sidebarNewColName(), color: this.sidebarNewColColor(), description: '' });
     this.sidebarNewColName.set('');
+    this.sidebarNewColColor.set('#8b5cf6');
     this.sidebarNewColOpen.set(false);
   }
-  cancelSidebarNewCol() { this.sidebarNewColName.set(''); this.sidebarNewColOpen.set(false); }
+  cancelSidebarNewCol() {
+    this.sidebarNewColName.set('');
+    this.sidebarNewColColor.set('#8b5cf6');
+    this.sidebarNewColOpen.set(false);
+  }
 
   // ── Source detail ─────────────────────────────────────────────────────────
-  editNotes       = signal('');
-  editTitle       = signal('');
-  editUrl         = signal('');
-  editAuthor      = signal('');
-  editDescription = signal('');
-  editTags        = signal('');
+  editNotes          = signal('');
+  editTitle          = signal('');
+  editUrl            = signal('');
+  editAuthor         = signal('');
+  editDescription    = signal('');
+  editTags           = signal('');
   generatingNotes    = signal(false);
-  showLinkTask       = signal(false);
-  taskSearch         = signal('');
   showUnsavedWarning = signal(false);
   showDetailsMeta    = signal(false);
 
@@ -159,11 +151,11 @@ export class KnowledgeComponent implements OnDestroy {
   aiMessages    = signal<AiPanelMessage[]>([]);
 
   readonly aiSuggestions = [
-    'Summarise this collection',
-    'Which sources are unread?',
-    'What topics do my sources cover?',
-    'Which sources have been processed?',
-    'Recommend what to read next',
+    'How many sources are in each collection?',
+    'Which collection has the most sources?',
+    'List my sources by type',
+    'What tags do I use most?',
+    'Which sources have notes?',
   ];
 
   // ── Static data ───────────────────────────────────────────────────────────
@@ -171,64 +163,19 @@ export class KnowledgeComponent implements OnDestroy {
 
   // ── env-table config ──────────────────────────────────────────────────────
   readonly sourceColumns: EnvTableColumn[] = [
-    { key: 'status', header: 'Status', type: 'badge', sortable: true, badgeMap: {
-      UNREAD:    { label: 'Unread',    variant: 'error',   icon: 'mark_email_unread' },
-      READING:   { label: 'Reading',   variant: 'warning', icon: 'auto_stories'      },
-      PROCESSED: { label: 'Processed', variant: 'success', icon: 'done_all'          },
-    }},
     { key: 'title',      header: 'Source',        type: 'primary-text', sortable: true },
     { key: 'sourceType', header: 'Type',           type: 'badge', sortable: true, badgeMap: {
-      WEB:       { label: 'Web',       variant: 'info',    icon: 'language'       },
-      PDF:       { label: 'PDF',       variant: 'error',   icon: 'picture_as_pdf' },
-      VIDEO:     { label: 'Video',     variant: 'purple',  icon: 'smart_display'  },
-      INTERVIEW: { label: 'Interview', variant: 'success', icon: 'mic'            },
-      PHYSICAL:  { label: 'Physical',  variant: 'warning', icon: 'menu_book'      },
-      ARTICLE:   { label: 'Article',   variant: 'info',    icon: 'article'        },
+      WEB:        { label: 'Web',        variant: 'info',    icon: 'language'       },
+      PDF:        { label: 'PDF',        variant: 'error',   icon: 'picture_as_pdf' },
+      VIDEO:      { label: 'Video',      variant: 'purple',  icon: 'smart_display'  },
+      INTERVIEW:  { label: 'Interview',  variant: 'success', icon: 'mic'            },
+      PHYSICAL:   { label: 'Physical',   variant: 'warning', icon: 'menu_book'      },
+      ARTICLE:    { label: 'Article',    variant: 'info',    icon: 'article'        },
+      NOTE:       { label: 'Note',       variant: 'purple',  icon: 'edit_note'      },
+      COLLECTION: { label: 'Collection', variant: 'info',    icon: 'folder'         },
     }},
     { key: 'meta', header: 'Author · Date', sortable: true },
   ];
-
-  // ── File table config ────────────────────────────────────────────────────
-  readonly fileColumns: EnvTableColumn[] = [
-    { key: 'name', header: 'Name',  type: 'primary-text', sortable: true },
-    { key: 'type', header: 'Type' },
-    { key: 'size', header: 'Size',  sortable: true },
-  ];
-
-  readonly fileActions: EnvTableAction[] = [
-    { key: 'download', label: 'Download', icon: 'download', bulk: true  },
-    { key: 'delete',   label: 'Delete',   icon: 'delete',   danger: true, bulk: false },
-  ];
-
-  fileTableRows = computed(() =>
-    this.filteredFiles().map(f => ({
-      id:   f.id,
-      name: f.name,
-      type: this.fileMimeLabel(f.mimeType),
-      size: this.fileStorage.formatSize(f.size),
-    }))
-  );
-
-  onFileAction(event: EnvTableActionEvent) {
-    const file = this.fileStorage.files().find(f => f.id === event.row['id']);
-    if (!file) return;
-    switch (event.actionKey) {
-      case 'download': this.downloadFile(file); break;
-      case 'delete':   this.openDeleteFile(file); break;
-    }
-  }
-
-  fileMimeLabel(mimeType: string): string {
-    if (mimeType.startsWith('image/'))         return 'Image';
-    if (mimeType.startsWith('video/'))         return 'Video';
-    if (mimeType.startsWith('audio/'))         return 'Audio';
-    if (mimeType === 'application/pdf')        return 'PDF';
-    if (mimeType.startsWith('text/'))          return 'Text';
-    if (mimeType.includes('word') || mimeType.includes('document')) return 'Document';
-    if (mimeType.includes('sheet') || mimeType.includes('excel'))   return 'Spreadsheet';
-    if (mimeType.includes('presentation') || mimeType.includes('powerpoint')) return 'Presentation';
-    return 'File';
-  }
 
   // ── Summary sort ─────────────────────────────────────────────────────────
   summarySort = signal<{ key: string; direction: 'asc' | 'desc' }>({ key: 'date', direction: 'desc' });
@@ -277,41 +224,69 @@ export class KnowledgeComponent implements OnDestroy {
   }
 
   readonly sourceActions: EnvTableAction[] = [
-    { key: 'mark-unread',    label: 'Unread',    icon: 'radio_button_unchecked', bulk: true  },
-    { key: 'mark-reading',   label: 'Reading',   icon: 'menu_book',              bulk: true  },
-    { key: 'mark-processed', label: 'Processed', icon: 'done_all',               bulk: true  },
-    { key: 'delete',         label: 'Delete',    icon: 'delete', danger: true,   bulk: false },
+    { key: 'move-collection', label: 'Move to', icon: 'drive_file_move', bulk: true  },
+    { key: 'delete',          label: 'Delete',  icon: 'delete', danger: true, bulk: false },
   ];
 
-  sourceTableRows = computed(() =>
-    this.filteredSources().map(s => ({
-      id:         s.id,
-      title:      s.title,
-      sourceType: s.sourceType,
-      status:     s.status,
-      meta:       this.formatSourceMetaShort(s),
-    }))
-  );
+  sourceTableRows = computed(() => {
+    const type = this.sidebarType();
+    const insideCollection = this.selectedCollection();
+
+    const sourceRows = this.filteredSources().map(s => ({
+      id: s.id, title: s.title, sourceType: s.sourceType,
+      meta: this.formatSourceMetaShort(s),
+    }));
+
+    if (!insideCollection && (type === 'ALL' || type === 'COLLECTION')) {
+      const q = this.searchQuery().toLowerCase();
+      let cols = this.collections();
+      if (q) cols = cols.filter(c => c.name.toLowerCase().includes(q));
+      const colRows = cols.map(c => {
+        const total = this.collectionSourceCounts().get(c.id) ?? 0;
+        const meta = total === 0 ? 'No sources' : `${total} source${total !== 1 ? 's' : ''}`;
+        return { id: c.id, title: c.name, sourceType: 'COLLECTION', meta };
+      });
+      return type === 'COLLECTION' ? colRows : [...colRows, ...sourceRows];
+    }
+
+    return sourceRows;
+  });
 
   onSourceRowClick(row: EnvTableRow) {
-    const source = this.researchService.sources().find(s => s.id === row['id']);
-    if (source) this.openSourceDetail(source);
+    if (row['sourceType'] === 'COLLECTION') {
+      const col = this.collections().find(c => c.id === row['id']);
+      if (col) this.selectCollection(col);
+    } else {
+      const source = this.researchService.sources().find(s => s.id === row['id']);
+      if (source) this.openSourceDetail(source);
+    }
   }
 
   onSourceAction(event: EnvTableActionEvent) {
+    if (event.row['sourceType'] === 'COLLECTION') {
+      if (event.actionKey === 'delete') {
+        const col = this.collections().find(c => c.id === event.row['id']);
+        if (col) this.openDeleteCollection(col, new MouseEvent('click'));
+      }
+      return;
+    }
     const source = this.researchService.sources().find(s => s.id === event.row['id']);
     if (!source) return;
     switch (event.actionKey) {
-      case 'mark-unread':    this.researchService.updateSource(source.id, { status: 'UNREAD' });    break;
-      case 'mark-reading':   this.researchService.updateSource(source.id, { status: 'READING' });   break;
-      case 'mark-processed': this.researchService.updateSource(source.id, { status: 'PROCESSED' }); break;
+      case 'move-collection': {
+        this.pendingMoveIds.update(ids => [...ids, source.id]);
+        if (!this.showBulkMove()) {
+          setTimeout(() => this.showBulkMove.set(true), 0);
+        }
+        break;
+      }
       case 'delete':         this.openDeleteSource(source);                                          break;
     }
   }
 
   onSourceSort(event: EnvTableSortEvent) {
     const keyMap: Record<string, SortField> = {
-      title: 'title', sourceType: 'type', status: 'status', meta: 'date',
+      title: 'title', sourceType: 'type', meta: 'date',
     };
     const field = keyMap[event.key];
     if (field) { this.sortField.set(field); this.sortDir.set(event.direction); }
@@ -330,46 +305,23 @@ export class KnowledgeComponent implements OnDestroy {
     return lib ? this.researchService.getSummariesByCollection(lib.id) : this.researchService.summaries();
   });
 
-  allSummaries = computed(() => this.researchService.summaries());
-
-  allSummaryTableRows = computed(() => {
-    const { key, direction } = this.summarySort();
-    const rows = this.allSummaries().map(s => ({
-      id:       s.id,
-      title:    s.title,
-      sources:  s.sourceIds.length ? `${s.sourceIds.length} source${s.sourceIds.length !== 1 ? 's' : ''}` : '—',
-      tags:     s.tags.join(', ') || '—',
-      date:     this.formatDate(s.createdDate),
-      _rawDate: s.createdDate,
-    }));
-    return [...rows].sort((a, b) => {
-      const cmp = key === 'title'
-        ? a.title.localeCompare(b.title)
-        : (a._rawDate ?? '').localeCompare(b._rawDate ?? '');
-      return direction === 'asc' ? cmp : -cmp;
-    });
-  });
-
   filteredSources = computed(() => {
     let list = this.sources();
-    const q      = this.searchQuery().toLowerCase();
-    const status = this.filterStatus();
-    const type   = this.filterType();
+    const q    = this.searchQuery().toLowerCase();
+    const type = this.sidebarType();
+    const tag  = this.selectedTag();
 
-    if (q)            list = list.filter(s => s.title.toLowerCase().includes(q) || s.tags.some(t => t.toLowerCase().includes(q)) || s.description?.toLowerCase().includes(q));
-    if (status !== 'ALL') list = list.filter(s => s.status === status);
-    if (type   !== 'ALL') list = list.filter(s => s.sourceType === type);
+    if (q)   list = list.filter(s => s.title.toLowerCase().includes(q) || s.tags.some(t => t.toLowerCase().includes(q)) || s.description?.toLowerCase().includes(q));
+    if (type !== 'ALL' && type !== 'COLLECTION') list = list.filter(s => s.sourceType === type);
+    if (tag) list = list.filter(s => s.tags.includes(tag));
 
-    // Sort (feature 6)
     const field = this.sortField();
     const dir   = this.sortDir();
-    const STATUS_ORDER: Record<string, number> = { UNREAD: 0, READING: 1, PROCESSED: 2 };
     list = [...list].sort((a, b) => {
       let cmp = 0;
-      if      (field === 'title')  cmp = a.title.localeCompare(b.title);
-      else if (field === 'status') cmp = (STATUS_ORDER[a.status] ?? 0) - (STATUS_ORDER[b.status] ?? 0);
-      else if (field === 'type')   cmp = a.sourceType.localeCompare(b.sourceType);
-      else if (field === 'date')   cmp = (a.createdDate ?? '').localeCompare(b.createdDate ?? '');
+      if      (field === 'title') cmp = a.title.localeCompare(b.title);
+      else if (field === 'type')  cmp = a.sourceType.localeCompare(b.sourceType);
+      else if (field === 'date')  cmp = (a.createdDate ?? '').localeCompare(b.createdDate ?? '');
       return dir === 'asc' ? cmp : -cmp;
     });
     return list;
@@ -383,36 +335,30 @@ export class KnowledgeComponent implements OnDestroy {
     return map;
   });
 
-  hasActiveFilters = computed(() => !!this.searchQuery() || this.filterStatus() !== 'ALL' || this.filterType() !== 'ALL');
-
-  // Feature 8: linked tasks
-  linkedTasks = computed(() => {
-    const s = this.selectedSource();
-    if (!s?.linkedTaskIds?.length) return [];
-    return this.store.tasks().filter(t => s.linkedTaskIds!.includes(t.id));
+  typeCountMap = computed(() => {
+    const sources = this.researchService.sources();
+    const map: Record<string, number> = { ALL: sources.length, COLLECTION: this.collections().length };
+    for (const s of sources) map[s.sourceType] = (map[s.sourceType] ?? 0) + 1;
+    return map;
   });
 
-  availableTasks = computed(() => {
-    const s = this.selectedSource();
-    const linked = s?.linkedTaskIds ?? [];
-    const q = this.taskSearch().toLowerCase();
-    return this.store.tasks()
-      .filter(t => !linked.includes(t.id))
-      .filter(t => !q || t.title.toLowerCase().includes(q))
-      .slice(0, 8);
+  allTags = computed(() => {
+    const tagMap = new Map<string, number>();
+    for (const s of this.researchService.sources()) {
+      for (const t of s.tags) {
+        tagMap.set(t, (tagMap.get(t) ?? 0) + 1);
+      }
+    }
+    return [...tagMap.entries()]
+      .sort((a, b) => b[1] - a[1])
+      .map(([tag, count]) => ({ tag, count }));
   });
 
-  hasTasks = computed(() => this.store.tasks().length > 0);
+  hasActiveFilters = computed(() => !!this.searchQuery() || (this.sidebarType() !== 'ALL' && this.sidebarType() !== 'COLLECTION') || !!this.selectedTag());
 
   notesDirty = computed(() => {
     const s = this.selectedSource();
     return s ? this.editNotes() !== (s.notes ?? '') : false;
-  });
-
-  collectionFiles = computed(() => {
-    const lib = this.selectedCollection();
-    if (!lib) return this.fileStorage.files();
-    return this.fileStorage.files().filter(f => f.collectionId === lib.id);
   });
 
   // ── Helpers ───────────────────────────────────────────────────────────────
@@ -455,34 +401,28 @@ export class KnowledgeComponent implements OnDestroy {
   }
 
   // ── Collection actions ───────────────────────────────────────────────────────
-  saveCollection() {
-    if (!this.newCollectionName()) return;
-    const newLib = this.researchService.addCollection({ name: this.newCollectionName(), description: this.newCollectionDesc(), color: this.newCollectionColor() });
-    this.newSourceCollectionId.set(newLib.id);
-    this.showNewCollectionForm.set(false);
-    this.newCollectionName.set(''); this.newCollectionDesc.set(''); this.newCollectionColor.set('#8b5cf6');
-  }
 
   switchView(mode: ViewMode) {
     this.viewMode.set(mode);
     this.searchQuery.set('');
-    if (mode !== 'files') this.fileFilterType.set('all');
   }
 
-  selectAllSources() {
+  setSidebarType(type: string) {
     this.selectedCollection.set(null);
+    this.sidebarType.set(type);
     this.viewMode.set('sources');
     this.searchQuery.set('');
-    this.filterStatus.set('ALL');
-    this.filterType.set('ALL');
+    this.selectedTag.set(null);
   }
+
+  selectAllSources() { this.setSidebarType('ALL'); }
 
   selectCollection(collection: ResearchCollection) {
     this.selectedCollection.set(collection);
+    this.sidebarType.set('ALL');
     this.viewMode.set('sources');
     this.searchQuery.set('');
-    this.filterStatus.set('ALL');
-    this.filterType.set('ALL');
+    this.selectedTag.set(null);
   }
 
   moveSourceToCollection(sourceId: string, collectionId: string) {
@@ -502,8 +442,13 @@ export class KnowledgeComponent implements OnDestroy {
   confirmDeleteCollection() {
     const lib = this.collectionToDelete();
     if (lib) {
+      // Unassign sources instead of deleting them
+      const sourcesInCollection = this.researchService.getSourcesByCollection(lib.id);
+      sourcesInCollection.forEach(s =>
+        this.researchService.updateSource(s.id, { collectionId: undefined })
+      );
       this.researchService.deleteCollection(lib.id);
-      if (this.selectedCollection()?.id === lib.id) this.selectedCollection.set(null);
+      if (this.selectedCollection()?.id === lib.id) this.setSidebarType('COLLECTION');
       this.cancelDeleteCollection();
     }
   }
@@ -514,9 +459,7 @@ export class KnowledgeComponent implements OnDestroy {
     this.newSourceTags.set(''); this.newSourceDesc.set(''); this.newSourceAuthor.set('');
     this.newSourceCollectionId.set(this.selectedCollection()?.id ?? '');
     this.addNoteContent.set('');
-    this.newCollectionName.set(''); this.newCollectionDesc.set(''); this.newCollectionColor.set('#8b5cf6');
     this.fetchingMeta.set(false); this.suggestingTags.set(false);
-    this.showNewCollectionForm.set(false);
     this.discardRecording(); this.audioTitle.set(''); this.recordingError.set('');
     this.addTab.set(tab);
     this.showAddModal.set(true);
@@ -525,7 +468,6 @@ export class KnowledgeComponent implements OnDestroy {
     if (this.isRecording()) this.stopRecording();
     this.discardRecording();
     this.showAddModal.set(false);
-    this.showNewCollectionForm.set(false);
   }
 
   saveSource() {
@@ -535,7 +477,7 @@ export class KnowledgeComponent implements OnDestroy {
       collectionId, title: this.newSourceTitle(), url: this.newSourceUrl(),
       sourceType: this.newSourceType(),
       tags: this.newSourceTags().split(',').map(t => t.trim()).filter(t => t),
-      description: this.newSourceDesc(), author: this.newSourceAuthor(), status: 'UNREAD',
+      description: this.newSourceDesc(), author: this.newSourceAuthor(),
     });
     this.closeAddModal();
   }
@@ -544,9 +486,9 @@ export class KnowledgeComponent implements OnDestroy {
     if (!this.newSourceTitle()) return;
     const collectionId = this.selectedCollection()?.id ?? (this.newSourceCollectionId() || undefined);
     this.researchService.addSource({
-      collectionId, title: this.newSourceTitle(), sourceType: 'ARTICLE',
+      collectionId, title: this.newSourceTitle(), sourceType: 'NOTE',
       tags: this.newSourceTags().split(',').map(t => t.trim()).filter(t => t),
-      notes: this.addNoteContent(), status: 'UNREAD',
+      notes: this.addNoteContent(),
     });
     this.closeAddModal();
   }
@@ -565,10 +507,24 @@ export class KnowledgeComponent implements OnDestroy {
         title: f.name.replace(/\.[^/.]+$/, ''),
         sourceType: this.mimeToSourceType(f.mimeType),
         tags: [],
-        status: 'UNREAD',
+        fileId: f.id,
       });
     }
     this.viewMode.set('sources');
+  }
+
+  async downloadSource(source: ResearchSource) {
+    if (!source.fileId) return;
+    const file = this.fileStorage.files().find(f => f.id === source.fileId);
+    if (!file) return;
+    try {
+      const url = await this.fileStorage.getSignedUrl(file.storagePath);
+      const a = document.createElement('a');
+      a.href = url; a.download = file.name; a.target = '_blank';
+      a.click();
+    } catch (e) {
+      console.error('[Knowledge] download failed:', e);
+    }
   }
 
   openFileInputFromModal() {
@@ -642,8 +598,6 @@ export class KnowledgeComponent implements OnDestroy {
     this.editAuthor.set(source.author || '');
     this.editDescription.set(source.description || '');
     this.editTags.set(source.tags.join(', '));
-    this.showLinkTask.set(false);
-    this.taskSearch.set('');
     this.showSourceDetail.set(true);
   }
 
@@ -690,13 +644,6 @@ export class KnowledgeComponent implements OnDestroy {
     this.selectedSource.update(cur => cur ? { ...cur, ...updates } : null);
   }
 
-  updateSourceStatus(status: 'UNREAD' | 'READING' | 'PROCESSED') {
-    const s = this.selectedSource();
-    if (s) {
-      this.researchService.updateSource(s.id, { status });
-      this.selectedSource.update(cur => cur ? { ...cur, status } : null);
-    }
-  }
 
 
   saveNotes() {
@@ -742,30 +689,11 @@ export class KnowledgeComponent implements OnDestroy {
     }
   }
 
-  // Feature 8: Link tasks to sources
-  linkTask(taskId: string) {
-    const s = this.selectedSource();
-    if (!s) return;
-    const linked = [...new Set([...(s.linkedTaskIds ?? []), taskId])];
-    this.researchService.updateSource(s.id, { linkedTaskIds: linked });
-    this.selectedSource.update(cur => cur ? { ...cur, linkedTaskIds: linked } : null);
-    this.showLinkTask.set(false);
-    this.taskSearch.set('');
-  }
-
-  unlinkTask(taskId: string) {
-    const s = this.selectedSource();
-    if (!s) return;
-    const linked = (s.linkedTaskIds ?? []).filter(id => id !== taskId);
-    this.researchService.updateSource(s.id, { linkedTaskIds: linked });
-    this.selectedSource.update(cur => cur ? { ...cur, linkedTaskIds: linked } : null);
-  }
-
   // ── Summary actions ───────────────────────────────────────────────────────
   openSummaryModal() {
     this.newSummaryTitle.set(''); this.newSummaryContent.set('');
     this.newSummaryTags.set(''); this.selectedSourceIds.set([]);
-    this.selectedFileIds.set([]); this.generatingSummary.set(false);
+    this.generatingSummary.set(false);
     this.showSummaryModal.set(true);
   }
   closeSummaryModal() { this.showSummaryModal.set(false); }
@@ -776,34 +704,23 @@ export class KnowledgeComponent implements OnDestroy {
     this.researchService.addSummary({
       collectionId: lib?.id ?? '', title: this.newSummaryTitle(), content: this.newSummaryContent(),
       sourceIds: this.selectedSourceIds(),
-      fileIds: this.selectedFileIds(),
       tags: this.newSummaryTags().split(',').map(t => t.trim()).filter(t => t),
     });
     this.closeSummaryModal();
   }
-
-  toggleFileSelection(id: string) {
-    this.selectedFileIds.update(ids => ids.includes(id) ? ids.filter(i => i !== id) : [...ids, id]);
-  }
-  isFileSelected(id: string) { return this.selectedFileIds().includes(id); }
 
   async generateAiSummary() {
     if (this.generatingSummary() || !this.aiService.aiEnabled()) return;
     this.generatingSummary.set(true);
     try {
       const selectedSources = this.sources().filter(s => this.selectedSourceIds().includes(s.id));
-      const selectedFiles   = this.collectionFiles().filter(f => this.selectedFileIds().includes(f.id));
       const sourceLines = selectedSources.map(s => [
         `- [${this.getSourceTypeMeta(s.sourceType).label}] ${s.title}`,
         s.author      ? `  Author: ${s.author}`           : '',
         s.description ? `  Description: ${s.description}` : '',
         s.notes       ? `  Notes: ${s.notes}`             : '',
       ].filter(Boolean).join('\n')).join('\n');
-      const fileLines = selectedFiles.map(f => `- [File] ${f.name} (${this.fileMimeLabel(f.mimeType)})`).join('\n');
-      const context = [
-        selectedSources.length ? `Sources:\n${sourceLines}` : '',
-        selectedFiles.length   ? `Files:\n${fileLines}`     : '',
-      ].filter(Boolean).join('\n\n');
+      const context = selectedSources.length ? `Sources:\n${sourceLines}` : '';
       const titleHint = this.newSummaryTitle() ? `The summary is titled "${this.newSummaryTitle()}".` : '';
       const prompt = [
         'Write a concise, insightful research summary in 3-6 sentences based on the following material.',
@@ -829,7 +746,100 @@ export class KnowledgeComponent implements OnDestroy {
   }
   isSourceSelected(id: string) { return this.selectedSourceIds().includes(id); }
 
-  clearFilters() { this.searchQuery.set(''); this.filterStatus.set('ALL'); this.filterType.set('ALL'); }
+  clearFilters() { this.searchQuery.set(''); this.sidebarType.set('ALL'); this.selectedTag.set(null); }
+
+  // ── Tag filter actions (Change 3) ─────────────────────────────────────────
+  setTagFilter(tag: string) {
+    this.selectedCollection.set(null);
+    this.selectedTag.set(tag);
+    this.sidebarType.set('ALL');
+    this.viewMode.set('sources');
+    this.searchQuery.set('');
+  }
+  clearTagFilter() { this.selectedTag.set(null); }
+
+  // ── Summary detail panel (Change 1) ──────────────────────────────────────
+  openSummaryDetail(summary: ResearchSummary) {
+    this.selectedSummary.set(summary);
+    this.editSummaryTitle.set(summary.title);
+    this.editSummaryContent.set(summary.content);
+    this.editSummaryTags.set(summary.tags.join(', '));
+    this.showSummaryDetail.set(true);
+  }
+  closeSummaryDetail() {
+    this.showSummaryDetail.set(false);
+    this.selectedSummary.set(null);
+  }
+  saveSummaryDetail() {
+    const s = this.selectedSummary();
+    if (!s) return;
+    const tags = this.editSummaryTags().split(',').map(t => t.trim()).filter(t => t);
+    this.researchService.updateSummary(s.id, {
+      title: this.editSummaryTitle(),
+      content: this.editSummaryContent(),
+      tags,
+    });
+    this.closeSummaryDetail();
+  }
+  onSummaryRowClick(row: EnvTableRow) {
+    const summary = this.researchService.summaries().find(s => s.id === row['id']);
+    if (summary) this.openSummaryDetail(summary);
+  }
+
+  // ── Quick URL capture (Change 7) ──────────────────────────────────────────
+  async quickCaptureSource() {
+    const url = this.quickUrl().trim();
+    if (!url || this.quickCapturing()) return;
+    try { new URL(url); } catch { return; } // must be valid URL
+    this.quickCapturing.set(true);
+    const tempTitle = url.replace(/^https?:\/\/(www\.)?/, '').split('/')[0];
+    const collectionId = this.selectedCollection()?.id;
+    this.researchService.addSource({
+      collectionId, title: tempTitle, url,
+      sourceType: 'WEB', tags: [],
+    });
+    this.quickUrl.set('');
+    // Background metadata fetch to update the title
+    try {
+      const res = await fetch(`https://api.microlink.io?url=${encodeURIComponent(url)}`);
+      const json = await res.json();
+      if (json.status === 'success') {
+        const added = this.researchService.sources().find(s => s.url === url);
+        if (added && json.data?.title) {
+          this.researchService.updateSource(added.id, {
+            title: json.data.title,
+            description: json.data.description ?? '',
+            author: typeof json.data.author === 'string' ? json.data.author : (json.data.publisher ?? ''),
+          });
+        }
+      }
+    } catch { /* silently fail */ }
+    this.quickCapturing.set(false);
+  }
+
+  onQuickUrlPaste(event: ClipboardEvent) {
+    const text = event.clipboardData?.getData('text') ?? '';
+    if (text.startsWith('http://') || text.startsWith('https://')) {
+      setTimeout(() => this.quickCaptureSource(), 50);
+    }
+  }
+
+  // ── Bulk move to collection (Change 8) ────────────────────────────────────
+  openBulkMove(ids: string[]) {
+    this.pendingMoveIds.set(ids);
+    this.bulkMoveTargetId.set('');
+    this.showBulkMove.set(true);
+  }
+
+  confirmBulkMove() {
+    const targetId = this.bulkMoveTargetId();
+    const collectionId = targetId || undefined;
+    this.pendingMoveIds().forEach(id =>
+      this.researchService.updateSource(id, { collectionId })
+    );
+    this.showBulkMove.set(false);
+    this.pendingMoveIds.set([]);
+  }
 
   // ── AI ────────────────────────────────────────────────────────────────────
   toggleAssistant() { this.showAssistant.update(v => !v); }
@@ -843,7 +853,7 @@ export class KnowledgeComponent implements OnDestroy {
       const lib = this.selectedCollection();
       const srcs = lib ? this.researchService.getSourcesByCollection(lib.id) : this.researchService.collections().flatMap(l => this.researchService.getSourcesByCollection(l.id));
       const sourceList = srcs.map(s =>
-        `- ${s.title} [${s.sourceType}, ${s.status}]${s.author ? `, by ${s.author}` : ''}${s.description ? `: ${s.description}` : ''}`
+        `- ${s.title} [${s.sourceType}]${s.author ? `, by ${s.author}` : ''}${s.description ? `: ${s.description}` : ''}`
       ).join('\n');
       const context = [
         'You are a research knowledge assistant for the Envello productivity app.',
@@ -973,41 +983,18 @@ export class KnowledgeComponent implements OnDestroy {
     input.click();
   }
 
-  openDeleteFile(file: StorageFile) {
-    this.fileToDelete.set(file);
-    this.showDeleteFile.set(true);
-  }
-  cancelDeleteFile() { this.showDeleteFile.set(false); this.fileToDelete.set(null); }
-  async confirmDeleteFile() {
-    const f = this.fileToDelete();
-    if (f) {
-      await this.fileStorage.delete(f.id);
-      this.cancelDeleteFile();
-    }
-  }
-
-  async downloadFile(file: StorageFile) {
-    try {
-      const url = await this.fileStorage.getSignedUrl(file.storagePath);
-      const a = document.createElement('a');
-      a.href = url; a.download = file.name; a.target = '_blank';
-      a.click();
-    } catch (e) {
-      console.error('[Knowledge] download failed:', e);
-    }
-  }
-
   // ── Keyboard ──────────────────────────────────────────────────────────────
   @HostListener('document:keydown', ['$event'])
   onKeyDown(e: KeyboardEvent) {
     if (e.key === 'Escape') {
-      if (this.showUnsavedWarning())  this.cancelUnsavedWarning();
-      else if (this.showSummaryModal()) this.closeSummaryModal();
-      else if (this.showAddModal())     this.closeAddModal();
-      else if (this.showDeleteSource())  this.cancelDeleteSource();
-      else if (this.showDeleteSummary()) this.cancelDeleteSummary();
+      if (this.showUnsavedWarning())        this.cancelUnsavedWarning();
+      else if (this.showSummaryModal())     this.closeSummaryModal();
+      else if (this.showSummaryDetail())    this.closeSummaryDetail();
+      else if (this.showBulkMove())         { this.showBulkMove.set(false); this.pendingMoveIds.set([]); }
+      else if (this.showAddModal())         this.closeAddModal();
+      else if (this.showDeleteSource())     this.cancelDeleteSource();
+      else if (this.showDeleteSummary())    this.cancelDeleteSummary();
       else if (this.showDeleteCollection()) this.cancelDeleteCollection();
-      else if (this.showDeleteFile())    this.cancelDeleteFile();
     }
   }
 }

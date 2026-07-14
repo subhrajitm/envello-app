@@ -16,17 +16,18 @@ export interface ResearchSource {
     id: string;
     collectionId?: string;
     title: string;
-    sourceType: 'WEB' | 'PDF' | 'INTERVIEW' | 'PHYSICAL' | 'VIDEO' | 'ARTICLE';
+    sourceType: 'WEB' | 'PDF' | 'INTERVIEW' | 'PHYSICAL' | 'VIDEO' | 'ARTICLE' | 'NOTE';
     url?: string;
     description?: string;
     author?: string;
     publishDate?: string;
     tags: string[];
-    status: 'UNREAD' | 'READING' | 'PROCESSED';
+    status?: 'UNREAD' | 'READING' | 'PROCESSED';
     notes?: string;
     createdDate: string;
     lastAccessed?: string;
     linkedTaskIds?: string[];
+    fileId?: string;
 }
 
 export interface ResearchSummary {
