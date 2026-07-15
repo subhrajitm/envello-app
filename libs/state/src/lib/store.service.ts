@@ -137,17 +137,18 @@ export class StoreService {
         this._pendingLoad = false;
         const generation = this._loadGeneration;
         try {
+            const L = StoreService.LIMITS;
             const [tasks, notes, planningItems, activities, books, folders, bookmarks, bookmarkFolders, spaces, people] = await Promise.all([
-                this.db.getAll<Task>('tasks'),
-                this.db.getAll<Note>('notes'),
+                this.db.getAll<Task>('tasks',                                     { limit: L.tasks }),
+                this.db.getAll<Note>('notes',                                     { limit: L.notes }),
                 this.db.getAll<PlanningItem>('planning_items'),
-                this.db.getAll<Activity>('activities'),
+                this.db.getAll<Activity>('activities',                            { limit: 50 }),
                 this.db.getAll<Book>('books'),
                 this.db.getAll<{ id: string; name: string; icon: string }>('note_folders'),
-                this.db.getAll<Bookmark>('bookmarks'),
+                this.db.getAll<Bookmark>('bookmarks',                             { limit: L.bookmarks }),
                 this.db.getAll<BookmarkFolder>('bookmark_folders'),
                 this.db.getAll<Project>('projects'),
-                this.db.getAll<Person>('people'),
+                this.db.getAll<Person>('people',                                  { limit: L.people }),
             ]);
 
             // A profile switch happened while we were reading — discard stale results.

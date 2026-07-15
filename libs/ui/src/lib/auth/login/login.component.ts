@@ -1,5 +1,4 @@
 import { Component, inject, signal, effect, ViewChild, ElementRef, AfterViewInit, OnDestroy } from '@angular/core';
-import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { AuthService, TauriService } from '@envello/core';
 import { Router, RouterModule } from '@angular/router';
@@ -9,7 +8,7 @@ import { ButtonComponent } from '../../button/button.component';
 @Component({
   selector: 'app-login',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterModule, EnvLogoComponent, ButtonComponent],
+  imports: [FormsModule, RouterModule, EnvLogoComponent, ButtonComponent],
   template: `
     <div class="login-container">
       <div class="lines-bg">
@@ -53,10 +52,12 @@ import { ButtonComponent } from '../../button/button.component';
             >
           </div>
 
-          <div *ngIf="error()" class="error-message">
-            <span class="material-symbols-outlined">error</span>
+          @if (error()) {
+          <div class="error-message" role="alert">
+            <span class="material-symbols-outlined" aria-hidden="true">error</span>
             <span>{{ error() }}</span>
           </div>
+          }
 
           <env-button
             type="submit"

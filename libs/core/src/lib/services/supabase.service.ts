@@ -66,6 +66,11 @@ export class SupabaseService {
         return this.supabase;
     }
 
+    /** Base URL of the Supabase project — used to build storage REST endpoints for XHR uploads. */
+    get projectUrl(): string {
+        return environment.supabase.url;
+    }
+
     get auth(): any {
         return this.supabase.auth;
     }

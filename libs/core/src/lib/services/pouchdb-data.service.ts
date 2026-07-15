@@ -3,7 +3,7 @@ import { WorkspaceProfileService } from './workspace-profile.service';
 import { AuthService } from './auth.service';
 import { SyncService } from './sync.service';
 import { LoggingService } from './logging.service';
-import { DataService } from '@envello/data';
+import { DataService, GetAllOptions } from '@envello/data';
 import { Credential, Transaction, CredentialTransactionLink } from '@envello/domain';
 import PouchDB from 'pouchdb';
 
@@ -261,22 +261,26 @@ export class PouchDbDataService implements DataService {
 
     // ─── Public DataService API ──────────────────────────────────────────────────
 
-    async getAll<T>(collection: string): Promise<T[]> {
+    async getAll<T>(collection: string, options?: GetAllOptions): Promise<T[]> {
         try {
             const isGlobal = this.GLOBAL_COLLECTIONS.has(collection);
             const activeId = this.profileService.activeProfileId() || 'default';
-            // Use 'default' as the cache profile key when aggregating all projects
             const cacheProfileId = (!isGlobal && activeId === 'default') ? '__all__' : (isGlobal ? 'default' : activeId);
 
             const cached = this.getCached<T>(collection, cacheProfileId);
-            if (cached) return cached;
+            if (cached) return options?.limit ? cached.slice(0, options.limit) : cached;
+
+            const queryOpts: Record<string, unknown> = { include_docs: true };
+            // Pass limit to allDocs so PouchDB doesn't stream all docs into V8 heap
+            // before we slice. Accepts undefined (= no limit).
+            if (options?.limit) queryOpts['limit'] = options.limit;
 
             // In "All Projects" mode, aggregate from every project namespace.
             if (!isGlobal && activeId === 'default') {
                 const results = await Promise.all(
                     this.getAllNamespaces().map(async (pid) => {
                         const db = this.getDbForProfile(collection, pid);
-                        const result = await db.allDocs({ include_docs: true });
+                        const result = await db.allDocs(queryOpts as any);
                         return result.rows.map(row => row.doc as unknown as T);
                     })
                 );
@@ -296,7 +300,7 @@ export class PouchDbDataService implements DataService {
             }
 
             const db = this.getDb(collection);
-            const result = await db.allDocs({ include_docs: true });
+            const result = await db.allDocs(queryOpts as any);
             const rows = result.rows.map(row => row.doc as unknown as T);
             this.setCache(collection, cacheProfileId, rows);
             return rows;
