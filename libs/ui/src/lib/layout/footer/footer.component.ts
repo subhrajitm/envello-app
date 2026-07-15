@@ -25,8 +25,9 @@ export class FooterComponent implements OnInit, OnDestroy {
   isCollapsed = signal(false);
   isOnline = signal(navigator.onLine);
 
-  readonly syncError    = this.syncService.syncError;
-  readonly isConnected  = this.ps.isConnected;
+  readonly syncError      = this.syncService.syncError;
+  readonly pendingUploads = this.syncService.pendingUploads;
+  readonly isConnected    = this.ps.isConnected;
   readonly syncAnimating = signal(false);
   readonly isActivelySyncing = computed(() => this.syncService.isSyncing() || this.ps.isSyncing() || this.syncAnimating());
 
@@ -94,6 +95,10 @@ export class FooterComponent implements OnInit, OnDestroy {
 
   triggerManualSync(): void {
     this.router.navigate(['/settings'], { queryParams: { section: 'data' } });
+  }
+
+  retrySync(): void {
+    this.syncService.retryPendingSync();
   }
 
   private _onOnline?: () => void;

@@ -1,6 +1,7 @@
 import { ErrorHandler, Injectable, inject } from '@angular/core';
 import { Router } from '@angular/router';
-import { LoggingService, CrashReportingService } from '@envello/core';
+import * as Sentry from '@sentry/angular';
+import { LoggingService, CrashReportingService, AppError } from '@envello/core';
 import { environment } from '../../../environments/environment';
 
 @Injectable()
@@ -21,6 +22,17 @@ export class GlobalErrorHandler implements ErrorHandler {
 
     this.logging.error('Unhandled error', error);
     this.crashReporting.capture(error);
+
+    // Report to Sentry when DSN is configured. AppError codes surface as Sentry tags.
+    if (environment.sentryDsn) {
+      Sentry.withScope(scope => {
+        if (AppError.is(error)) {
+          scope.setTag('error_code', error.code);
+          if (error.context) scope.setContext('app_error', error.context);
+        }
+        Sentry.captureException(error);
+      });
+    }
 
     if (environment.production) {
       // Do not expose stack or internal details in production

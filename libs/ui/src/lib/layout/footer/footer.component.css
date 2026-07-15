@@ -249,3 +249,35 @@
         display: none;
     }
 }
+
+/* ── Retry button & pending counter ─────────────────────────────────────── */
+.footer-retry-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+    margin-left: 6px;
+    padding: 1px 7px;
+    border-radius: 4px;
+    border: 1px solid var(--accent-red);
+    background: transparent;
+    color: var(--accent-red);
+    font-size: 10px;
+    font-weight: 600;
+    font-family: var(--font-sans);
+    cursor: pointer;
+    letter-spacing: 0.02em;
+    transition: background 0.12s, color 0.12s;
+}
+
+.footer-retry-btn:hover {
+    background: var(--accent-red);
+    color: #fff;
+}
+
+.footer-pending {
+    margin-left: 6px;
+    font-size: 10px;
+    font-weight: 500;
+    color: var(--text-tertiary);
+    letter-spacing: 0.01em;
+}

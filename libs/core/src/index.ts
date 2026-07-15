@@ -1,3 +1,4 @@
+export * from './lib/errors/error-codes';
 export * from './lib/services/ai.service';
 export * from './lib/services/user-preferences.service';
 export * from './lib/services/tauri.service';

@@ -37,6 +37,7 @@
     "@huggingface/transformers": "^3.8.1",
     "@journeyapps/wa-sqlite": "^1.7.0",
     "@powersync/web": "^1.38.2",
+    "@sentry/angular": "^10.65.0",
     "@supabase/supabase-js": "^2.105.4",
     "@tauri-apps/api": "^2.11.0",
     "@tauri-apps/plugin-autostart": "^2.5.1",

@@ -2,6 +2,8 @@ import { Injectable, inject, signal } from '@angular/core';
 import { SupabaseService } from './supabase.service';
 import { AuthService } from './auth.service';
 import { LoggingService } from './logging.service';
+import { NotificationService } from './notification.service';
+import { AppErrorCode } from '../errors/error-codes';
 
 export interface SyncRecord {
     id: string;
@@ -26,6 +28,7 @@ export class SyncService {
     private readonly supabase = inject(SupabaseService);
     private readonly auth = inject(AuthService);
     private readonly logging = inject(LoggingService);
+    private readonly notify = inject(NotificationService);
 
     private readonly TABLE = 'user_data';
     private readonly LAST_SYNC_PREFIX = 'envello_last_sync_';
@@ -34,8 +37,12 @@ export class SyncService {
     readonly lastSyncedAt = signal<string | null>(null);
     readonly syncActivity = signal<SyncActivity[]>([]);
     readonly syncError = signal<string | null>(null);
+    /** Number of items queued for upload that have not yet succeeded. */
+    readonly pendingUploads = signal(0);
 
     private errorClearTimer: ReturnType<typeof setTimeout> | null = null;
+    /** Tracks the last notification id so we can deduplicate repeated sync errors. */
+    private lastSyncErrorNotifId: string | null = null;
 
     private get userId(): string | null {
         return this.auth.currentUser()?.id ?? null;
@@ -45,10 +52,35 @@ export class SyncService {
         return !!this.userId && !this.auth.isGuest();
     }
 
-    reportError(message: string): void {
+    /**
+     * Record a sync error in the footer signal and show a toast notification.
+     * Deduplicates: a second call within the clear window replaces the first notification
+     * rather than stacking them.
+     */
+    reportError(message: string, code = AppErrorCode.SYNC_UPLOAD_FAILED): void {
         this.syncError.set(message);
         if (this.errorClearTimer) clearTimeout(this.errorClearTimer);
         this.errorClearTimer = setTimeout(() => this.syncError.set(null), 6000);
+
+        // Delete the previous sync error notification before creating a new one so the
+        // notification center doesn't fill up with repeated "Upload failed" entries.
+        if (this.lastSyncErrorNotifId) {
+            this.notify.delete(this.lastSyncErrorNotifId);
+        }
+        this.lastSyncErrorNotifId = this.notify.warning(
+            'Sync issue',
+            message,
+            {
+                icon: 'sync_problem',
+                actionLabel: 'Retry',
+                actionCallback: () => this.retryPendingSync(),
+            }
+        );
+    }
+
+    /** Trigger a manual pull to recover from a failed sync. */
+    retryPendingSync(): void {
+        this.pull().catch(() => {});
     }
 
     private addActivity(entry: SyncActivity): void {
@@ -64,6 +96,7 @@ export class SyncService {
     async pushBatch(collection: string, profileId: string, items: any[]): Promise<void> {
         if (!this.canSync || !items.length) return;
 
+        this.pendingUploads.update(n => n + items.length);
         const rows = items.map(item => ({
             id: item.id,
             user_id: this.userId,
@@ -74,15 +107,19 @@ export class SyncService {
             // updated_at intentionally omitted — set server-side via DB trigger
         }));
 
-        const { error } = await this.supabase.client
-            .from(this.TABLE)
-            .upsert(rows, { onConflict: 'user_id,id,collection,profile_id' });
+        try {
+            const { error } = await this.supabase.client
+                .from(this.TABLE)
+                .upsert(rows, { onConflict: 'user_id,id,collection,profile_id' });
 
-        if (error) {
-            console.error('[SyncService] push failed', collection, error.message);
-            this.reportError(`Upload failed: ${error.message}`);
-        } else {
-            this.addActivity({ timestamp: new Date().toISOString(), direction: 'upload', count: items.length });
+            if (error) {
+                console.error('[SyncService] push failed', collection, error.message);
+                this.reportError(`Upload failed for "${collection}": ${error.message}`, AppErrorCode.SYNC_UPLOAD_FAILED);
+            } else {
+                this.addActivity({ timestamp: new Date().toISOString(), direction: 'upload', count: items.length });
+            }
+        } finally {
+            this.pendingUploads.update(n => Math.max(0, n - items.length));
         }
     }
 
@@ -104,7 +141,7 @@ export class SyncService {
 
         if (error) {
             console.error('[SyncService] pushDelete failed', collection, error.message);
-            this.reportError(`Upload failed: ${error.message}`);
+            this.reportError(`Delete sync failed for "${collection}": ${error.message}`, AppErrorCode.SYNC_UPLOAD_FAILED);
         } else {
             this.addActivity({ timestamp: new Date().toISOString(), direction: 'upload', count: 1 });
         }
@@ -146,7 +183,7 @@ export class SyncService {
 
                 if (error) {
                     console.error('[SyncService] pull failed (page', page, ')', error.message);
-                    this.reportError(`Sync failed: ${error.message}`);
+                    this.reportError(`Sync pull failed: ${error.message}`, AppErrorCode.SYNC_PULL_FAILED);
                     return all; // return whatever we got before the failure
                 }
 

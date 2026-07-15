@@ -41,6 +41,23 @@
           </span>
           <span class="footer-sync-label">{{ syncLabel() }}</span>
         </button>
+        @if (syncState() === 'error') {
+          <button
+            type="button"
+            class="footer-retry-btn"
+            (click)="retrySync()"
+            title="Retry sync now"
+            aria-label="Retry sync"
+          >
+            <span class="material-symbols-outlined" style="font-size:12px;" aria-hidden="true">refresh</span>
+            Retry
+          </button>
+        }
+        @if (pendingUploads() > 0) {
+          <span class="footer-pending" [title]="pendingUploads() + ' items waiting to sync'">
+            {{ pendingUploads() }} pending
+          </span>
+        }
       </div>
       <div class="footer-item footer-version" title="App version">v{{ appVersion() }}</div>
     </div>
