@@ -14,7 +14,10 @@
     "build:web": "nx build web",
     "test:web": "nx test web",
     "generate:context": "npx ts-node -O '{\"module\":\"commonjs\"}' tools/scripts/generate-ai-context.ts",
-    "dev:mac": "bash scripts/dev-mac.sh"
+    "dev:mac": "bash scripts/dev-mac.sh",
+    "e2e": "playwright test --config e2e/playwright.config.ts",
+    "e2e:ui": "playwright test --config e2e/playwright.config.ts --ui",
+    "e2e:headed": "playwright test --config e2e/playwright.config.ts --headed"
   },
   "private": true,
   "dependencies": {
@@ -109,6 +112,7 @@
     "@nx/js": "22.7.2",
     "@nx/web": "22.7.2",
     "@nx/workspace": "22.7.2",
+    "@playwright/test": "^1.61.1",
     "@schematics/angular": "^20.0.0",
     "@swc-node/register": "~1.11.1",
     "@swc/core": "~1.15.33",

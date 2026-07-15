@@ -455,18 +455,29 @@ export class LoginComponent implements AfterViewInit, OnDestroy {
       this.error.set('Please enter a valid email address');
       return;
     }
+    if (typeof navigator !== 'undefined' && !navigator.onLine) {
+      this.error.set('No internet connection — check your network and try again.');
+      return;
+    }
 
     this.loading.set(true);
     this.error.set(null);
 
-    const success = await this.authService.login(this.email, this.password);
-
-    if (success) {
-      // Router navigation handled by auth state subscription or manually here
-    } else {
-      this.error.set('Invalid credentials or login failed.');
+    try {
+      const success = await this.authService.login(this.email, this.password);
+      if (!success) {
+        this.error.set('Invalid credentials or login failed.');
+      }
+    } catch (e: any) {
+      const msg = e?.message ?? '';
+      if (msg.includes('fetch') || msg.includes('network') || msg.includes('Failed to fetch')) {
+        this.error.set('Could not reach the server — check your internet connection.');
+      } else {
+        this.error.set(msg || 'Login failed. Please try again.');
+      }
+    } finally {
+      this.loading.set(false);
     }
-    this.loading.set(false);
   }
 
   async handleSignUp() {

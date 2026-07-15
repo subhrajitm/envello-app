@@ -15,6 +15,7 @@ import { filter, map, mergeMap } from 'rxjs/operators';
 })
 export class AppComponent implements OnInit, AfterViewInit, OnDestroy {
   title = 'envello';
+  isOffline = signal(typeof navigator !== 'undefined' && !navigator.onLine);
   private router = inject(Router);
   private activatedRoute = inject(ActivatedRoute);
   private tauriService = inject(TauriService);
@@ -52,6 +53,8 @@ export class AppComponent implements OnInit, AfterViewInit, OnDestroy {
   ngOnInit() {
     this.setupSwUpdate();
     this.loadNavigationLayout();
+    window.addEventListener('online',  () => this.isOffline.set(false));
+    window.addEventListener('offline', () => this.isOffline.set(true));
     // Smart Monitor — run after sync completes or after 6s fallback
     window.addEventListener('envello:sync-complete', () => setTimeout(() => this.monitor.run(), 1500), { once: true });
     setTimeout(() => this.monitor.run(), 6000);

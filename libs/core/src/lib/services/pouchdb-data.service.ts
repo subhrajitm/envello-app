@@ -49,6 +49,47 @@ export class PouchDbDataService implements DataService {
     /** Cleanup function returned by subscribeRealtime. */
     private unsubscribeRealtime?: () => void;
 
+    // ─── Result cache ────────────────────────────────────────────────────────────
+    // Short TTL prevents redundant PouchDB queries during burst sync-complete events
+    // while still being fresh enough that stale data is never a practical concern.
+    private readonly resultCache = new Map<string, { data: any[]; expiry: number }>();
+    private readonly CACHE_TTL_MS = 8_000;
+
+    private cacheKey(collection: string, profileId: string): string {
+        return `${profileId}\x00${collection}`;
+    }
+
+    private getCached<T>(collection: string, profileId: string): T[] | null {
+        const entry = this.resultCache.get(this.cacheKey(collection, profileId));
+        if (!entry || Date.now() > entry.expiry) {
+            this.resultCache.delete(this.cacheKey(collection, profileId));
+            return null;
+        }
+        return entry.data as T[];
+    }
+
+    private setCache<T>(collection: string, profileId: string, data: T[]): void {
+        this.resultCache.set(this.cacheKey(collection, profileId), {
+            data,
+            expiry: Date.now() + this.CACHE_TTL_MS,
+        });
+    }
+
+    private invalidateCache(collection: string, profileId?: string): void {
+        if (profileId) {
+            this.resultCache.delete(this.cacheKey(collection, profileId));
+        } else {
+            const suffix = `\x00${collection}`;
+            for (const key of this.resultCache.keys()) {
+                if (key.endsWith(suffix)) this.resultCache.delete(key);
+            }
+        }
+    }
+
+    private clearAllCache(): void {
+        this.resultCache.clear();
+    }
+
     constructor() {
         // On profile switch: PouchDB resolves the active namespace per-request via activeProfileId(),
         // so no re-init is needed — signal StoreService to reload from the new namespace.
@@ -56,6 +97,7 @@ export class PouchDbDataService implements DataService {
         // (including StoreService's handler that increments _loadGeneration), so the load
         // captures the correct generation and isn't immediately discarded.
         window.addEventListener('envello:profile-switched', () => {
+            this.clearAllCache();
             queueMicrotask(() => window.dispatchEvent(new CustomEvent('envello:db-ready')));
         });
 
@@ -188,6 +230,16 @@ export class PouchDbDataService implements DataService {
         } catch (err: any) {
             if (err.name === 'not_found' || err.status === 404) {
                 await db.put({ ...item, _id: docId });
+            } else if (err.status === 409) {
+                // Conflict: our _rev is stale (two concurrent writes while offline).
+                // Resolve with last-write-wins: fetch the latest _rev and overwrite.
+                try {
+                    const latest = await db.get(docId);
+                    await db.put({ ...item, _id: docId, _rev: latest._rev });
+                } catch (retryErr: any) {
+                    console.error(`[PouchDbDataService] conflict retry failed for ${docId} in ${collection}`, retryErr);
+                    throw retryErr;
+                }
             } else {
                 throw err;
             }
@@ -213,6 +265,11 @@ export class PouchDbDataService implements DataService {
         try {
             const isGlobal = this.GLOBAL_COLLECTIONS.has(collection);
             const activeId = this.profileService.activeProfileId() || 'default';
+            // Use 'default' as the cache profile key when aggregating all projects
+            const cacheProfileId = (!isGlobal && activeId === 'default') ? '__all__' : (isGlobal ? 'default' : activeId);
+
+            const cached = this.getCached<T>(collection, cacheProfileId);
+            if (cached) return cached;
 
             // In "All Projects" mode, aggregate from every project namespace.
             if (!isGlobal && activeId === 'default') {
@@ -234,12 +291,15 @@ export class PouchDbDataService implements DataService {
                         }
                     }
                 }
+                this.setCache(collection, cacheProfileId, merged);
                 return merged;
             }
 
             const db = this.getDb(collection);
             const result = await db.allDocs({ include_docs: true });
-            return result.rows.map(row => row.doc as unknown as T);
+            const rows = result.rows.map(row => row.doc as unknown as T);
+            this.setCache(collection, cacheProfileId, rows);
+            return rows;
         } catch (e) {
             console.error(`[PouchDbDataService] getAll failed for ${collection}`, e);
             return [];
@@ -277,7 +337,14 @@ export class PouchDbDataService implements DataService {
 
             await this.upsertToProfile(collection, resolvedProfileId, item);
 
-            if (!this.applyingSync && !this.SYNC_EXCLUDED_COLLECTIONS.has(collection)) {
+            // Invalidate cache so the next getAll() reflects this write.
+            this.invalidateCache(collection);
+
+            // Sync race guard: skip the Supabase push if the active profile changed
+            // while we were resolving / writing (indicates a profile switch mid-flight).
+            const currentId = this.profileService.activeProfileId() || 'default';
+            const profileConsistent = isGlobal || activeId === currentId || activeId === 'default';
+            if (!this.applyingSync && !this.SYNC_EXCLUDED_COLLECTIONS.has(collection) && profileConsistent) {
                 this.syncService.push(collection, resolvedProfileId, item).catch(() => {});
             }
         } catch (e) {
@@ -296,6 +363,7 @@ export class PouchDbDataService implements DataService {
                     const db = this.getDbForProfile(collection, pid);
                     const existing = await db.get(id);
                     await db.remove(existing._id, existing._rev);
+                    this.invalidateCache(collection);
                     if (!this.applyingSync && !this.SYNC_EXCLUDED_COLLECTIONS.has(collection)) {
                         this.syncService.pushDelete(collection, pid, id).catch(() => {});
                     }
@@ -311,6 +379,7 @@ export class PouchDbDataService implements DataService {
 
         const profileId = isGlobal ? 'default' : activeId;
         await this.removeFromProfile(collection, profileId, id);
+        this.invalidateCache(collection);
         if (!this.applyingSync && !this.SYNC_EXCLUDED_COLLECTIONS.has(collection)) {
             this.syncService.pushDelete(collection, profileId, id).catch(() => {});
         }

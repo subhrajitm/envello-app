@@ -1,8 +1,9 @@
-import { Injectable, inject, signal } from '@angular/core';
+import { Injectable, inject, signal, computed } from '@angular/core';
 import { DataService } from '@envello/data';
 import { StorageFile } from '@envello/domain';
 import { SupabaseService } from './supabase.service';
 import { NotificationService } from './notification.service';
+import { AppError, AppErrorCode } from '../errors/error-codes';
 
 export type { StorageFile };
 
@@ -17,7 +18,12 @@ export class FileStorageService {
     private notify = inject(NotificationService);
 
     files = signal<StorageFile[]>([]);
+    /** Legacy boolean kept for backwards compat — true when any upload is in flight. */
     uploading = signal(false);
+    /** Names of files currently being uploaded, in insertion order. */
+    uploadingFileNames = signal<string[]>([]);
+    /** Derived: the file name currently at the front of the upload queue (or null). */
+    currentUploadName = computed(() => this.uploadingFileNames()[0] ?? null);
 
     private signedUrlCache = signal<Record<string, string>>({});
 
@@ -68,7 +74,9 @@ export class FileStorageService {
         collectionId?: string,
     ): Promise<StorageFile> {
         if (file.size > MAX_SIZE_BYTES) {
-            throw new Error(`"${file.name}" exceeds the 50 MB limit.`);
+            const msg = `"${file.name}" exceeds the 50 MB upload limit (${this.formatSize(file.size)}).`;
+            this.notify.error('File too large', msg);
+            throw new AppError(AppErrorCode.FILE_TOO_LARGE, msg, { fileName: file.name, sizeBytes: file.size });
         }
 
         const { data: { user } } = await this.sb.client.auth.getUser();
@@ -122,11 +130,17 @@ export class FileStorageService {
         const errors: string[] = [];
 
         for (const file of files) {
+            this.uploadingFileNames.update(names => [...names, file.name]);
             try {
                 const sf = await this.upload(file, source, collectionId);
                 results.push(sf);
             } catch (e) {
-                errors.push(`${file.name}: ${(e as Error).message}`);
+                // Quota errors already show a notification inside upload() — avoid double-toasting.
+                if (!(e instanceof AppError && e.code === AppErrorCode.FILE_TOO_LARGE)) {
+                    errors.push(`${file.name}: ${(e as Error).message}`);
+                }
+            } finally {
+                this.uploadingFileNames.update(names => names.filter(n => n !== file.name));
             }
         }
 
