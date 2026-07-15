@@ -8357,3 +8357,28 @@ textarea:focus-visible {
         padding: 16px;
     }
 }
+
+/* ── Thumbnails load-more ───────────────────────────────────────────────── */
+.thumbs-load-more {
+    display: flex;
+    justify-content: center;
+    padding: 16px 0 24px;
+}
+
+.thumbs-load-more-btn {
+    padding: 8px 20px;
+    border-radius: 8px;
+    border: 1px solid var(--border-subtle);
+    background: var(--bg-panel);
+    color: var(--text-secondary);
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background 0.12s, border-color 0.12s, color 0.12s;
+}
+
+.thumbs-load-more-btn:hover {
+    background: var(--bg-hover);
+    border-color: var(--border-highlight);
+    color: var(--text-primary);
+}

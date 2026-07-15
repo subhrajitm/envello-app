@@ -141,10 +141,15 @@ export class TasksComponent implements OnInit, OnDestroy {
   // Loading states
   isLoading = signal<boolean>(false);
 
-  // Virtual scrolling
+  // Virtual scrolling (windowing for list view)
   virtualScrollEnabled = signal<boolean>(true);
-  visibleTaskRange = signal<{ start: number; end: number }>({ start: 0, end: 50 });
-  itemHeight: number = 65; // Approximate height of each task row
+  visibleTaskRange = signal<{ start: number; end: number }>({ start: 0, end: 75 });
+  itemHeight: number = 65; // Approximate height of each task row in px
+  private readonly WINDOW_THRESHOLD = 100; // only window above this many flat items
+  private readonly WINDOW_BUFFER    = 15;  // extra items above/below the viewport
+
+  // Thumbnails view load-more
+  thumbnailsLimit = signal(48);
 
   // Voice input
   isListening = signal<boolean>(false);
@@ -745,6 +750,8 @@ export class TasksComponent implements OnInit, OnDestroy {
   onSidebarActiveChange(id: string) {
     this.selectedView.set(id as TaskViewFilter);
     this.sidebarActiveId.set(id);
+    this.visibleTaskRange.set({ start: 0, end: 75 });
+    this.thumbnailsLimit.set(48);
     // Reset metric and project filters when switching primary view
     this.metricFilter.set('none');
 
@@ -980,6 +987,31 @@ export class TasksComponent implements OnInit, OnDestroy {
 
     return items;
   });
+
+  /** Windowed slice of flatListItems for rendering — prevents DOM bloat with 100+ items. */
+  visibleFlatItems = computed((): TaskListItem[] => {
+    const items = this.flatListItems();
+    if (items.length <= this.WINDOW_THRESHOLD) return items;
+    const { start, end } = this.visibleTaskRange();
+    return items.slice(start, end);
+  });
+
+  topSpacerHeight = computed((): number => {
+    const items = this.flatListItems();
+    if (items.length <= this.WINDOW_THRESHOLD) return 0;
+    return this.visibleTaskRange().start * this.itemHeight;
+  });
+
+  bottomSpacerHeight = computed((): number => {
+    const items = this.flatListItems();
+    if (items.length <= this.WINDOW_THRESHOLD) return 0;
+    return Math.max(0, items.length - this.visibleTaskRange().end) * this.itemHeight;
+  });
+
+  /** Visible subset of filteredTasks for the thumbnails card grid. */
+  visibleThumbnailTasks = computed(() => this.filteredTasks().slice(0, this.thumbnailsLimit()));
+
+  loadMoreThumbnails() { this.thumbnailsLimit.update(n => n + 48); }
 
   groupIcon(label: string): string {
     switch (label) {
@@ -2903,17 +2935,16 @@ export class TasksComponent implements OnInit, OnDestroy {
 
   onScroll(event: Event) {
     const target = event.target as HTMLElement;
-    const scrollTop = target.scrollTop;
+    const items = this.flatListItems();
+    if (items.length <= this.WINDOW_THRESHOLD) return;
+
+    const scrollTop      = target.scrollTop;
     const containerHeight = target.clientHeight;
+    const visibleCount   = Math.ceil(containerHeight / this.itemHeight) + this.WINDOW_BUFFER * 2;
+    const start          = Math.max(0, Math.floor(scrollTop / this.itemHeight) - this.WINDOW_BUFFER);
+    const end            = Math.min(start + visibleCount, items.length);
 
-    const tasks = this.filteredTasks();
-    if (tasks.length <= 50) return;
-
-    // Calculate visible range
-    const start = Math.floor(scrollTop / this.itemHeight);
-    const end = Math.min(start + Math.ceil(containerHeight / this.itemHeight) + 10, tasks.length);
-
-    this.visibleTaskRange.set({ start: Math.max(0, start - 5), end });
+    this.visibleTaskRange.set({ start, end });
   }
 
   // Theme switching

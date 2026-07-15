@@ -187,7 +187,10 @@
                       </env-empty-state>
                     }
                 } @else {
-                    @for (item of flatListItems(); track $index) {
+                    @if (topSpacerHeight() > 0) {
+                      <div [style.height.px]="topSpacerHeight()" aria-hidden="true"></div>
+                    }
+                    @for (item of visibleFlatItems(); track $index) {
 
                         @if (item.kind === 'header') {
                         <div class="task-group-header" (click)="toggleGroupCollapse(item.label)">
@@ -368,6 +371,9 @@
                         </div>
                         }
                     }
+                    @if (bottomSpacerHeight() > 0) {
+                      <div [style.height.px]="bottomSpacerHeight()" aria-hidden="true"></div>
+                    }
                 }
             </div>
         </div>
@@ -390,7 +396,7 @@
             }
             } @else {
             <div class="thumbs-grid">
-                @for (task of filteredTasks(); track task.id) {
+                @for (task of visibleThumbnailTasks(); track task.id) {
                 <article class="thumb-card"
                          [class.thumb-card-completed]="task.status === 'COMPLETED'"
                          [class.thumb-high]="task.priority === 'HIGH'"
@@ -440,6 +446,13 @@
                 </article>
                 }
             </div>
+            @if (filteredTasks().length > thumbnailsLimit()) {
+              <div class="thumbs-load-more">
+                <button class="thumbs-load-more-btn" type="button" (click)="loadMoreThumbnails()">
+                  Show {{ filteredTasks().length - thumbnailsLimit() }} more tasks
+                </button>
+              </div>
+            }
             }
         </div>
 
