@@ -45,6 +45,29 @@ export class NotificationCenterComponent {
     return all;
   });
 
+  // Grouped by date bucket: Today | Yesterday | Earlier
+  groupedNotifications = computed(() => {
+    const items = this.filteredNotifications();
+    const now = new Date();
+    const todayStart     = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const yesterdayStart = new Date(todayStart.getTime() - 86_400_000);
+
+    const groups: { label: string; items: Notification[] }[] = [
+      { label: 'Today',     items: [] },
+      { label: 'Yesterday', items: [] },
+      { label: 'Earlier',   items: [] },
+    ];
+
+    for (const n of items) {
+      const ts = n.timestamp instanceof Date ? n.timestamp : new Date(n.timestamp);
+      if (ts >= todayStart)     { groups[0].items.push(n); }
+      else if (ts >= yesterdayStart) { groups[1].items.push(n); }
+      else                      { groups[2].items.push(n); }
+    }
+
+    return groups.filter(g => g.items.length > 0);
+  });
+
   open() {
     this.isOpen.set(true);
   }

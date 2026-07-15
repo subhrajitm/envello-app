@@ -371,3 +371,16 @@
         min-height: 0;
     }
 }
+
+/* ── Date group headers ─────────────────────────────────────────────────── */
+.notif-group { display: contents; }
+
+.notif-group-label {
+    padding: 10px 16px 4px;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--text-tertiary);
+    user-select: none;
+}

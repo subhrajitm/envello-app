@@ -22,8 +22,9 @@
           type="button"
           (click)="toggleVoice()"
           [class.active]="isVoiceActive()"
-          [attr.aria-label]="isVoiceActive() ? 'Deactivate voice input' : 'Activate voice input'"
+          [attr.aria-label]="isVoiceActive() ? 'Deactivate voice input' : 'Activate voice input (or hold Ctrl)'"
           [attr.aria-pressed]="isVoiceActive()"
+          title="Voice input — click to toggle, or hold Ctrl for 0.5 s"
         >
           <div class="voice-indicator" aria-hidden="true">
             <span class="voice-bar"></span>
