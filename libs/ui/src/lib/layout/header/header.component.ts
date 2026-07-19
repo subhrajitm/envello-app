@@ -101,6 +101,7 @@ export class HeaderComponent implements OnInit, OnDestroy {
 
   voiceService = inject(VoiceService);
   isVoiceActive = this.voiceService.isVoiceActive;
+  voiceText = this.voiceService.voiceText;
 
 
   private navigationLayoutListener?: (event: CustomEvent) => void;

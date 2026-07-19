@@ -199,14 +199,28 @@
 
 
 
-<!-- Voice active banner -->
+<!-- Voice active popup -->
 @if (isVoiceActive()) {
-  <div class="voice-active-banner">
-    <span class="material-symbols-outlined" style="font-size:16px;">mic</span>
-    <span>Voice input active — click any text field to start dictating</span>
-    <button class="voice-banner-dismiss" (click)="toggleVoice()" title="Stop voice input">
-      <span class="material-symbols-outlined" style="font-size:16px;">mic_off</span>
-    </button>
+  <div class="voice-popup" role="status" aria-live="polite">
+    <span class="voice-popup-text" [class.voice-popup-text--idle]="!voiceText()">
+      {{ voiceText() || 'Listening...' }}
+    </span>
+    <div class="voice-popup-right">
+      <span class="material-symbols-outlined voice-popup-mic" aria-hidden="true">mic</span>
+      <div class="voice-popup-viz" aria-hidden="true">
+        <div class="vdot-col"></div>
+        <div class="vdot-col"></div>
+        <div class="vdot-col"></div>
+        <div class="vdot-col"></div>
+        <div class="vdot-col"></div>
+        <div class="vdot-col"></div>
+        <div class="vdot-col"></div>
+        <div class="vdot-col"></div>
+        <div class="vdot-col"></div>
+        <div class="vdot-col"></div>
+      </div>
+      <button class="voice-popup-stop" (click)="toggleVoice()" aria-label="Stop voice input"></button>
+    </div>
   </div>
 }
 

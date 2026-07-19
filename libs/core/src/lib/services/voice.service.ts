@@ -5,6 +5,7 @@ import { Injectable, signal } from '@angular/core';
 })
 export class VoiceService {
   isVoiceActive = signal(false);
+  voiceText = signal('');
   private commandPressTimer: ReturnType<typeof setTimeout> | null = null;
   private isControlPressed = false;
   private recognition: any = null;
@@ -18,6 +19,7 @@ export class VoiceService {
   toggleVoice() {
     const newState = !this.isVoiceActive();
     this.isVoiceActive.set(newState);
+    if (!newState) this.voiceText.set('');
     this.handleRecognitionState(newState);
   }
 
@@ -30,7 +32,7 @@ export class VoiceService {
     if (SpeechRecognition) {
       this.recognition = new SpeechRecognition();
       this.recognition.continuous = true;
-      this.recognition.interimResults = false;
+      this.recognition.interimResults = true;
 
       this.recognition.onstart = () => {
         this.isRecognizing = true;
@@ -50,15 +52,22 @@ export class VoiceService {
       };
 
       this.recognition.onresult = (event: any) => {
-        let transcript = '';
+        let interim = '';
+        let final = '';
         for (let i = event.resultIndex; i < event.results.length; ++i) {
+          const t = event.results[i][0].transcript;
           if (event.results[i].isFinal) {
-            transcript += event.results[i][0].transcript;
+            final += t;
+          } else {
+            interim += t;
           }
         }
-        
-        if (transcript) {
-           this.insertTextAtCursor(transcript);
+
+        this.voiceText.set(interim || final);
+
+        if (final) {
+          this.insertTextAtCursor(final);
+          this.voiceText.set('');
         }
       };
 
@@ -171,6 +180,7 @@ export class VoiceService {
           this.commandPressTimer = null;
         }
         this.isVoiceActive.set(false);
+        this.voiceText.set('');
         this.handleRecognitionState(false);
       }
     });
