@@ -912,353 +912,404 @@
           <p>Storage, backup and sync preferences</p>
         </div>
 
-        <div class="setting-item setting-row setting-row--disabled">
-          <div class="setting-label-group">
-            <label>Analytics <env-badge variant="default" size="xs">Coming soon</env-badge></label>
-            <span class="setting-desc">Share anonymous usage data to improve Envello</span>
-          </div>
-          <label class="toggle">
-            <input type="checkbox" [checked]="analytics()" disabled>
-            <span class="toggle-track"></span>
-          </label>
-        </div>
+        <!-- Tab bar -->
+        <nav class="data-tabs" aria-label="Data section tabs">
+          <button class="data-tab" [class.active]="dataTab() === 'backup'"
+            (click)="dataTab.set('backup')">
+            <span class="material-symbols-outlined">save</span>
+            Backup
+          </button>
+          <button class="data-tab" [class.active]="dataTab() === 'export'"
+            (click)="dataTab.set('export')">
+            <span class="material-symbols-outlined">download</span>
+            Export
+          </button>
+          <button class="data-tab" [class.active]="dataTab() === 'import'"
+            (click)="dataTab.set('import')">
+            <span class="material-symbols-outlined">upload</span>
+            Import
+          </button>
+          <button class="data-tab" [class.active]="dataTab() === 'sync'"
+            (click)="dataTab.set('sync')">
+            <span class="material-symbols-outlined">sync</span>
+            Sync
+          </button>
+        </nav>
 
-        <!-- Backup -->
-        <div class="section-divider"></div>
-        <div class="section-header settings-no-margin-top">
-          <h3>Backup</h3>
-          <p>Save a full copy of all your data — including vault — to a file or Google Drive</p>
-        </div>
+        <!-- ── Backup tab ── -->
+        @if (dataTab() === 'backup') {
+          <div class="data-tab-panel">
 
-        <!-- Local backup -->
-        <div class="setting-item flex flex-col gap-3">
-          <div class="settings-inline-group">
-            <env-button variant="primary"
-              [disabled]="backupService.running()"
-              (clicked)="runLocalBackup()">
-              @if (backupService.running()) {
-                <span class="material-symbols-outlined settings-icon-sm settings-spin">progress_activity</span>
-                @if (backupService.progress(); as p) {
-                  Backing up {{ p.current }} ({{ p.done }}/{{ p.total }})…
+            <div class="section-header settings-no-margin-top">
+              <h3>Local Backup</h3>
+              <p>Save a full copy of all your data to a JSON file</p>
+            </div>
+
+            <div class="setting-item flex flex-col gap-3">
+              <div class="settings-inline-group">
+                <env-button variant="primary"
+                  [disabled]="backupService.running()"
+                  (clicked)="runLocalBackup()">
+                  @if (backupService.running()) {
+                    <span class="material-symbols-outlined settings-icon-sm settings-spin">progress_activity</span>
+                    @if (backupService.progress(); as p) {
+                      Backing up {{ p.current }} ({{ p.done }}/{{ p.total }})…
+                    } @else {
+                      Preparing…
+                    }
+                  } @else {
+                    <span class="material-symbols-outlined settings-icon-sm">save</span>
+                    Backup Now
+                  }
+                </env-button>
+                @if (backupService.lastLocal()) {
+                  <span class="setting-desc">Last backup: {{ backupService.lastLocal() | date:'medium' }}</span>
                 } @else {
-                  Preparing…
+                  <span class="setting-desc">Never backed up</span>
                 }
+              </div>
+              <div class="backup-warn-row">
+                <span class="material-symbols-outlined backup-warn-icon">shield</span>
+                <span class="backup-warn-text">
+                  Backup includes vault credentials and transactions.
+                  On web, credential values are exported in plaintext — store the file securely.
+                  Note: file attachments are not included.
+                </span>
+              </div>
+            </div>
+
+            <div class="section-divider"></div>
+            <div class="section-header settings-no-margin-top">
+              <h3>Google Drive</h3>
+              <p>Back up to an "Envello Backups" folder in your Google Drive</p>
+            </div>
+
+            <div class="setting-item flex flex-col gap-3">
+              @if (!googleAuth.connected() || !hasDriveScope()) {
+                <div class="settings-inline-group">
+                  <env-button variant="secondary"
+                    [disabled]="googleAuth.connecting()"
+                    (clicked)="connectDrive()">
+                    <span class="material-symbols-outlined settings-icon-sm">add_circle</span>
+                    @if (!googleAuth.connected()) { Connect Google Drive }
+                    @else { Reconnect for Drive access }
+                  </env-button>
+                  @if (googleAuth.connected() && !hasDriveScope()) {
+                    <span class="setting-desc">Drive permission not granted — reconnect to enable.</span>
+                  }
+                </div>
               } @else {
-                <span class="material-symbols-outlined settings-icon-sm">save</span>
-                Backup Now
-              }
-            </env-button>
-            @if (backupService.lastLocal()) {
-              <span class="setting-desc">Last backup: {{ backupService.lastLocal() | date:'medium' }}</span>
-            } @else {
-              <span class="setting-desc">Never backed up</span>
-            }
-          </div>
-          <div class="backup-warn-row">
-            <span class="material-symbols-outlined backup-warn-icon">shield</span>
-            <span class="backup-warn-text">
-              Backup includes vault credentials and transactions.
-              On web, credential values are exported in plaintext — store the file securely.
-              Note: file attachments are not included.
-            </span>
-          </div>
-        </div>
-
-        <!-- Google Drive backup -->
-        <div class="setting-item flex flex-col gap-3">
-          <div class="setting-label-group">
-            <label>Google Drive</label>
-            <span class="setting-desc">Back up to an "Envello Backups" folder in your Google Drive</span>
-          </div>
-          @if (!googleAuth.connected() || !hasDriveScope()) {
-            <div class="settings-inline-group">
-              <env-button variant="secondary"
-                [disabled]="googleAuth.connecting()"
-                (clicked)="connectDrive()">
-                <span class="material-symbols-outlined settings-icon-sm">add_circle</span>
-                @if (!googleAuth.connected()) { Connect Google Drive }
-                @else { Reconnect for Drive access }
-              </env-button>
-              @if (googleAuth.connected() && !hasDriveScope()) {
-                <span class="setting-desc">Drive permission not granted — reconnect to enable.</span>
+                <div class="settings-inline-group">
+                  <env-button variant="secondary"
+                    [disabled]="driveService.uploading() || backupService.running()"
+                    (clicked)="runDriveBackup()">
+                    @if (driveService.uploading()) {
+                      <span class="material-symbols-outlined settings-icon-sm settings-spin">progress_activity</span>
+                      Uploading…
+                    } @else {
+                      <span class="material-symbols-outlined settings-icon-sm">cloud_upload</span>
+                      Backup to Drive
+                    }
+                  </env-button>
+                </div>
+                @if (driveService.recentFiles().length > 0) {
+                  <div class="backup-drive-list">
+                    @for (f of driveService.recentFiles(); track f.id) {
+                      <div class="backup-drive-item">
+                        <span class="material-symbols-outlined backup-drive-icon">description</span>
+                        <span class="backup-drive-name">{{ f.name }}</span>
+                        @if (f.size) {
+                          <span class="backup-drive-meta">{{ (+f.size / 1024).toFixed(1) }} KB</span>
+                        }
+                        @if (f.createdTime) {
+                          <span class="backup-drive-meta">{{ f.createdTime | date:'mediumDate' }}</span>
+                        }
+                      </div>
+                    }
+                  </div>
+                }
               }
             </div>
-          } @else {
+
+          </div>
+        }
+
+        <!-- ── Export tab ── -->
+        @if (dataTab() === 'export') {
+          <div class="data-tab-panel">
+
+            <div class="section-header settings-no-margin-top">
+              <h3>Export Data</h3>
+              <p>Download a copy of your data in your chosen format</p>
+            </div>
+
+            <div class="setting-item flex flex-col gap-3">
+              <div class="setting-label-group">
+                <label>Format</label>
+                <span class="setting-desc">JSON preserves all fields; Markdown exports readable text for notes, meetings and articles</span>
+              </div>
+              <div class="export-format-row">
+                <button class="export-fmt-btn" [class.active]="exportFormat() === 'json'"
+                  (click)="exportFormat.set('json')">
+                  <span class="material-symbols-outlined">data_object</span>
+                  JSON
+                </button>
+                <button class="export-fmt-btn" [class.active]="exportFormat() === 'markdown'"
+                  (click)="exportFormat.set('markdown')">
+                  <span class="material-symbols-outlined">article</span>
+                  Markdown
+                </button>
+              </div>
+            </div>
+
+            <div class="setting-item flex flex-col gap-2">
+              <div class="setting-label-group">
+                <label>Collections to export</label>
+              </div>
+              <div class="export-select-actions">
+                <button class="link-btn" (click)="selectAllExport()">Select all</button>
+                <span class="link-sep">·</span>
+                <button class="link-btn" (click)="selectNoneExport()">None</button>
+              </div>
+              <div class="export-col-grid">
+                @for (col of exportCollections; track col.id) {
+                  @if (exportFormat() !== 'markdown' || col.includeInMarkdown) {
+                    <label class="export-col-check">
+                      <input type="checkbox"
+                        [checked]="isExportCollectionSelected(col.id)"
+                        (change)="toggleExportCollection(col.id)">
+                      <span>{{ col.label }}</span>
+                    </label>
+                  }
+                }
+              </div>
+            </div>
+
             <div class="settings-inline-group">
               <env-button variant="secondary"
-                [disabled]="driveService.uploading() || backupService.running()"
-                (clicked)="runDriveBackup()">
-                @if (driveService.uploading()) {
+                [disabled]="isExporting() || exportSelectedIds().length === 0"
+                (clicked)="exportData()">
+                @if (isExporting()) {
                   <span class="material-symbols-outlined settings-icon-sm settings-spin">progress_activity</span>
-                  Uploading…
+                  Exporting…
                 } @else {
-                  <span class="material-symbols-outlined settings-icon-sm">cloud_upload</span>
-                  Backup to Drive
+                  <span class="material-symbols-outlined settings-icon-sm">download</span>
+                  Export {{ exportSelectedIds().length }} collection{{ exportSelectedIds().length !== 1 ? 's' : '' }}
                 }
               </env-button>
+              @if (exportDone()) {
+                <span class="export-done-label">
+                  <span class="material-symbols-outlined settings-icon-sm">check_circle</span>
+                  Downloaded
+                </span>
+              }
             </div>
-            @if (driveService.recentFiles().length > 0) {
-              <div class="backup-drive-list">
-                @for (f of driveService.recentFiles(); track f.id) {
-                  <div class="backup-drive-item">
-                    <span class="material-symbols-outlined backup-drive-icon">description</span>
-                    <span class="backup-drive-name">{{ f.name }}</span>
-                    @if (f.size) {
-                      <span class="backup-drive-meta">{{ (+f.size / 1024).toFixed(1) }} KB</span>
+
+          </div>
+        }
+
+        <!-- ── Import tab ── -->
+        @if (dataTab() === 'import') {
+          <div class="data-tab-panel">
+
+            <div class="section-header settings-no-margin-top">
+              <h3>Import</h3>
+              <p>Bring in notes and tasks from Notion, Obsidian or any Markdown files</p>
+            </div>
+
+            <div class="import-options-row">
+              <div class="setting-label-group">
+                <label>Source</label>
+              </div>
+              <div class="import-source-btns">
+                @for (src of [['obsidian','Obsidian','hub'],['notion','Notion','grid_view'],['markdown','Markdown','article']]; track src[0]) {
+                  <button class="export-fmt-btn" [class.active]="importSource() === src[0]"
+                    (click)="importSource.set($any(src[0]))">
+                    <span class="material-symbols-outlined">{{ src[2] }}</span>
+                    {{ src[1] }}
+                  </button>
+                }
+              </div>
+            </div>
+
+            <div class="import-options-row">
+              <div class="setting-label-group">
+                <label>Import as</label>
+              </div>
+              <div class="import-source-btns">
+                <button class="export-fmt-btn" [class.active]="importTarget() === 'notes'"
+                  (click)="importTarget.set('notes')">
+                  <span class="material-symbols-outlined">note</span>
+                  Notes
+                </button>
+                <button class="export-fmt-btn" [class.active]="importTarget() === 'tasks'"
+                  (click)="importTarget.set('tasks')">
+                  <span class="material-symbols-outlined">checklist</span>
+                  Tasks
+                </button>
+              </div>
+            </div>
+
+            <div class="import-file-row">
+              <label class="import-file-label" [class.import-loading]="isImporting()">
+                <input type="file" multiple
+                  [accept]="importTarget() === 'tasks' ? '.md,.markdown,.csv' : '.md,.markdown'"
+                  style="display:none"
+                  (change)="onImportFilesSelected($event)"
+                  [disabled]="isImporting()">
+                @if (isImporting()) {
+                  <span class="material-symbols-outlined settings-icon-sm settings-spin">progress_activity</span>
+                  Importing…
+                } @else {
+                  <span class="material-symbols-outlined settings-icon-sm">upload_file</span>
+                  Choose files…
+                }
+              </label>
+              <span class="import-hint">
+                @if (importSource() === 'notion') {
+                  Export from Notion as Markdown &amp; CSV, then select the files here
+                } @else if (importSource() === 'obsidian') {
+                  Select .md files from your Obsidian vault
+                } @else {
+                  Select any .md files
+                }
+              </span>
+            </div>
+
+            @if (importResult()) {
+              <div class="import-result" [class.import-result--ok]="importResult()!.errors.length === 0"
+                [class.import-result--warn]="importResult()!.errors.length > 0">
+                <span class="material-symbols-outlined">
+                  {{ importResult()!.errors.length === 0 ? 'check_circle' : 'warning' }}
+                </span>
+                <div class="import-result-body">
+                  <span>Imported <strong>{{ importResult()!.imported }}</strong>
+                    {{ importResult()!.target === 'notes' ? 'note' : 'task' }}{{ importResult()!.imported !== 1 ? 's' : '' }}
+                    @if (importResult()!.skipped > 0) {
+                      · <span class="import-skipped">{{ importResult()!.skipped }} skipped</span>
                     }
-                    @if (f.createdTime) {
-                      <span class="backup-drive-meta">{{ f.createdTime | date:'mediumDate' }}</span>
-                    }
+                  </span>
+                  @if (importResult()!.errors.length > 0) {
+                    <ul class="import-errors">
+                      @for (err of importResult()!.errors; track err) {
+                        <li>{{ err }}</li>
+                      }
+                    </ul>
+                  }
+                </div>
+              </div>
+            }
+
+          </div>
+        }
+
+        <!-- ── Sync tab ── -->
+        @if (dataTab() === 'sync') {
+          <div class="data-tab-panel">
+
+            <div class="section-header settings-no-margin-top">
+              <h3>Status</h3>
+            </div>
+
+            <div class="info-card">
+              <div class="info-row">
+                <span class="info-label">Storage Mode</span>
+                <span class="info-value">{{ isDesktop ? 'On-device SQLite' : 'Local (browser)' }}</span>
+              </div>
+              <div class="info-row">
+                <span class="info-label">Last Synced</span>
+                <span class="info-value">{{ formatSyncTime(syncService.lastSyncedAt()) }}</span>
+              </div>
+              <div class="info-row">
+                <span class="info-label">Sync Status</span>
+                <span aria-live="polite" aria-atomic="true">
+                  @if (syncService.isSyncing()) {
+                    <span class="info-value sync-status-active">
+                      <span class="sync-mini-spinner" aria-hidden="true"></span> Syncing…
+                    </span>
+                  } @else if (syncService.syncError()) {
+                    <span class="info-value sync-status-error">
+                      <span class="material-symbols-outlined settings-icon-xs" aria-hidden="true">error</span>
+                      {{ syncService.syncError() }}
+                    </span>
+                  } @else {
+                    <span class="info-value sync-status-ok">
+                      <span class="material-symbols-outlined settings-icon-xs" aria-hidden="true">check_circle</span>
+                      Up to date
+                    </span>
+                  }
+                </span>
+              </div>
+            </div>
+
+            <div class="section-divider"></div>
+            <div class="section-header settings-no-margin-top">
+              <h3>Selective Sync</h3>
+              <p>Choose which collections are uploaded to the cloud. Vault and credentials are always local-only.</p>
+            </div>
+
+            <div class="backup-actions-bar">
+              <env-button variant="secondary" (clicked)="syncSettings.enableAll()">Enable All</env-button>
+              <env-button variant="secondary" (clicked)="syncSettings.disableAll()">Disable All</env-button>
+            </div>
+
+            <div class="backup-grid">
+              @for (col of backupCollections; track col.id) {
+                <div class="backup-row">
+                  <span class="backup-label">{{ col.label }}</span>
+                  <div class="backup-row-actions">
+                    <label class="toggle">
+                      <input type="checkbox"
+                        [checked]="syncSettings.isEnabled(col.id)"
+                        (change)="syncSettings.toggle(col.id)">
+                      <span class="toggle-track"></span>
+                    </label>
+                  </div>
+                </div>
+              }
+            </div>
+
+            @if (syncService.syncActivity().length > 0) {
+              <div class="section-divider"></div>
+              <div class="section-header settings-no-margin-top">
+                <h3>Sync Activity</h3>
+                <p>Recent sync events for this session</p>
+              </div>
+              <div class="sync-log">
+                @for (entry of syncService.syncActivity(); track entry.timestamp) {
+                  <div class="sync-log-row">
+                    <span class="material-symbols-outlined sync-log-icon"
+                      [class.sync-log-up]="entry.direction === 'upload'"
+                      [class.sync-log-down]="entry.direction === 'download'">
+                      {{ entry.direction === 'upload' ? 'cloud_upload' : 'cloud_download' }}
+                    </span>
+                    <span class="sync-log-text">
+                      {{ entry.direction === 'upload' ? 'Uploaded' : 'Downloaded' }}
+                      <strong>{{ entry.count }}</strong>
+                      {{ entry.count === 1 ? 'record' : 'records' }}
+                    </span>
+                    <span class="sync-log-time">{{ formatSyncTime(entry.timestamp) }}</span>
                   </div>
                 }
               </div>
             }
-          }
-        </div>
 
-        <!-- Export (#13) -->
-        <div class="section-divider"></div>
-        <div class="section-header settings-no-margin-top">
-          <h3>Export Data</h3>
-          <p>Download a copy of your data in your chosen format</p>
-        </div>
-
-        <div class="setting-item flex flex-col gap-3">
-          <div class="setting-label-group">
-            <label>Format</label>
-            <span class="setting-desc">JSON preserves all fields; Markdown exports readable text for notes, meetings and articles</span>
-          </div>
-          <div class="export-format-row">
-            <button class="export-fmt-btn" [class.active]="exportFormat() === 'json'"
-              (click)="exportFormat.set('json')">
-              <span class="material-symbols-outlined">data_object</span>
-              JSON
-            </button>
-            <button class="export-fmt-btn" [class.active]="exportFormat() === 'markdown'"
-              (click)="exportFormat.set('markdown')">
-              <span class="material-symbols-outlined">article</span>
-              Markdown
-            </button>
-          </div>
-        </div>
-
-        <div class="setting-item flex flex-col gap-2">
-          <div class="setting-label-group">
-            <label>Collections to export</label>
-          </div>
-          <div class="export-select-actions">
-            <button class="link-btn" (click)="selectAllExport()">Select all</button>
-            <span class="link-sep">·</span>
-            <button class="link-btn" (click)="selectNoneExport()">None</button>
-          </div>
-          <div class="export-col-grid">
-            @for (col of exportCollections; track col.id) {
-              @if (exportFormat() !== 'markdown' || col.includeInMarkdown) {
-                <label class="export-col-check">
-                  <input type="checkbox"
-                    [checked]="isExportCollectionSelected(col.id)"
-                    (change)="toggleExportCollection(col.id)">
-                  <span>{{ col.label }}</span>
-                </label>
-              }
-            }
-          </div>
-        </div>
-
-        <div class="settings-inline-group">
-          <env-button variant="secondary"
-            [disabled]="isExporting() || exportSelectedIds().length === 0"
-            (clicked)="exportData()">
-            @if (isExporting()) {
-              <span class="material-symbols-outlined settings-icon-sm settings-spin">progress_activity</span>
-              Exporting…
-            } @else {
-              <span class="material-symbols-outlined settings-icon-sm">download</span>
-              Export {{ exportSelectedIds().length }} collection{{ exportSelectedIds().length !== 1 ? 's' : '' }}
-            }
-          </env-button>
-          @if (exportDone()) {
-            <span class="export-done-label">
-              <span class="material-symbols-outlined settings-icon-sm">check_circle</span>
-              Downloaded
-            </span>
-          }
-        </div>
-
-        <!-- Import from Notion/Obsidian (#14) -->
-        <div class="section-divider"></div>
-        <div class="section-header settings-no-margin-top">
-          <h3>Import</h3>
-          <p>Bring in notes and tasks from Notion, Obsidian or any Markdown files</p>
-        </div>
-
-        <div class="import-options-row">
-          <div class="setting-label-group">
-            <label>Source</label>
-          </div>
-          <div class="import-source-btns">
-            @for (src of [['obsidian','Obsidian','hub'],['notion','Notion','grid_view'],['markdown','Markdown','article']]; track src[0]) {
-              <button class="export-fmt-btn" [class.active]="importSource() === src[0]"
-                (click)="importSource.set($any(src[0]))">
-                <span class="material-symbols-outlined">{{ src[2] }}</span>
-                {{ src[1] }}
-              </button>
-            }
-          </div>
-        </div>
-
-        <div class="import-options-row">
-          <div class="setting-label-group">
-            <label>Import as</label>
-          </div>
-          <div class="import-source-btns">
-            <button class="export-fmt-btn" [class.active]="importTarget() === 'notes'"
-              (click)="importTarget.set('notes')">
-              <span class="material-symbols-outlined">note</span>
-              Notes
-            </button>
-            <button class="export-fmt-btn" [class.active]="importTarget() === 'tasks'"
-              (click)="importTarget.set('tasks')">
-              <span class="material-symbols-outlined">checklist</span>
-              Tasks
-            </button>
-          </div>
-        </div>
-
-        <div class="import-file-row">
-          <label class="import-file-label" [class.import-loading]="isImporting()">
-            <input type="file" multiple
-              [accept]="importTarget() === 'tasks' ? '.md,.markdown,.csv' : '.md,.markdown'"
-              style="display:none"
-              (change)="onImportFilesSelected($event)"
-              [disabled]="isImporting()">
-            @if (isImporting()) {
-              <span class="material-symbols-outlined settings-icon-sm settings-spin">progress_activity</span>
-              Importing…
-            } @else {
-              <span class="material-symbols-outlined settings-icon-sm">upload_file</span>
-              Choose files…
-            }
-          </label>
-          <span class="import-hint">
-            @if (importSource() === 'notion') {
-              Export from Notion as Markdown &amp; CSV, then select the files here
-            } @else if (importSource() === 'obsidian') {
-              Select .md files from your Obsidian vault
-            } @else {
-              Select any .md files
-            }
-          </span>
-        </div>
-
-        @if (importResult()) {
-          <div class="import-result" [class.import-result--ok]="importResult()!.errors.length === 0"
-            [class.import-result--warn]="importResult()!.errors.length > 0">
-            <span class="material-symbols-outlined">
-              {{ importResult()!.errors.length === 0 ? 'check_circle' : 'warning' }}
-            </span>
-            <div class="import-result-body">
-              <span>Imported <strong>{{ importResult()!.imported }}</strong>
-                {{ importResult()!.target === 'notes' ? 'note' : 'task' }}{{ importResult()!.imported !== 1 ? 's' : '' }}
-                @if (importResult()!.skipped > 0) {
-                  · <span class="import-skipped">{{ importResult()!.skipped }} skipped</span>
-                }
-              </span>
-              @if (importResult()!.errors.length > 0) {
-                <ul class="import-errors">
-                  @for (err of importResult()!.errors; track err) {
-                    <li>{{ err }}</li>
-                  }
-                </ul>
-              }
-            </div>
-          </div>
-        }
-
-        <div class="info-card">
-          <div class="info-row">
-            <span class="info-label">Storage Mode</span>
-            <span class="info-value">{{ isDesktop ? 'On-device SQLite' : 'Local (browser)' }}</span>
-          </div>
-          <div class="info-row">
-            <span class="info-label">Last Synced</span>
-            <span class="info-value">{{ formatSyncTime(syncService.lastSyncedAt()) }}</span>
-          </div>
-          <div class="info-row">
-            <span class="info-label">Sync Status</span>
-            <span aria-live="polite" aria-atomic="true">
-              @if (syncService.isSyncing()) {
-                <span class="info-value sync-status-active">
-                  <span class="sync-mini-spinner" aria-hidden="true"></span> Syncing…
-                </span>
-              } @else if (syncService.syncError()) {
-                <span class="info-value sync-status-error">
-                  <span class="material-symbols-outlined settings-icon-xs" aria-hidden="true">error</span>
-                  {{ syncService.syncError() }}
-                </span>
-              } @else {
-                <span class="info-value sync-status-ok">
-                  <span class="material-symbols-outlined settings-icon-xs" aria-hidden="true">check_circle</span>
-                  Up to date
-                </span>
-              }
-            </span>
-          </div>
-        </div>
-
-        <!-- Selective sync (#12) -->
-        <div class="section-divider"></div>
-        <div class="section-header settings-no-margin-top">
-          <h3>Selective Sync</h3>
-          <p>Choose which collections are uploaded to the cloud. Vault and credentials are always local-only.</p>
-        </div>
-
-        <div class="backup-actions-bar">
-          <env-button variant="secondary" (clicked)="syncSettings.enableAll()">Enable All</env-button>
-          <env-button variant="secondary" (clicked)="syncSettings.disableAll()">Disable All</env-button>
-        </div>
-
-        <div class="backup-grid">
-          @for (col of backupCollections; track col.id) {
-          <div class="backup-row">
-            <span class="backup-label">{{ col.label }}</span>
-            <div class="backup-row-actions">
+            <div class="section-divider"></div>
+            <div class="setting-item setting-row setting-row--disabled">
+              <div class="setting-label-group">
+                <label>Analytics <env-badge variant="default" size="xs">Coming soon</env-badge></label>
+                <span class="setting-desc">Share anonymous usage data to improve Envello</span>
+              </div>
               <label class="toggle">
-                <input type="checkbox"
-                  [checked]="syncSettings.isEnabled(col.id)"
-                  (change)="syncSettings.toggle(col.id)">
+                <input type="checkbox" [checked]="analytics()" disabled>
                 <span class="toggle-track"></span>
               </label>
             </div>
-          </div>
-          }
-        </div>
 
-        @if (syncService.syncActivity().length > 0) {
-        <div class="section-divider"></div>
-        <div class="section-header settings-no-margin-top">
-          <h3>Sync Activity</h3>
-          <p>Recent sync events for this session</p>
-        </div>
-        <div class="sync-log">
-          @for (entry of syncService.syncActivity(); track entry.timestamp) {
-          <div class="sync-log-row">
-            <span class="material-symbols-outlined sync-log-icon"
-              [class.sync-log-up]="entry.direction === 'upload'"
-              [class.sync-log-down]="entry.direction === 'download'">
-              {{ entry.direction === 'upload' ? 'cloud_upload' : 'cloud_download' }}
-            </span>
-            <span class="sync-log-text">
-              {{ entry.direction === 'upload' ? 'Uploaded' : 'Downloaded' }}
-              <strong>{{ entry.count }}</strong>
-              {{ entry.count === 1 ? 'record' : 'records' }}
-            </span>
-            <span class="sync-log-time">{{ formatSyncTime(entry.timestamp) }}</span>
           </div>
-          }
-        </div>
         }
 
+        <!-- Danger zone — always visible below tabs -->
         <div class="danger-zone">
           <div class="danger-zone-header">
             <span class="material-symbols-outlined danger-zone-icon">warning</span>
