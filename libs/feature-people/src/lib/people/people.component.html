@@ -170,14 +170,9 @@
               placeholder="Full name" autofocus />
           </div>
         </div>
-        <div class="ppl-slider-actions">
-          <button class="ppl-btn-ghost ppl-btn-sm" (click)="closeSlider()">Cancel</button>
-          <button class="ppl-btn-primary ppl-btn-sm"
-            [class.ppl-btn-primary--disabled]="!editName().trim()"
-            (click)="addPerson()">Add Person</button>
-        </div>
       </div>
 
+      <div class="ppl-slider-body">
       <div class="ppl-edit-form">
         <div class="ppl-edit-row">
           <label class="ppl-edit-label">Email</label>
@@ -223,6 +218,14 @@
           </div>
         </div>
       </div>
+      </div><!-- /ppl-slider-body -->
+
+      <div class="ppl-slider-foot">
+        <button class="ppl-btn-ghost" (click)="closeSlider()">Cancel</button>
+        <button class="ppl-btn-primary"
+          [class.ppl-btn-primary--disabled]="!editName().trim()"
+          (click)="addPerson()">Add Person</button>
+      </div>
     </div>
   }
 
@@ -263,23 +266,19 @@
             </div>
           }
         </div>
-        <div class="ppl-slider-actions">
-          @if (!editMode()) {
+        @if (!editMode()) {
+          <div class="ppl-slider-actions">
             <button class="ppl-icon-btn" (click)="openEdit()" title="Edit person">
               <span class="material-symbols-outlined">edit</span>
             </button>
             <button class="ppl-icon-btn ppl-icon-btn--danger" (click)="confirmDelete(selectedProfile()!.person)" title="Remove person">
               <span class="material-symbols-outlined">delete</span>
             </button>
-          } @else {
-            <button class="ppl-btn-ghost ppl-btn-sm" (click)="cancelEdit()">Cancel</button>
-            <button class="ppl-btn-primary ppl-btn-sm"
-              [class.ppl-btn-primary--disabled]="!editName().trim()"
-              (click)="saveEdit()">Save</button>
-          }
-        </div>
+          </div>
+        }
       </div>
 
+      <div class="ppl-slider-body">
       <!-- ── Edit Form ── -->
       @if (editMode()) {
         <div class="ppl-edit-form">
@@ -409,6 +408,16 @@
         </div>
       }
 
+      </div><!-- /ppl-slider-body -->
+
+      @if (editMode()) {
+        <div class="ppl-slider-foot">
+          <button class="ppl-btn-ghost" (click)="cancelEdit()">Cancel</button>
+          <button class="ppl-btn-primary"
+            [class.ppl-btn-primary--disabled]="!editName().trim()"
+            (click)="saveEdit()">Save</button>
+        </div>
+      }
     </div>
   }
 </env-slider-panel>

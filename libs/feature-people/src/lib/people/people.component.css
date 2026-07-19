@@ -229,7 +229,20 @@
 /* ═══════════════════════════════════════════════════════
    SLIDER PANEL – PROFILE
 ════════════════════════════════════════════════════════ */
-.ppl-slider-inner { display: flex; flex-direction: column; height: 100%; overflow-y: auto; }
+.ppl-slider-inner { display: flex; flex-direction: column; height: 100%; overflow: hidden; }
+
+.ppl-slider-body { flex: 1; min-height: 0; overflow-y: auto; }
+
+.ppl-slider-foot {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  padding: 12px 16px;
+  border-top: 1px solid var(--border-subtle);
+  flex-shrink: 0;
+  background: var(--bg-panel);
+}
 
 .ppl-slider-hdr {
   display: flex;
@@ -345,16 +358,18 @@
 }
 .ppl-btn-ghost {
   padding: 6px 14px;
-  background: transparent; border: 1px solid var(--border-main);
-  border-radius: 6px; font-size: 12px; cursor: pointer; color: var(--text-secondary);
+  background: transparent; border: 1px solid var(--border-subtle);
+  border-radius: 8px; font-size: 13px; font-weight: 500; cursor: pointer; color: var(--text-secondary);
+  transition: background .12s, color .12s;
 }
+.ppl-btn-ghost:hover { background: var(--bg-hover); color: var(--text-primary); }
 .ppl-btn-primary {
   padding: 6px 16px;
   background: var(--accent-primary); color: var(--accent-primary-text);
-  border: none; border-radius: 6px; font-size: 12px; font-weight: 600; cursor: pointer;
-  transition: opacity .15s;
+  border: 1px solid var(--accent-primary); border-radius: 8px; font-size: 13px; font-weight: 500; cursor: pointer;
+  transition: filter .12s;
 }
-.ppl-btn-primary:hover { opacity: .88; }
+.ppl-btn-primary:hover:not(.ppl-btn-primary--disabled) { filter: brightness(1.1); }
 .ppl-btn-primary--disabled { opacity: .4; cursor: default; pointer-events: none; }
 
 /* Import modal specifics */
@@ -413,7 +428,6 @@
 .ppl-icon-btn--danger:hover { color: #ef4444; background: var(--bg-hover); }
 .ppl-icon-btn .material-symbols-outlined { font-size: 18px; }
 
-.ppl-btn-sm { padding: 4px 12px; font-size: 11px; }
 
 .ppl-edit-name-wrap { display: flex; align-items: center; }
 .ppl-edit-name-input {
