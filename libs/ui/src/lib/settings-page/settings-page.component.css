@@ -1544,3 +1544,43 @@
 }
 .crash-log-ver  { font-size: 11px; color: var(--text-tertiary); }
 .crash-log-time { font-size: 11px; color: var(--text-tertiary); white-space: nowrap; }
+
+/* ── Backup ── */
+.backup-warn-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 8px 12px;
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--accent-yellow) 8%, transparent);
+  border: 1px solid color-mix(in srgb, var(--accent-yellow) 25%, transparent);
+}
+.backup-warn-icon {
+  font-size: 15px;
+  color: var(--accent-yellow);
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+.backup-warn-text {
+  font-size: 12px;
+  color: var(--text-secondary);
+  line-height: 1.5;
+}
+.backup-drive-list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 6px 0;
+}
+.backup-drive-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 5px 8px;
+  border-radius: 6px;
+  background: var(--bg-hover);
+  font-size: 12px;
+}
+.backup-drive-icon { font-size: 15px; color: var(--accent-primary); flex-shrink: 0; }
+.backup-drive-name { flex: 1; color: var(--text-primary); font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.backup-drive-meta { color: var(--text-tertiary); flex-shrink: 0; }

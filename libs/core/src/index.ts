@@ -60,3 +60,5 @@ export * from './lib/services/relationship.service';export * from './lib/service
 export * from './lib/services/google-calendar.service';
 export * from './lib/services/google-contacts.service';
 export * from './lib/services/google-gmail.service';
+export * from './lib/services/backup.service';
+export * from './lib/services/google-drive.service';

@@ -25,6 +25,9 @@ export const EXPORT_COLLECTIONS: ExportCollectionMeta[] = [
   { id: 'bookmark_folders',     label: 'Bookmark Folders',     includeInMarkdown: false },
   { id: 'people',               label: 'People',               includeInMarkdown: false },
   { id: 'transactions',         label: 'Transactions',         includeInMarkdown: false },
+  // Vault — included in backup only (not in the user-facing export picker)
+  { id: 'credentials',                label: 'Credentials',                includeInMarkdown: false },
+  { id: 'credential_transaction_links', label: 'Credential Links',           includeInMarkdown: false },
 ];
 
 export type ExportFormat = 'json' | 'markdown';

@@ -923,6 +923,99 @@
           </label>
         </div>
 
+        <!-- Backup -->
+        <div class="section-divider"></div>
+        <div class="section-header settings-no-margin-top">
+          <h3>Backup</h3>
+          <p>Save a full copy of all your data — including vault — to a file or Google Drive</p>
+        </div>
+
+        <!-- Local backup -->
+        <div class="setting-item flex flex-col gap-3">
+          <div class="settings-inline-group">
+            <env-button variant="primary"
+              [disabled]="backupService.running()"
+              (clicked)="runLocalBackup()">
+              @if (backupService.running()) {
+                <span class="material-symbols-outlined settings-icon-sm settings-spin">progress_activity</span>
+                @if (backupService.progress(); as p) {
+                  Backing up {{ p.current }} ({{ p.done }}/{{ p.total }})…
+                } @else {
+                  Preparing…
+                }
+              } @else {
+                <span class="material-symbols-outlined settings-icon-sm">save</span>
+                Backup Now
+              }
+            </env-button>
+            @if (backupService.lastLocal()) {
+              <span class="setting-desc">Last backup: {{ backupService.lastLocal() | date:'medium' }}</span>
+            } @else {
+              <span class="setting-desc">Never backed up</span>
+            }
+          </div>
+          <div class="backup-warn-row">
+            <span class="material-symbols-outlined backup-warn-icon">shield</span>
+            <span class="backup-warn-text">
+              Backup includes vault credentials and transactions.
+              On web, credential values are exported in plaintext — store the file securely.
+              Note: file attachments are not included.
+            </span>
+          </div>
+        </div>
+
+        <!-- Google Drive backup -->
+        <div class="setting-item flex flex-col gap-3">
+          <div class="setting-label-group">
+            <label>Google Drive</label>
+            <span class="setting-desc">Back up to an "Envello Backups" folder in your Google Drive</span>
+          </div>
+          @if (!googleAuth.connected() || !hasDriveScope()) {
+            <div class="settings-inline-group">
+              <env-button variant="secondary"
+                [disabled]="googleAuth.connecting()"
+                (clicked)="connectDrive()">
+                <span class="material-symbols-outlined settings-icon-sm">add_circle</span>
+                @if (!googleAuth.connected()) { Connect Google Drive }
+                @else { Reconnect for Drive access }
+              </env-button>
+              @if (googleAuth.connected() && !hasDriveScope()) {
+                <span class="setting-desc">Drive permission not granted — reconnect to enable.</span>
+              }
+            </div>
+          } @else {
+            <div class="settings-inline-group">
+              <env-button variant="secondary"
+                [disabled]="driveService.uploading() || backupService.running()"
+                (clicked)="runDriveBackup()">
+                @if (driveService.uploading()) {
+                  <span class="material-symbols-outlined settings-icon-sm settings-spin">progress_activity</span>
+                  Uploading…
+                } @else {
+                  <span class="material-symbols-outlined settings-icon-sm">cloud_upload</span>
+                  Backup to Drive
+                }
+              </env-button>
+            </div>
+            @if (driveService.recentFiles().length > 0) {
+              <div class="backup-drive-list">
+                @for (f of driveService.recentFiles(); track f.id) {
+                  <div class="backup-drive-item">
+                    <span class="material-symbols-outlined backup-drive-icon">description</span>
+                    <span class="backup-drive-name">{{ f.name }}</span>
+                    @if (f.size) {
+                      <span class="backup-drive-meta">{{ (+f.size / 1024).toFixed(1) }} KB</span>
+                    }
+                    @if (f.createdTime) {
+                      <span class="backup-drive-meta">{{ f.createdTime | date:'mediumDate' }}</span>
+                    }
+                  </div>
+                }
+              </div>
+            }
+          }
+        </div>
+
         <!-- Export (#13) -->
         <div class="section-divider"></div>
         <div class="section-header settings-no-margin-top">

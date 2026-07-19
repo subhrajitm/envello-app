@@ -8,7 +8,7 @@ import { EnvLogoComponent } from '../logo/logo.component';
 import { ThemeService, Theme, StoreService, UserPreferencesService, APP_VERSION } from '@envello/core';
 import { AiService, AiProvider, AiFeature } from '@envello/core';
 import { SmartMonitorService, MONITOR_RULES, MonitorRuleId } from '@envello/core';
-import { GoogleAuthService, GoogleCalendarService, GoogleContactsService, GoogleGmailService } from '@envello/core';
+import { GoogleAuthService, GoogleCalendarService, GoogleContactsService, GoogleGmailService, BackupService, GoogleDriveService } from '@envello/core';
 import { Task } from '@envello/domain';
 import { DesktopSyncSettingsService, DesktopDataService, BACKUP_ELIGIBLE_COLLECTIONS, BookContentService, TauriService, SyncService, DataExportService, EXPORT_COLLECTIONS, ExportFormat, ContentImportService, ImportSource, ImportTarget, ImportResult, CrashReportingService, CrashReport } from '@envello/core';
 import { DataService } from '@envello/data';
@@ -123,6 +123,33 @@ export class SettingsPageComponent implements OnInit {
   activityEntries           = signal<ActivityEntry[]>([]);
   revokeOtherConfirm        = signal(false);
   revokeAllConfirm          = signal(false);
+
+  // ── Backup ────────────────────────────────────────────────────────────────
+  readonly backupService  = inject(BackupService);
+  readonly driveService   = inject(GoogleDriveService);
+  hasDriveScope = signal(false);
+  readonly DRIVE_SCOPE = 'https://www.googleapis.com/auth/drive.file';
+
+  async runLocalBackup(): Promise<void> {
+    await this.backupService.backupToFile();
+  }
+
+  async runDriveBackup(): Promise<void> {
+    await this.driveService.backupNow();
+  }
+
+  async connectDrive(): Promise<void> {
+    await this.googleAuth.connect();
+    this.hasDriveScope.set(await this.googleAuth.hasScope(this.DRIVE_SCOPE));
+    await this.driveService.loadRecentFiles();
+  }
+
+  async checkDriveScope(): Promise<void> {
+    if (this.googleAuth.connected()) {
+      this.hasDriveScope.set(await this.googleAuth.hasScope(this.DRIVE_SCOPE));
+      if (this.hasDriveScope()) await this.driveService.loadRecentFiles();
+    }
+  }
 
   // ── Data export (#13) ─────────────────────────────────────────────────────
   private readonly dataExport = inject(DataExportService);
@@ -449,6 +476,7 @@ export class SettingsPageComponent implements OnInit {
       this.tauri.getOsType().then(v => this.osType.set(v));
       this.tauri.getOsArch().then(v => this.osArch.set(v));
     }
+    this.checkDriveScope();
   }
 
   @HostListener('document:keydown.escape')
