@@ -1,4 +1,4 @@
-import { Component, inject, signal, computed, input, output, OnInit, ChangeDetectionStrategy, effect, untracked } from '@angular/core';
+import { Component, inject, signal, computed, input, output, OnInit, ChangeDetectionStrategy, effect, untracked, ViewChild, ElementRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, ActivatedRoute } from '@angular/router';
@@ -238,23 +238,7 @@ const POPULAR_VENDOR_OPTIONS = ALL_VENDOR_OPTIONS.filter(v => POPULAR_VENDOR_KEY
       <div class="tf-form-col">
         <div [class.tf-card]="!embeddedMode()">
 
-          <!-- ── Q1: Type ── -->
-          <div class="tf-q-section">
-            <div class="tf-q-label">Transaction type</div>
-            <div class="type-chips">
-              @for (opt of typeOptions; track opt) {
-                <button type="button" class="type-chip"
-                  [class.type-chip--active]="formType() === opt"
-                  [style.--chip-color]="typeMeta(opt).color"
-                  (click)="selectType(opt)">
-                  <span class="material-symbols-outlined">{{ typeMeta(opt).icon }}</span>
-                  <span>{{ typeMeta(opt).label }}</span>
-                </button>
-              }
-            </div>
-          </div>
-
-          <!-- ── Q2: Amount (hero size) ── -->
+          <!-- ── Q1: Amount (hero size — always first) ── -->
           <div class="tf-q-section">
             <div class="tf-q-label">How much?</div>
             <div class="tf-amount-hero">
@@ -264,7 +248,7 @@ const POPULAR_VENDOR_OPTIONS = ALL_VENDOR_OPTIONS.filter(v => POPULAR_VENDOR_KEY
                   <option [value]="c">{{ c }}</option>
                 }
               </select>
-              <input type="number" step="0.01" min="0" class="tf-amount-big"
+              <input #amountInput type="number" step="0.01" min="0" class="tf-amount-big"
                 [ngModel]="formAmount()" (ngModelChange)="formAmount.set($event)"
                 placeholder="0.00">
             </div>
@@ -319,6 +303,22 @@ const POPULAR_VENDOR_OPTIONS = ALL_VENDOR_OPTIONS.filter(v => POPULAR_VENDOR_KEY
                     <span class="material-symbols-outlined">expand_less</span> Done
                   </button>
                 </div>
+              }
+            </div>
+          </div>
+
+          <!-- ── Q2: Type ── -->
+          <div class="tf-q-section">
+            <div class="tf-q-label">Transaction type</div>
+            <div class="type-chips">
+              @for (opt of typeOptions; track opt) {
+                <button type="button" class="type-chip"
+                  [class.type-chip--active]="formType() === opt"
+                  [style.--chip-color]="typeMeta(opt).color"
+                  (click)="selectType(opt)">
+                  <span class="material-symbols-outlined">{{ typeMeta(opt).icon }}</span>
+                  <span>{{ typeMeta(opt).label }}</span>
+                </button>
               }
             </div>
           </div>
@@ -1219,6 +1219,7 @@ export class TransactionFormComponent implements OnInit {
 
     deleteConfirmOpen = signal(false);
     sliderTab = signal<'details' | 'updates' | 'edit'>('details');
+    @ViewChild('amountInput') private amountInputRef?: ElementRef<HTMLInputElement>;
 
     // ── Computed ──────────────────────────────────────────────────────────
     private _editingTx = computed(() => {
@@ -1327,6 +1328,7 @@ export class TransactionFormComponent implements OnInit {
                     this.presetApplied.set(false);
                     this.showDateInput.set(false);
                     this.sliderTab.set('updates');
+                    setTimeout(() => this.amountInputRef?.nativeElement?.focus(), 0);
                 }
             });
         });
@@ -1343,6 +1345,7 @@ export class TransactionFormComponent implements OnInit {
             this.sliderTab.set('details');
         } else {
             this.formDate.set(autoDate('monthly'));
+            setTimeout(() => this.amountInputRef?.nativeElement?.focus(), 0);
         }
     }
 
