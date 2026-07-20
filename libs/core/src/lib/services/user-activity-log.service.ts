@@ -23,6 +23,8 @@ const MAX_ENTRIES = 100;
 @Injectable({ providedIn: 'root' })
 export class UserActivityLogService {
   private readonly sb = inject(SupabaseService);
+  /** Set to true once we confirm the remote table doesn't exist, to avoid repeated 404s. */
+  private remoteUnavailable = false;
 
   log(action: ActivityAction, details?: string): void {
     const entry: ActivityEntry = {
@@ -54,16 +56,21 @@ export class UserActivityLogService {
   }
 
   private async persistToSupabase(entry: ActivityEntry): Promise<void> {
+    if (this.remoteUnavailable) return;
     try {
       const { data: { user } } = await this.sb.client.auth.getUser();
       if (!user) return;
-      await this.sb.client.from('user_activity_log').insert({
+      const { error } = await this.sb.client.from('user_activity_log').insert({
         user_id: user.id,
         action: entry.action,
         details: entry.details ?? null,
         device: entry.device ?? null,
         created_at: entry.timestamp,
       });
+      // 42P01 = relation does not exist (table missing); treat any 404/table error as permanent
+      if (error && (error.code === '42P01' || (error as any).status === 404)) {
+        this.remoteUnavailable = true;
+      }
     } catch {}
   }
 
