@@ -283,6 +283,106 @@ const POPULAR_VENDOR_OPTIONS = ALL_VENDOR_OPTIONS.filter(v => POPULAR_VENDOR_KEY
                 placeholder="0.00">
             </div>
 
+          </div>
+
+          <!-- ── Q2: Name ── -->
+          <div class="tf-q-section">
+            <div class="tf-q-label">{{ formName() ? nameQuestion() : "What's this for?" }}</div>
+            <div class="tf-vendor-wrap">
+
+              <!-- Collapsed: show selected name or trigger -->
+              @if (formName() && !vendorDropdownOpen()) {
+                <div class="tf-vendor-selected">
+                  <div class="vd-avatar tf-vendor-sel-av" [style.background]="avatarBgFn(formName())">
+                    {{ formName().charAt(0).toUpperCase() }}
+                  </div>
+                  <span class="tf-vendor-sel-name">{{ formName() }}</span>
+                  @if (presetApplied()) {
+                    <span class="preset-badge">
+                      <span class="material-symbols-outlined" style="font-size:11px">auto_awesome</span>
+                      auto-filled
+                    </span>
+                  }
+                  <button type="button" class="tf-vendor-edit" (click)="clearVendor()" title="Change">
+                    <span class="material-symbols-outlined">edit</span>
+                  </button>
+                </div>
+              } @else {
+                <button type="button" class="tf-vendor-trigger"
+                  (click)="vendorDropdownOpen.set(true)"
+                  [style.display]="vendorDropdownOpen() ? 'none' : ''">
+                  <span class="material-symbols-outlined tf-vendor-trigger-icon">search</span>
+                  <span class="tf-vendor-trigger-placeholder">Netflix, AWS, rent…</span>
+                </button>
+              }
+
+              <!-- Dropdown panel -->
+              @if (vendorDropdownOpen()) {
+                <div class="tf-curr-drop tf-vendor-drop">
+                  <div class="tf-curr-search-wrap">
+                    <span class="material-symbols-outlined tf-curr-search-icon">search</span>
+                    <input class="tf-curr-search" type="text" placeholder="Search or type a name…"
+                      [ngModel]="vendorSearch()"
+                      (ngModelChange)="vendorSearch.set($event); onNameChange($event)"
+                      (keydown.enter)="vendorDropdownOpen.set(false)"
+                      (click)="$event.stopPropagation()"
+                      autofocus>
+                    @if (vendorSearch()) {
+                      <button type="button" class="tf-vendor-use-btn"
+                        (click)="formName.set(vendorSearch()); vendorDropdownOpen.set(false); vendorSearch.set('')"
+                        title="Use this name">
+                        <span class="material-symbols-outlined">check</span>
+                      </button>
+                    }
+                  </div>
+                  <div class="tf-curr-list">
+                    @if (!vendorSearch()) {
+                      <div class="tf-curr-section-lbl">
+                        <span class="material-symbols-outlined" style="font-size:13px">bolt</span>
+                        Popular services
+                      </div>
+                    }
+                    @for (v of filteredVendors(); track v.key) {
+                      <button type="button" class="tf-curr-opt tf-vendor-opt"
+                        (click)="selectVendorFromDropdown(v)">
+                        <div class="vd-avatar tf-vendor-opt-av" [style.background]="avatarBgFn(v.displayName)">
+                          {{ v.displayName.charAt(0).toUpperCase() }}
+                        </div>
+                        <div class="tf-vendor-opt-info">
+                          <span class="tf-curr-code" style="width:auto">{{ v.displayName }}</span>
+                          <span class="tf-curr-name">{{ v.category }} · {{ v.billingCycle }}</span>
+                        </div>
+                      </button>
+                    }
+                    @if (filteredVendors().length === 0) {
+                      <div class="tf-curr-empty">No matches — press Enter to use "{{ vendorSearch() }}"</div>
+                    }
+                  </div>
+                </div>
+              }
+            </div>
+          </div>
+
+          <!-- ── Q3: Type ── -->
+          <div class="tf-q-section">
+            <div class="tf-q-label">Transaction type</div>
+            <div class="type-chips">
+              @for (opt of typeOptions; track opt) {
+                <button type="button" class="type-chip"
+                  [class.type-chip--active]="formType() === opt"
+                  [style.--chip-color]="typeMeta(opt).color"
+                  (click)="selectType(opt)">
+                  <span class="material-symbols-outlined">{{ typeMeta(opt).icon }}</span>
+                  <span>{{ typeMeta(opt).label }}</span>
+                </button>
+              }
+            </div>
+          </div>
+
+          <!-- ── Q4: When? (billing cycle + date — depend on type) ── -->
+          <div class="tf-q-section">
+            <div class="tf-q-label">{{ dateLabel() }}</div>
+
             <!-- Billing cycle pills (recurring only) -->
             @if (formType() === 'recurring') {
               <div class="tf-cycle-pills">
@@ -298,13 +398,12 @@ const POPULAR_VENDOR_OPTIONS = ALL_VENDOR_OPTIONS.filter(v => POPULAR_VENDOR_KEY
               </div>
             }
 
-            <!-- Date — summary, expands on click -->
             <div class="tf-date-row">
               @if (!showDateInput()) {
                 <button type="button" class="date-summary" (click)="showDateInput.set(true)">
                   <span class="material-symbols-outlined">calendar_month</span>
                   <span class="date-summary-text">
-                    {{ dateLabel() }}: <strong>{{ formatPreviewDate(formDate()) }}</strong>
+                    <strong>{{ formatPreviewDate(formDate()) }}</strong>
                   </span>
                   @if (daysUntilPreview() !== null && (formType() === 'recurring' || formType() === 'bill')) {
                     <span class="date-badge"
@@ -337,76 +436,7 @@ const POPULAR_VENDOR_OPTIONS = ALL_VENDOR_OPTIONS.filter(v => POPULAR_VENDOR_KEY
             </div>
           </div>
 
-          <!-- ── Q2: Type ── -->
-          <div class="tf-q-section">
-            <div class="tf-q-label">Transaction type</div>
-            <div class="type-chips">
-              @for (opt of typeOptions; track opt) {
-                <button type="button" class="type-chip"
-                  [class.type-chip--active]="formType() === opt"
-                  [style.--chip-color]="typeMeta(opt).color"
-                  (click)="selectType(opt)">
-                  <span class="material-symbols-outlined">{{ typeMeta(opt).icon }}</span>
-                  <span>{{ typeMeta(opt).label }}</span>
-                </button>
-              }
-            </div>
-          </div>
-
-          <!-- ── Q3: Name ── -->
-          <div class="tf-q-section">
-            <div class="tf-q-label">{{ nameQuestion() }}</div>
-            <div class="vd-wrap">
-              <div class="name-wrap">
-                <span class="material-symbols-outlined vd-search-icon">search</span>
-                <input type="text" class="form-input vd-input vendor-name-input"
-                  [ngModel]="formName()" (ngModelChange)="onNameChange($event)"
-                  (click)="showVendorDropdown.set(true)"
-                  (blur)="onVendorBlur()"
-                  (keydown)="onVendorKeydown($event)"
-                  [attr.placeholder]="namePlaceholder()"
-                  autocomplete="off">
-                @if (presetApplied()) {
-                  <span class="preset-badge">
-                    <span class="material-symbols-outlined" style="font-size:11px">auto_awesome</span>
-                    auto-filled
-                  </span>
-                }
-              </div>
-              @if (showVendorDropdown() && vendorSuggestions().length > 0) {
-                <div class="vd-dropdown">
-                  @if (!formName()) {
-                    <div class="vd-section-label">
-                      <span class="material-symbols-outlined" style="font-size:13px;vertical-align:middle">bolt</span>
-                      Popular services
-                    </div>
-                  }
-                  @for (v of vendorSuggestions(); track v.key; let i = $index) {
-                    <button type="button" class="vd-item"
-                      [class.vd-item-highlighted]="vendorHighlightIdx() === i"
-                      (mousedown)="selectVendor(v)">
-                      <div class="vd-avatar" [style.background]="avatarBgFn(v.displayName)">
-                        {{ v.displayName.charAt(0).toUpperCase() }}
-                      </div>
-                      <div class="vd-info">
-                        <span class="vd-name">{{ v.displayName }}</span>
-                        <span class="vd-meta">
-                          <span class="material-symbols-outlined" style="font-size:12px;vertical-align:middle">{{ categoryIconFn(v.category) }}</span>
-                          {{ v.category }}
-                        </span>
-                      </div>
-                      <div class="vd-chips">
-                        <span class="vd-chip">{{ v.billingCycle }}</span>
-                        <span class="vd-chip vd-chip-currency">{{ v.currency }}</span>
-                      </div>
-                    </button>
-                  }
-                </div>
-              }
-            </div>
-          </div>
-
-          <!-- ── Q4: Category (optional) ── -->
+          <!-- ── Q5: Category (optional) ── -->
           <div class="tf-q-section">
             <div class="tf-q-label">Category <span class="tf-q-opt">optional</span></div>
             <div class="cat-pills">
@@ -421,7 +451,7 @@ const POPULAR_VENDOR_OPTIONS = ALL_VENDOR_OPTIONS.filter(v => POPULAR_VENDOR_KEY
             </div>
           </div>
 
-          <!-- ── Q5: Notes (optional) ── -->
+          <!-- ── Q6: Notes (optional) ── -->
           <div class="tf-q-section tf-q-section--last">
             <div class="tf-q-label">Notes <span class="tf-q-opt">optional</span></div>
             <textarea class="form-input form-textarea" rows="2"
@@ -453,105 +483,8 @@ const POPULAR_VENDOR_OPTIONS = ALL_VENDOR_OPTIONS.filter(v => POPULAR_VENDOR_KEY
         </div>
       </div>
 
-      <!-- Preview (route mode only — slider already has hero card) -->
-      @if (!embeddedMode()) {
-      <div class="tf-preview-col">
-        <div class="tf-section-label preview-section-label">Preview</div>
-        <div class="preview-card">
-          <div class="preview-header">
-            <div class="preview-avatar" [style.background]="avatarBgFn(formName() || 'N')">
-              {{ (formName() || 'N').charAt(0).toUpperCase() }}
-            </div>
-            <div class="preview-info">
-              <div class="preview-name" [class.preview-ghost]="!formName()">
-                {{ formName() || 'Service name' }}
-              </div>
-              <div class="preview-type" [style.color]="typeMeta(formType()).color">
-                <span class="material-symbols-outlined" style="font-size:12px">{{ typeMeta(formType()).icon }}</span>
-                {{ typeMeta(formType()).label }}
-              </div>
-            </div>
-          </div>
-          <div class="preview-amount-row">
-            <span class="preview-amount" [class.preview-ghost]="formAmount() <= 0">{{ previewAmountStr() }}</span>
-            @if (formType() === 'recurring') {
-              <span class="preview-cycle-badge">/ {{ formCycle() }}</span>
-            }
-          </div>
-          <div class="preview-details">
-            @if (formDate()) {
-              <div class="preview-detail-row">
-                <span class="preview-detail-label">{{ dateLabel() }}</span>
-                <span class="preview-detail-val">{{ formatPreviewDate(formDate()) }}</span>
-              </div>
-              @let days = daysUntilPreview();
-              @if ((formType() === 'recurring' || formType() === 'bill') && days !== null) {
-                <div class="preview-detail-row">
-                  <span class="preview-detail-label">Due in</span>
-                  <span class="preview-detail-val"
-                    [class.preview-due-soon]="days <= 7 && days >= 0"
-                    [class.preview-overdue]="days < 0">
-                    @if (days < 0) { overdue }
-                    @else if (days === 0) { today }
-                    @else { {{ days }}d }
-                  </span>
-                </div>
-              }
-            }
-            @if (formCategory()) {
-              <div class="preview-detail-row">
-                <span class="preview-detail-label">Category</span>
-                <span class="preview-detail-val">{{ formCategory() }}</span>
-              </div>
-            }
-          </div>
-          <div class="preview-status-row">
-            <span class="status-dot" [style.background]="statusMetaFn(formStatus()).color"></span>
-            <span class="preview-status-label" [style.color]="statusMetaFn(formStatus()).color">
-              {{ statusMetaFn(formStatus()).label }}
-            </span>
-          </div>
-        </div>
-      </div>
-      } <!-- end @if (!embeddedMode()) preview col -->
-
     </div>
 
-    <!-- ── LIVE PREVIEW card (embedded add mode, at bottom) ── -->
-    @if (embeddedMode() && !isEditMode()) {
-      <div class="tf-slider-preview-section">
-        <div class="tf-slider-preview-label">
-          <span class="material-symbols-outlined">visibility</span>
-          Preview
-        </div>
-        <div class="tf-slider-hero-card tf-slider-hero-card--bottom">
-          <div class="tf-slider-hero-left">
-            <div class="tf-hero-avatar tf-hero-avatar--lg" [style.background]="avatarBgFn(formName() || 'N')">
-              {{ (formName() || 'N').charAt(0).toUpperCase() }}
-            </div>
-            <div class="tf-slider-hero-info">
-              <div class="tf-slider-service-name" [class.tf-hero-ghost]="!formName()">
-                {{ formName() || 'Service name' }}
-              </div>
-              <div class="tf-slider-status-row">
-                <span class="tf-status-dot" [style.background]="typeMeta(formType()).color"></span>
-                <span class="tf-slider-status-label" [style.color]="typeMeta(formType()).color">
-                  {{ typeMeta(formType()).label }}
-                </span>
-              </div>
-            </div>
-          </div>
-          <div class="tf-slider-hero-right">
-            <div class="tf-slider-amount" [class.tf-hero-ghost]="formAmount() <= 0">
-              {{ previewAmountStr() }}
-            </div>
-            @if (formType() === 'recurring') {
-              <div class="tf-slider-cycle-label">per {{ formCycle() }}</div>
-            }
-          </div>
-        </div>
-      </div>
-    }
     } <!-- end Updates / add form -->
 
   </div> <!-- end tf-scroll -->
@@ -662,10 +595,9 @@ const POPULAR_VENDOR_OPTIONS = ALL_VENDOR_OPTIONS.filter(v => POPULAR_VENDOR_KEY
     }
     .tf-hero-ghost { opacity: 0.35; font-style: italic; }
 
-    /* ── Two-column layout ── */
-    .tf-cols { display: flex; gap: 20px; align-items: flex-start; max-width: 860px; }
-    .tf-form-col { flex: 1; min-width: 0; }
-    .tf-preview-col { width: 224px; flex-shrink: 0; position: sticky; top: 0; align-self: flex-start; }
+    /* ── Form layout ── */
+    .tf-cols { display: block; max-width: 560px; }
+    .tf-form-col { width: 100%; }
 
     /* ── Slider header ── */
     .tf-slider-header {
@@ -795,9 +727,6 @@ const POPULAR_VENDOR_OPTIONS = ALL_VENDOR_OPTIONS.filter(v => POPULAR_VENDOR_KEY
     /* ── Embedded overrides ── */
     .tf-shell--embedded .tf-scroll { overflow-x: hidden; padding: 0 0 16px; }
     .tf-shell--embedded .tf-cols { flex-wrap: wrap; padding: 0 16px; }
-    .tf-shell--embedded .tf-preview-col { display: none; }
-    .tf-shell--embedded .preview-card { display: none; }
-    .tf-shell--embedded .preview-section-label { display: none; }
 
     /* ── Embedded type-chips: single-row segmented style ── */
     .tf-shell--embedded .type-chips {
@@ -823,18 +752,6 @@ const POPULAR_VENDOR_OPTIONS = ALL_VENDOR_OPTIONS.filter(v => POPULAR_VENDOR_KEY
     }
 
     /* ── Bottom live preview (embedded add mode) ── */
-    .tf-slider-preview-section { padding: 16px 16px 4px; }
-    .tf-slider-preview-label {
-      display: flex; align-items: center; gap: 5px;
-      font-size: 9.5px; font-weight: 700; text-transform: uppercase;
-      letter-spacing: 0.08em; color: var(--text-tertiary); margin-bottom: 10px;
-    }
-    .tf-slider-preview-label .material-symbols-outlined { font-size: 13px; }
-    .tf-slider-hero-card--bottom {
-      border: 1px solid var(--border-subtle) !important;
-      border-radius: 12px; border-bottom: 1px solid var(--border-subtle) !important;
-    }
-
     /* ── Embedded footer ── */
     .tf-footer--embedded {
       padding: 10px 16px; gap: 10px;
@@ -898,7 +815,6 @@ const POPULAR_VENDOR_OPTIONS = ALL_VENDOR_OPTIONS.filter(v => POPULAR_VENDOR_KEY
       font-size: 10px; font-weight: 700; text-transform: uppercase;
       letter-spacing: 0.5px; color: var(--text-tertiary); margin-bottom: 8px;
     }
-    .preview-section-label { margin-bottom: 6px; }
     .tf-divider { border: none; border-top: 1px solid var(--border-subtle); margin: 12px 0; }
 
     /* ── Type chips ── */
@@ -989,10 +905,8 @@ const POPULAR_VENDOR_OPTIONS = ALL_VENDOR_OPTIONS.filter(v => POPULAR_VENDOR_KEY
     /* ── Amount hero ── */
     .tf-amount-hero {
       display: flex; align-items: center; gap: 10px;
-      padding: 10px 0; border-bottom: 2px solid var(--border-subtle);
-      margin-bottom: 12px;
+      padding: 6px 0;
     }
-    .tf-amount-hero:focus-within { border-bottom-color: var(--accent-primary); }
     /* ── Custom currency picker ── */
     .tf-curr-wrap { position: relative; flex-shrink: 0; }
     .tf-currency-sel {
@@ -1040,6 +954,51 @@ const POPULAR_VENDOR_OPTIONS = ALL_VENDOR_OPTIONS.filter(v => POPULAR_VENDOR_KEY
     }
     .tf-curr-name { font-size: 12px; color: var(--text-tertiary); }
     .tf-curr-empty { padding: 16px; text-align: center; font-size: 12px; color: var(--text-tertiary); }
+    .tf-curr-section-lbl {
+      display: flex; align-items: center; gap: 4px;
+      padding: 6px 10px 4px; font-size: 10.5px; font-weight: 600;
+      color: var(--text-tertiary); letter-spacing: 0.04em;
+    }
+
+    /* ── Vendor picker ── */
+    .tf-vendor-wrap { position: relative; }
+    .tf-vendor-drop { width: 100%; left: 0; }
+
+    .tf-vendor-trigger {
+      display: flex; align-items: center; gap: 8px; width: 100%;
+      padding: 9px 12px; border: 1px solid var(--border-subtle);
+      border-radius: 8px; background: var(--bg-app); cursor: pointer;
+      color: var(--text-tertiary); font-size: 13px; transition: border-color 0.15s;
+    }
+    .tf-vendor-trigger:hover { border-color: var(--border-highlight); color: var(--text-secondary); }
+    .tf-vendor-trigger-icon { font-size: 16px; flex-shrink: 0; }
+    .tf-vendor-trigger-placeholder { flex: 1; text-align: left; }
+
+    .tf-vendor-selected {
+      display: flex; align-items: center; gap: 10px;
+      padding: 8px 12px; border: 1px solid var(--border-subtle);
+      border-radius: 8px; background: var(--bg-hover);
+    }
+    .tf-vendor-sel-av { width: 28px !important; height: 28px !important; border-radius: 7px !important; font-size: 12px !important; flex-shrink: 0; }
+    .tf-vendor-sel-name { flex: 1; font-size: 13px; font-weight: 600; color: var(--text-primary); }
+    .tf-vendor-edit {
+      background: none; border: none; cursor: pointer; padding: 4px;
+      color: var(--text-tertiary); border-radius: 5px; display: flex;
+      transition: color 0.12s, background 0.12s; flex-shrink: 0;
+    }
+    .tf-vendor-edit:hover { color: var(--text-primary); background: var(--bg-active); }
+    .tf-vendor-edit .material-symbols-outlined { font-size: 15px; display: block; }
+
+    .tf-vendor-opt { gap: 10px; }
+    .tf-vendor-opt-av { width: 28px !important; height: 28px !important; border-radius: 7px !important; font-size: 12px !important; flex-shrink: 0; }
+    .tf-vendor-opt-info { display: flex; flex-direction: column; gap: 1px; min-width: 0; }
+
+    .tf-vendor-use-btn {
+      background: var(--accent-primary-dim); border: none; cursor: pointer;
+      color: var(--accent-primary); border-radius: 5px; padding: 3px 5px;
+      display: flex; align-items: center; flex-shrink: 0;
+    }
+    .tf-vendor-use-btn .material-symbols-outlined { font-size: 15px; display: block; }
     .tf-amount-big {
       font-size: 32px; font-weight: 800; color: var(--text-primary);
       background: transparent; border: none; outline: none;
@@ -1188,49 +1147,6 @@ const POPULAR_VENDOR_OPTIONS = ALL_VENDOR_OPTIONS.filter(v => POPULAR_VENDOR_KEY
     }
 
 
-    /* ── Preview card ── */
-    .preview-card {
-      background: var(--bg-panel); border: 1px solid var(--border-subtle);
-      border-radius: 10px; padding: 12px;
-    }
-    .preview-header { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; }
-    .preview-avatar {
-      width: 28px; height: 28px; border-radius: 7px; flex-shrink: 0;
-      display: flex; align-items: center; justify-content: center;
-      font-size: 12px; font-weight: 700; color: #fff;
-      text-shadow: 0 1px 2px rgba(0,0,0,0.25);
-    }
-    .preview-info { flex: 1; min-width: 0; }
-    .preview-name {
-      font-size: 12px; font-weight: 600; color: var(--text-primary);
-      white-space: nowrap; overflow: hidden; text-overflow: ellipsis; line-height: 1.3;
-    }
-    .preview-ghost { color: var(--text-tertiary) !important; font-style: italic; opacity: 0.6; }
-    .preview-type {
-      display: flex; align-items: center; gap: 3px;
-      font-size: 10px; font-weight: 500; margin-top: 2px;
-    }
-    .preview-amount-row {
-      display: flex; align-items: baseline; gap: 5px; margin-bottom: 10px;
-    }
-    .preview-amount {
-      font-size: 20px; font-weight: 700; color: var(--text-primary); letter-spacing: -0.4px;
-      transition: opacity 0.15s;
-    }
-    .preview-cycle-badge { font-size: 10.5px; color: var(--text-tertiary); font-weight: 500; }
-    .preview-details { display: flex; flex-direction: column; gap: 6px; margin-bottom: 10px; }
-    .preview-detail-row { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
-    .preview-detail-label { font-size: 10.5px; color: var(--text-tertiary); }
-    .preview-detail-val { font-size: 10.5px; font-weight: 500; color: var(--text-secondary); text-align: right; }
-    .preview-due-soon { color: #fbbf24 !important; font-weight: 700 !important; }
-    .preview-overdue { color: #ef4444 !important; font-weight: 700 !important; }
-    .preview-status-row {
-      display: flex; align-items: center; gap: 5px;
-      padding-top: 8px; border-top: 1px solid var(--border-subtle);
-    }
-    .status-dot { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; }
-    .preview-status-label { font-size: 10.5px; font-weight: 600; }
-
     /* ── Footer ── */
     .tf-footer {
       display: flex; align-items: center; justify-content: flex-end; gap: 8px;
@@ -1302,6 +1218,15 @@ export class TransactionFormComponent implements OnInit {
     saving = signal(false);
     currencyDropdownOpen = signal(false);
     currencySearch = signal('');
+    vendorDropdownOpen = signal(false);
+    vendorSearch = signal('');
+    filteredVendors = computed(() => {
+        const q = this.vendorSearch().toLowerCase().trim();
+        if (!q) return POPULAR_VENDOR_OPTIONS;
+        return ALL_VENDOR_OPTIONS.filter(v =>
+            v.key.includes(q) || v.displayName.toLowerCase().includes(q)
+        ).slice(0, 12);
+    });
     filteredCurrencies = computed(() => {
         const q = this.currencySearch().toLowerCase().trim();
         if (!q) return this.currencies;
@@ -1597,14 +1522,29 @@ export class TransactionFormComponent implements OnInit {
         this.currencySearch.set('');
     }
 
+    selectVendorFromDropdown(v: { key: string; displayName: string; category: string; billingCycle: 'monthly' | 'yearly'; currency: string }) {
+        this.selectVendor(v);
+        this.vendorDropdownOpen.set(false);
+        this.vendorSearch.set('');
+    }
+
+    clearVendor() {
+        this.formName.set('');
+        this.presetApplied.set(false);
+        this.vendorSearch.set('');
+        this.vendorDropdownOpen.set(true);
+    }
+
     @HostListener('document:click', ['$event'])
     onDocumentClick(e: MouseEvent) {
-        if (this.currencyDropdownOpen()) {
-            const target = e.target as Element;
-            if (!target.closest('.tf-curr-wrap')) {
-                this.currencyDropdownOpen.set(false);
-                this.currencySearch.set('');
-            }
+        const target = e.target as Element;
+        if (this.currencyDropdownOpen() && !target.closest('.tf-curr-wrap')) {
+            this.currencyDropdownOpen.set(false);
+            this.currencySearch.set('');
+        }
+        if (this.vendorDropdownOpen() && !target.closest('.tf-vendor-wrap')) {
+            this.vendorDropdownOpen.set(false);
+            this.vendorSearch.set('');
         }
     }
 
