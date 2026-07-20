@@ -285,6 +285,8 @@ export interface BookmarkFolder {
     createdAt: string;
 }
 
+export type RelationshipType = 'friend' | 'colleague' | 'client' | 'family' | 'mentor' | 'acquaintance';
+
 export interface Person {
     id: string;
     name: string;
@@ -295,7 +297,14 @@ export interface Person {
     avatar?: string;
     tags?: string[];
     notes?: string;
-    lastInteraction?: string; // ISO date of most recent interaction
+    // CRM fields
+    birthday?: string;           // YYYY-MM-DD (year optional but stored for display)
+    lastContacted?: string;      // ISO datetime — manually logged
+    reminderDate?: string;       // YYYY-MM-DD — next follow-up date
+    relationshipType?: RelationshipType;
+    location?: string;
+    socialLinks?: { linkedin?: string; twitter?: string; website?: string };
+    lastInteraction?: string;    // ISO date of most recent interaction
     createdAt: string;
     deleted_at?: string | null;
 }
