@@ -81,7 +81,9 @@ export class SettingsPageComponent implements OnInit {
   lastSectionError = signal<'web' | 'desktop' | null>(null);
   saveStatus = signal<'idle' | 'saving' | 'saved'>('idle');
   exportDone = signal(false);
-  dataTab = signal<'backup' | 'export' | 'import' | 'sync'>('backup');
+  dataTab     = signal<'backup' | 'export' | 'import' | 'sync'>('backup');
+  aiTab       = signal<'provider' | 'features'>('provider');
+  securityTab = signal<'sessions' | 'activity'>('sessions');
 
   // Settings signals
   currentTheme = signal<Theme>('dark');

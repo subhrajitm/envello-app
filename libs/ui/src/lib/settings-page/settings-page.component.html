@@ -499,6 +499,22 @@
           <p>Configure AI providers and API keys</p>
         </div>
 
+        <nav class="data-tabs" aria-label="AI section tabs">
+          <button class="data-tab" [class.active]="aiTab() === 'provider'"
+            (click)="aiTab.set('provider')">
+            <span class="material-symbols-outlined">smart_toy</span>
+            Provider
+          </button>
+          <button class="data-tab" [class.active]="aiTab() === 'features'"
+            (click)="aiTab.set('features')">
+            <span class="material-symbols-outlined">tune</span>
+            Features
+          </button>
+        </nav>
+
+        @if (aiTab() === 'provider') {
+        <div class="data-tab-panel">
+
         <div class="setting-item setting-row">
           <div class="setting-label-group">
             <label>Enable AI Features</label>
@@ -668,11 +684,18 @@
           </p>
         </div>
 
+        }
+        </div><!-- /provider tab panel -->
+        }
+
+        @if (aiTab() === 'features') {
+        <div class="data-tab-panel">
+
         <!-- Per-feature model overrides -->
         <div class="setting-item flex flex-col gap-3">
           <div class="setting-label-group">
             <label>Per-Feature Models</label>
-            <span class="setting-desc">Use a different provider or model for specific AI tasks. Leave as "Default" to inherit the global setting above.</span>
+            <span class="setting-desc">Use a different provider or model for specific AI tasks. Leave as "Default" to inherit the global provider.</span>
           </div>
           <div class="feature-models-grid">
             <div class="feature-models-header">
@@ -732,7 +755,9 @@
         </div>
         }
 
+        </div><!-- /features tab panel -->
         }
+
       </div>
       }
 
@@ -1337,90 +1362,117 @@
           <p>Active sessions and account activity log</p>
         </div>
 
-        <!-- Current session card -->
-        <div class="info-card">
-          <div class="info-row">
-            <span class="info-label">Current device</span>
-            <span class="info-value">
-              {{ currentDevice }}
-              <env-badge variant="success" size="xs" [pill]="true">Current</env-badge>
-            </span>
-          </div>
-          @if (currentUserEmail()) {
-            <div class="info-row">
-              <span class="info-label">Signed in as</span>
-              <span class="info-value">{{ currentUserEmail() }}</span>
-            </div>
-          }
-          <div class="info-row">
-            <span class="info-label">Session status</span>
-            <span class="info-value sec-active-badge">
-              <span class="material-symbols-outlined settings-icon-xs">check_circle</span>
-              Active
-            </span>
-          </div>
-        </div>
-
-        <!-- Revoke other sessions -->
-        <div class="setting-item setting-row">
-          <div class="setting-label-group">
-            <label>Other devices</label>
-            <span class="setting-desc">Sign out of all other browsers and devices while staying signed in here</span>
-          </div>
-          <env-button variant="secondary" (clicked)="revokeOtherConfirm.set(true)">Sign out other devices</env-button>
-        </div>
-
-        <!-- Danger zone: sign out everywhere -->
-        <div class="danger-zone">
-          <div class="danger-zone-header">
-            <span class="material-symbols-outlined danger-zone-icon">warning</span>
-            <div>
-              <p class="danger-zone-title">Sign Out Everywhere</p>
-              <p class="danger-zone-desc">Ends all sessions, including this one — you'll be returned to the login screen.</p>
-            </div>
-          </div>
-          <div class="danger-zone-row">
-            <div class="setting-label-group">
-              <label>All devices</label>
-              <span class="setting-desc">Use this if your account may have been compromised</span>
-            </div>
-            <env-button variant="danger" (clicked)="revokeAllConfirm.set(true)">Sign Out Everywhere</env-button>
-          </div>
-        </div>
-
-        <!-- Activity log -->
-        <div class="section-divider"></div>
-        <div class="section-header settings-no-margin-top">
-          <h3>Activity Log</h3>
-          <p>Recent sign-in and security events on this device</p>
-        </div>
-
-        @if (activityEntries().length === 0) {
-          <div class="sec-empty">
+        <nav class="data-tabs" aria-label="Security section tabs">
+          <button class="data-tab" [class.active]="securityTab() === 'sessions'"
+            (click)="securityTab.set('sessions')">
+            <span class="material-symbols-outlined">devices</span>
+            Sessions
+          </button>
+          <button class="data-tab" [class.active]="securityTab() === 'activity'"
+            (click)="securityTab.set('activity')">
             <span class="material-symbols-outlined">history</span>
-            <p>No activity recorded yet — events appear after your next sign-in.</p>
-          </div>
-        } @else {
-          <div class="sec-log-card">
-            @for (entry of activityEntries(); track entry.id) {
-              <div class="sec-log-row">
-                <span class="material-symbols-outlined sec-log-icon {{ actionMeta(entry.action).cls }}">
-                  {{ actionMeta(entry.action).icon }}
-                </span>
-                <div class="sec-log-body">
-                  <span class="sec-log-label">{{ actionMeta(entry.action).label }}</span>
-                  @if (entry.details) {
-                    <span class="sec-log-detail">{{ entry.details }}</span>
-                  }
-                </div>
-                <div class="sec-log-meta">
-                  <span class="sec-log-device">{{ entry.device }}</span>
-                  <span class="sec-log-time">{{ formatActivityTime(entry.timestamp) }}</span>
-                </div>
+            Activity
+            @if (activityEntries().length > 0) {
+              <env-badge size="xs" variant="default" [pill]="true">{{ activityEntries().length }}</env-badge>
+            }
+          </button>
+        </nav>
+
+        @if (securityTab() === 'sessions') {
+        <div class="data-tab-panel">
+
+          <!-- Current session card -->
+          <div class="info-card">
+            <div class="info-row">
+              <span class="info-label">Current device</span>
+              <span class="info-value">
+                {{ currentDevice }}
+                <env-badge variant="success" size="xs" [pill]="true">Current</env-badge>
+              </span>
+            </div>
+            @if (currentUserEmail()) {
+              <div class="info-row">
+                <span class="info-label">Signed in as</span>
+                <span class="info-value">{{ currentUserEmail() }}</span>
               </div>
             }
+            <div class="info-row">
+              <span class="info-label">Session status</span>
+              <span class="info-value sec-active-badge">
+                <span class="material-symbols-outlined settings-icon-xs">check_circle</span>
+                Active
+              </span>
+            </div>
           </div>
+
+          <!-- Revoke other sessions -->
+          <div class="setting-item setting-row">
+            <div class="setting-label-group">
+              <label>Other devices</label>
+              <span class="setting-desc">Sign out of all other browsers and devices while staying signed in here</span>
+            </div>
+            <env-button variant="secondary" (clicked)="revokeOtherConfirm.set(true)">Sign out other devices</env-button>
+          </div>
+
+          <!-- Danger zone: sign out everywhere -->
+          <div class="danger-zone">
+            <div class="danger-zone-header">
+              <span class="material-symbols-outlined danger-zone-icon">warning</span>
+              <div>
+                <p class="danger-zone-title">Sign Out Everywhere</p>
+                <p class="danger-zone-desc">Ends all sessions, including this one — you'll be returned to the login screen.</p>
+              </div>
+            </div>
+            <div class="danger-zone-row">
+              <div class="setting-label-group">
+                <label>All devices</label>
+                <span class="setting-desc">Use this if your account may have been compromised</span>
+              </div>
+              <env-button variant="danger" (clicked)="revokeAllConfirm.set(true)">Sign Out Everywhere</env-button>
+            </div>
+          </div>
+
+        </div>
         }
+
+        @if (securityTab() === 'activity') {
+        <div class="data-tab-panel">
+
+          <div class="section-header settings-no-margin-top">
+            <h3>Activity Log</h3>
+            <p>Recent sign-in and security events on this device</p>
+          </div>
+
+          @if (activityEntries().length === 0) {
+            <div class="sec-empty">
+              <span class="material-symbols-outlined">history</span>
+              <p>No activity recorded yet — events appear after your next sign-in.</p>
+            </div>
+          } @else {
+            <div class="sec-log-card">
+              @for (entry of activityEntries(); track entry.id) {
+                <div class="sec-log-row">
+                  <span class="material-symbols-outlined sec-log-icon {{ actionMeta(entry.action).cls }}">
+                    {{ actionMeta(entry.action).icon }}
+                  </span>
+                  <div class="sec-log-body">
+                    <span class="sec-log-label">{{ actionMeta(entry.action).label }}</span>
+                    @if (entry.details) {
+                      <span class="sec-log-detail">{{ entry.details }}</span>
+                    }
+                  </div>
+                  <div class="sec-log-meta">
+                    <span class="sec-log-device">{{ entry.device }}</span>
+                    <span class="sec-log-time">{{ formatActivityTime(entry.timestamp) }}</span>
+                  </div>
+                </div>
+              }
+            </div>
+          }
+
+        </div>
+        }
+
       </div>
       }
 
