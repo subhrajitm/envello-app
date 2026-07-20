@@ -1,4 +1,4 @@
-import { Component, inject, signal, computed, input, output, OnInit, ChangeDetectionStrategy, effect, untracked, ViewChild, ElementRef } from '@angular/core';
+import { Component, inject, signal, computed, input, output, OnInit, ChangeDetectionStrategy, effect, untracked, ViewChild, ElementRef, HostListener } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, ActivatedRoute } from '@angular/router';
@@ -6,9 +6,9 @@ import { TransactionStore } from '@envello/state';
 import { Transaction, TransactionType } from '@envello/domain';
 import { ConfirmDialogComponent } from '@envello/ui';
 import {
-    TYPE_META, STATUS_META, CURRENCIES, CATEGORY_OPTIONS, POPULAR_VENDOR_KEYS,
+    TYPE_META, STATUS_META, CATEGORY_OPTIONS, POPULAR_VENDOR_KEYS,
     VENDOR_PRESETS, toDisplayName, toLocalDateString, autoDate, avatarBg,
-    currencySymbol, categoryIcon,
+    currencySymbol, categoryIcon, ALL_CURRENCIES,
 } from './transaction.constants';
 
 
@@ -242,14 +242,44 @@ const POPULAR_VENDOR_OPTIONS = ALL_VENDOR_OPTIONS.filter(v => POPULAR_VENDOR_KEY
           <div class="tf-q-section">
             <div class="tf-q-label">How much?</div>
             <div class="tf-amount-hero">
-              <select class="tf-currency-sel"
-                [ngModel]="formCurrency()" (ngModelChange)="formCurrency.set($event)">
-                @for (c of currencies; track c) {
-                  <option [value]="c">{{ c }}</option>
+              <!-- Custom currency picker -->
+              <div class="tf-curr-wrap">
+                <button type="button" class="tf-currency-sel"
+                  (click)="currencyDropdownOpen.set(!currencyDropdownOpen())"
+                  [title]="formCurrency()">
+                  {{ formCurrency() }}
+                </button>
+                @if (currencyDropdownOpen()) {
+                  <div class="tf-curr-drop">
+                    <div class="tf-curr-search-wrap">
+                      <span class="material-symbols-outlined tf-curr-search-icon">search</span>
+                      <input class="tf-curr-search" type="text" placeholder="Search currency…"
+                        [ngModel]="currencySearch()"
+                        (ngModelChange)="currencySearch.set($event)"
+                        (click)="$event.stopPropagation()"
+                        autofocus>
+                    </div>
+                    <div class="tf-curr-list">
+                      @for (c of filteredCurrencies(); track c.code) {
+                        <button type="button" class="tf-curr-opt"
+                          [class.tf-curr-opt--active]="formCurrency() === c.code"
+                          (click)="selectCurrency(c.code)">
+                          <span class="tf-curr-code">{{ c.code }}</span>
+                          <span class="tf-curr-name">{{ c.name }}</span>
+                        </button>
+                      }
+                      @if (filteredCurrencies().length === 0) {
+                        <div class="tf-curr-empty">No results</div>
+                      }
+                    </div>
+                  </div>
                 }
-              </select>
+              </div>
               <input #amountInput type="number" step="0.01" min="0" class="tf-amount-big"
-                [ngModel]="formAmount()" (ngModelChange)="formAmount.set($event)"
+                [ngModel]="formAmount() || null"
+                (ngModelChange)="formAmount.set(+($event ?? 0))"
+                (focus)="$any($event.target).select()"
+                (wheel)="$event.preventDefault()"
                 placeholder="0.00">
             </div>
 
@@ -536,8 +566,8 @@ const POPULAR_VENDOR_OPTIONS = ALL_VENDOR_OPTIONS.filter(v => POPULAR_VENDOR_KEY
         Edit Details
       </button>
     } @else {
-      @if (!canSave() && formName() && !embeddedMode()) {
-        <span class="save-hint">{{ formAmount() <= 0 ? 'Enter an amount' : '' }}</span>
+      @if (!canSave() && formName()) {
+        <span class="save-hint">{{ formAmount() <= 0 ? 'Enter an amount to continue' : '' }}</span>
       }
       @if (embeddedMode() && isEditMode()) {
         <button class="tf-cancel-btn tf-cancel-btn--embedded" (click)="sliderTab.set('details')">
@@ -550,8 +580,13 @@ const POPULAR_VENDOR_OPTIONS = ALL_VENDOR_OPTIONS.filter(v => POPULAR_VENDOR_KEY
       }
       <button class="tf-save-btn" [class.tf-save-btn--embedded]="embeddedMode()"
         [disabled]="!canSave()" (click)="save()">
-        <span class="material-symbols-outlined">{{ isEditMode() ? 'sync' : 'add_circle' }}</span>
-        {{ isEditMode() ? 'Update Transaction' : 'Save Transaction' }}
+        @if (saving()) {
+          <span class="tf-save-spinner"></span>
+          {{ isEditMode() ? 'Updating…' : 'Saving…' }}
+        } @else {
+          <span class="material-symbols-outlined">{{ isEditMode() ? 'sync' : 'add_circle' }}</span>
+          {{ isEditMode() ? 'Update Transaction' : 'Save Transaction' }}
+        }
       </button>
     }
   </div>
@@ -958,14 +993,53 @@ const POPULAR_VENDOR_OPTIONS = ALL_VENDOR_OPTIONS.filter(v => POPULAR_VENDOR_KEY
       margin-bottom: 12px;
     }
     .tf-amount-hero:focus-within { border-bottom-color: var(--accent-primary); }
+    /* ── Custom currency picker ── */
+    .tf-curr-wrap { position: relative; flex-shrink: 0; }
     .tf-currency-sel {
-      font-size: 15px; font-weight: 700; color: var(--text-secondary);
+      font-size: 13px; font-weight: 700; color: var(--text-secondary);
       background: var(--bg-hover); border: 1px solid var(--border-subtle);
-      border-radius: 6px; padding: 5px 8px; cursor: pointer;
-      -webkit-appearance: none; appearance: none; outline: none;
-      transition: all 0.15s; flex-shrink: 0;
+      border-radius: 6px; padding: 5px 10px; cursor: pointer;
+      outline: none; transition: all 0.15s;
+      width: 60px; text-align: center; letter-spacing: 0.02em;
     }
-    .tf-currency-sel:focus { border-color: var(--accent-primary); }
+    .tf-currency-sel:hover { border-color: var(--border-highlight); color: var(--text-primary); }
+
+    .tf-curr-drop {
+      position: absolute; top: calc(100% + 6px); left: 0;
+      width: 220px; z-index: var(--z-notification);
+      background: var(--bg-panel); border: 1px solid var(--border-subtle);
+      border-radius: 10px; box-shadow: 0 8px 24px rgba(0,0,0,0.18);
+      overflow: hidden; display: flex; flex-direction: column;
+    }
+    .tf-curr-search-wrap {
+      display: flex; align-items: center; gap: 6px;
+      padding: 8px 10px; border-bottom: 1px solid var(--border-subtle);
+      flex-shrink: 0;
+    }
+    .tf-curr-search-icon { font-size: 15px; color: var(--text-tertiary); flex-shrink: 0; }
+    .tf-curr-search {
+      flex: 1; background: transparent; border: none; outline: none;
+      font-size: 12px; color: var(--text-primary);
+    }
+    .tf-curr-search::placeholder { color: var(--text-tertiary); }
+    .tf-curr-list {
+      overflow-y: auto; max-height: 240px;
+      padding: 4px;
+    }
+    .tf-curr-opt {
+      display: flex; align-items: center; gap: 10px; width: 100%;
+      padding: 7px 10px; border: none; border-radius: 6px;
+      background: transparent; cursor: pointer; text-align: left;
+      transition: background 0.1s;
+    }
+    .tf-curr-opt:hover, .tf-curr-opt--active { background: var(--bg-hover); }
+    .tf-curr-opt--active .tf-curr-code { color: var(--accent-primary); }
+    .tf-curr-code {
+      font-size: 12px; font-weight: 700; color: var(--text-primary);
+      width: 36px; flex-shrink: 0; font-family: var(--font-mono, monospace);
+    }
+    .tf-curr-name { font-size: 12px; color: var(--text-tertiary); }
+    .tf-curr-empty { padding: 16px; text-align: center; font-size: 12px; color: var(--text-tertiary); }
     .tf-amount-big {
       font-size: 32px; font-weight: 800; color: var(--text-primary);
       background: transparent; border: none; outline: none;
@@ -1181,6 +1255,12 @@ const POPULAR_VENDOR_OPTIONS = ALL_VENDOR_OPTIONS.filter(v => POPULAR_VENDOR_KEY
     .tf-save-btn:hover { opacity: 0.88; }
     .tf-save-btn:disabled { opacity: 0.5; cursor: not-allowed; }
     .tf-save-btn .material-symbols-outlined { font-size: 15px; }
+    .tf-save-spinner {
+      width: 13px; height: 13px; border-radius: 50%; flex-shrink: 0;
+      border: 2px solid rgba(0,0,0,0.2); border-top-color: var(--accent-primary-text);
+      animation: tf-spin 0.7s linear infinite;
+    }
+    @keyframes tf-spin { to { transform: rotate(360deg); } }
     `]
 })
 export class TransactionFormComponent implements OnInit {
@@ -1195,7 +1275,7 @@ export class TransactionFormComponent implements OnInit {
 
     readonly typeOptions: TransactionType[] = ['recurring', 'one-time', 'bill', 'purchase', 'refund'];
     readonly categoryOptions = CATEGORY_OPTIONS;
-    readonly currencies = CURRENCIES;
+    readonly currencies = ALL_CURRENCIES;
 
     // ── Mode ──────────────────────────────────────────────────────────────
     isEditMode = signal(false);
@@ -1207,7 +1287,7 @@ export class TransactionFormComponent implements OnInit {
     formCategory  = signal('');
     formProjectId = signal('global');
     formAmount    = signal<number>(0);
-    formCurrency  = signal('USD');
+    formCurrency  = signal(this.defaultCurrency());
     formCycle     = signal<'monthly' | 'yearly' | 'weekly'>('monthly');
     formDate      = signal('');
     formStatus    = signal<'active' | 'paused' | 'cancelled' | 'completed'>('active');
@@ -1219,6 +1299,17 @@ export class TransactionFormComponent implements OnInit {
 
     deleteConfirmOpen = signal(false);
     sliderTab = signal<'details' | 'updates' | 'edit'>('details');
+    saving = signal(false);
+    currencyDropdownOpen = signal(false);
+    currencySearch = signal('');
+    filteredCurrencies = computed(() => {
+        const q = this.currencySearch().toLowerCase().trim();
+        if (!q) return this.currencies;
+        return this.currencies.filter(c =>
+            c.code.toLowerCase().startsWith(q) ||
+            c.name.toLowerCase().includes(q)
+        );
+    });
     @ViewChild('amountInput') private amountInputRef?: ElementRef<HTMLInputElement>;
 
     // ── Computed ──────────────────────────────────────────────────────────
@@ -1228,7 +1319,7 @@ export class TransactionFormComponent implements OnInit {
         return this.transactionStore.transactions().find(t => t.id === id) ?? null;
     });
 
-    canSave = computed(() => !!this.formName() && this.formAmount() > 0);
+    canSave = computed(() => !!this.formName() && this.formAmount() > 0 && !this.saving());
 
     nameLabel = computed<string>(() => {
         const map: Record<TransactionType, string> = {
@@ -1320,14 +1411,14 @@ export class TransactionFormComponent implements OnInit {
                     this.formCategory.set('');
                     this.formProjectId.set('global');
                     this.formAmount.set(0);
-                    this.formCurrency.set('USD');
+                    this.formCurrency.set(this.defaultCurrency());
                     this.formCycle.set('monthly');
                     this.formDate.set(autoDate('monthly'));
                     this.formStatus.set('active');
                     this.formNotes.set('');
                     this.presetApplied.set(false);
                     this.showDateInput.set(false);
-                    this.sliderTab.set('updates');
+                    this.sliderTab.set('details');
                     setTimeout(() => this.amountInputRef?.nativeElement?.focus(), 0);
                 }
             });
@@ -1369,26 +1460,31 @@ export class TransactionFormComponent implements OnInit {
 
     async save() {
         if (!this.canSave()) return;
-        const type = this.formType();
-        const payload: Partial<Transaction> = {
-            name:         this.formName(),
-            type,
-            category:     this.formCategory() || undefined,
-            projectId:    this.formProjectId() !== 'global' ? this.formProjectId() : undefined,
-            amount:       Number(this.formAmount()),
-            currency:     this.formCurrency(),
-            date:         this.formDate() || new Date().toISOString().split('T')[0],
-            billingCycle: type === 'recurring' ? this.formCycle() : undefined,
-            status:       this.formStatus(),
-            notes:        this.formNotes() || undefined,
-        };
-        if (this.isEditMode() && this.editingId()) {
-            await this.transactionStore.update(this.editingId()!, payload);
-            if (this.embeddedMode()) { this.sliderTab.set('updates'); return; }
-        } else {
-            await this.transactionStore.add({ id: crypto.randomUUID(), ...payload } as Transaction);
+        this.saving.set(true);
+        try {
+            const type = this.formType();
+            const payload: Partial<Transaction> = {
+                name:         this.formName(),
+                type,
+                category:     this.formCategory() || undefined,
+                projectId:    this.formProjectId() !== 'global' ? this.formProjectId() : undefined,
+                amount:       Math.max(0, Number(this.formAmount())),
+                currency:     this.formCurrency(),
+                date:         this.formDate() || new Date().toISOString().split('T')[0],
+                billingCycle: type === 'recurring' ? this.formCycle() : undefined,
+                status:       this.formStatus(),
+                notes:        this.formNotes() || undefined,
+            };
+            if (this.isEditMode() && this.editingId()) {
+                await this.transactionStore.update(this.editingId()!, payload);
+                if (this.embeddedMode()) { this.sliderTab.set('updates'); return; }
+            } else {
+                await this.transactionStore.add({ id: crypto.randomUUID(), ...payload } as Transaction);
+            }
+            this.back();
+        } finally {
+            this.saving.set(false);
         }
-        this.back();
     }
 
     async confirmDelete() {
@@ -1495,6 +1591,31 @@ export class TransactionFormComponent implements OnInit {
 
 
     // ── Display helpers ───────────────────────────────────────────────────
+    selectCurrency(code: string) {
+        this.formCurrency.set(code);
+        this.currencyDropdownOpen.set(false);
+        this.currencySearch.set('');
+    }
+
+    @HostListener('document:click', ['$event'])
+    onDocumentClick(e: MouseEvent) {
+        if (this.currencyDropdownOpen()) {
+            const target = e.target as Element;
+            if (!target.closest('.tf-curr-wrap')) {
+                this.currencyDropdownOpen.set(false);
+                this.currencySearch.set('');
+            }
+        }
+    }
+
+    defaultCurrency(): string {
+        try {
+            const saved = localStorage.getItem('envello-settings');
+            if (saved) return (JSON.parse(saved)?.defaultCurrency as string) || 'USD';
+        } catch { /* ok */ }
+        return 'USD';
+    }
+
     typeMeta(type: TransactionType)   { return TYPE_META[type]; }
     statusMetaFn(status: string)      { return STATUS_META[status] ?? STATUS_META['active']; }
     avatarBgFn(name: string)          { return avatarBg(name); }

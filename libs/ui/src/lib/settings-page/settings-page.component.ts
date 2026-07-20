@@ -102,6 +102,32 @@ export class SettingsPageComponent implements OnInit {
   dailySummary = signal(false);
   analytics = signal(true);
   versionHistoryLimit = signal(50);
+  defaultCurrency = signal('USD');
+
+  /** Common world currencies for the settings picker. */
+  readonly currencyOptions: { code: string; name: string }[] = [
+    { code: 'USD', name: 'US Dollar' }, { code: 'EUR', name: 'Euro' },
+    { code: 'GBP', name: 'British Pound' }, { code: 'JPY', name: 'Japanese Yen' },
+    { code: 'CAD', name: 'Canadian Dollar' }, { code: 'AUD', name: 'Australian Dollar' },
+    { code: 'CHF', name: 'Swiss Franc' }, { code: 'CNY', name: 'Chinese Yuan' },
+    { code: 'INR', name: 'Indian Rupee' }, { code: 'BRL', name: 'Brazilian Real' },
+    { code: 'MXN', name: 'Mexican Peso' }, { code: 'SGD', name: 'Singapore Dollar' },
+    { code: 'HKD', name: 'Hong Kong Dollar' }, { code: 'KRW', name: 'South Korean Won' },
+    { code: 'NOK', name: 'Norwegian Krone' }, { code: 'SEK', name: 'Swedish Krona' },
+    { code: 'DKK', name: 'Danish Krone' }, { code: 'NZD', name: 'New Zealand Dollar' },
+    { code: 'TRY', name: 'Turkish Lira' }, { code: 'ZAR', name: 'South African Rand' },
+    { code: 'PLN', name: 'Polish Złoty' }, { code: 'THB', name: 'Thai Baht' },
+    { code: 'IDR', name: 'Indonesian Rupiah' }, { code: 'MYR', name: 'Malaysian Ringgit' },
+    { code: 'PHP', name: 'Philippine Peso' }, { code: 'AED', name: 'UAE Dirham' },
+    { code: 'SAR', name: 'Saudi Riyal' }, { code: 'ILS', name: 'Israeli Shekel' },
+    { code: 'NGN', name: 'Nigerian Naira' }, { code: 'KES', name: 'Kenyan Shilling' },
+    { code: 'PKR', name: 'Pakistani Rupee' }, { code: 'EGP', name: 'Egyptian Pound' },
+    { code: 'CZK', name: 'Czech Koruna' }, { code: 'HUF', name: 'Hungarian Forint' },
+    { code: 'RON', name: 'Romanian Leu' }, { code: 'UAH', name: 'Ukrainian Hryvnia' },
+    { code: 'TWD', name: 'Taiwan Dollar' }, { code: 'VND', name: 'Vietnamese Đồng' },
+    { code: 'RUB', name: 'Russian Ruble' }, { code: 'ARS', name: 'Argentine Peso' },
+  ];
+
   // Desktop-only window settings
   launchAtLogin = signal(false);
   alwaysOnTop = signal(false);
@@ -673,6 +699,7 @@ export class SettingsPageComponent implements OnInit {
       hiddenNavItems: this.hiddenNavItems(),
       alwaysOnTop: this.alwaysOnTop(),
       minimizeToTray: this.minimizeToTray(),
+      defaultCurrency: this.defaultCurrency(),
     };
     await this.userPrefsService.save(settings);
     this.aiService.updateConfig(this.aiProvider(), this.aiModel(), this.aiKey());
@@ -721,6 +748,7 @@ export class SettingsPageComponent implements OnInit {
     this.analytics.set(true);
     this.alwaysOnTop.set(false);
     this.minimizeToTray.set(false);
+    this.defaultCurrency.set('USD');
     this.aiProvider.set('openai');
     this.aiModel.set('');
     this.aiKey.set('');
@@ -834,6 +862,7 @@ export class SettingsPageComponent implements OnInit {
     if (s['versionHistoryLimit'])          this.versionHistoryLimit.set(s['versionHistoryLimit']);
     if (s['alwaysOnTop'] !== undefined)    this.alwaysOnTop.set(!!s['alwaysOnTop']);
     if (s['minimizeToTray'] !== undefined) this.minimizeToTray.set(!!s['minimizeToTray']);
+    if (s['defaultCurrency'])              this.defaultCurrency.set(s['defaultCurrency']);
     const hn = s['hiddenNavItems'];
     if (hn && !Array.isArray(hn)) {
       this.hiddenNavItems.set({ web: hn.web ?? [], desktop: hn.desktop ?? [] });

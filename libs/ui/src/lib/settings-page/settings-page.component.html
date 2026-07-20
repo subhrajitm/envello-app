@@ -100,6 +100,22 @@
           </div>
         </div>
 
+        <div class="setting-item setting-row">
+          <div class="setting-label-group">
+            <label>Default Currency</label>
+            <span class="setting-desc">Used as the starting currency when adding transactions</span>
+          </div>
+          <div class="setting-control settings-min-w-220">
+            <select class="select-input w-full"
+              [ngModel]="defaultCurrency()"
+              (ngModelChange)="defaultCurrency.set($event); isDirty.set(true)">
+              @for (c of currencyOptions; track c.code) {
+                <option [value]="c.code">{{ c.code }}  {{ c.name }}</option>
+              }
+            </select>
+          </div>
+        </div>
+
         @if (isDesktop) {
           <div class="section-divider"></div>
           <div class="section-header settings-no-margin-top">
