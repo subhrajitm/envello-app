@@ -299,3 +299,23 @@ export interface Person {
     createdAt: string;
     deleted_at?: string | null;
 }
+
+export interface Habit {
+    id: string;
+    name: string;
+    icon: string;       // Material Symbols icon name
+    color: string;      // CSS color string
+    description?: string;
+    frequency: 'daily' | 'weekly';
+    createdAt: string;
+    archivedAt?: string | null;
+    deleted_at?: string | null;
+}
+
+export interface HabitLog {
+    id: string;
+    habitId: string;
+    date: string;        // YYYY-MM-DD local date
+    completedAt: string; // ISO datetime
+    note?: string;
+}
