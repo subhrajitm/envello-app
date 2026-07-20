@@ -64,6 +64,12 @@ export class AiService {
     private readonly secureKeys = inject(SecureKeyStorageService);
 
     constructor() {
+        // Migration: if provider was previously 'mock', reset to unconfigured state.
+        if (localStorage.getItem('ai-provider') === 'mock') {
+            localStorage.removeItem('ai-provider');
+            localStorage.setItem('ai-enabled', 'false');
+        }
+
         // Load non-sensitive settings synchronously from localStorage.
         const savedEnabled = localStorage.getItem('ai-enabled');
         if (savedEnabled !== null) this.aiEnabled.set(savedEnabled === 'true');
@@ -118,7 +124,7 @@ export class AiService {
                 .select('provider, model_name, api_key, ai_enabled')
                 .maybeSingle();
             if (data) {
-                this.platformProvider = (data.provider as AiProvider) ?? 'mock';
+                this.platformProvider = (data.provider as AiProvider) ?? 'openai';
                 this.platformModel = data.model_name ?? '';
                 this.platformKey = data.api_key ?? '';
                 if (localStorage.getItem('ai-enabled') === null) {
@@ -400,7 +406,7 @@ export class AiService {
             return text;
         }
 
-        return this.getMockResponse();
+        throw new Error('AI is not configured. Select a provider and enter your API key in Settings → AI.');
     }
 
     async *streamMessage(prompt: string, context?: string, feature?: AiFeature): AsyncIterable<string> {
@@ -431,7 +437,7 @@ export class AiService {
             return;
         }
 
-        yield* this.getMockStream();
+        throw new Error('AI is not configured. Select a provider and enter your API key in Settings → AI.');
     }
 
     private getMockResponse(): Promise<string> {
