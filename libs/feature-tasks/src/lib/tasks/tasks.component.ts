@@ -1,4 +1,4 @@
-import { Component, computed, inject, signal, HostListener, OnInit, OnDestroy, ChangeDetectionStrategy } from '@angular/core';
+import { Component, computed, inject, signal, HostListener, OnInit, OnDestroy, ChangeDetectionStrategy, ViewChild, ElementRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { StoreService, Task, NotificationService, FileStorageService, AiService, ThemeService, UserPreferencesService, AppPreferences, ContextService, RecentActivityService } from '@envello/core';
 import { SidebarNavItem, AiAssistantPanelComponent, AiPanelMessage, EmptyStateComponent, ConfirmDialogComponent, BadgeComponent, type BadgeVariant, ChipComponent } from '@envello/ui';
@@ -191,6 +191,7 @@ export class TasksComponent implements OnInit, OnDestroy {
   // New task modal state
   newTaskModalOpen = signal<boolean>(false);
   newTaskTitle = signal<string>('');
+  @ViewChild('newTaskTitleRef') private newTaskTitleRef?: ElementRef<HTMLTextAreaElement>;
   newTaskDescription = signal<string>('');
   newTaskPriority = signal<Task['priority']>('MEDIUM');
   newTaskStatus = signal<Task['status']>('ACTIVE');
@@ -436,6 +437,7 @@ export class TasksComponent implements OnInit, OnDestroy {
     this.showMarkdownPreview.set(false);
     this.showNewTaskReminderPicker.set(false);
     this.newTaskModalOpen.set(true);
+    setTimeout(() => this.newTaskTitleRef?.nativeElement?.focus(), 0);
   }
 
   closeNewTaskDialog(force = false) {

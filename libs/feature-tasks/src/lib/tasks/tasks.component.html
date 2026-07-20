@@ -819,12 +819,12 @@
                 <div class="td-main">
                     <div class="td-title-row">
                         <textarea class="td-title-input"
+                                  #newTaskTitleRef
                                   placeholder="Task title…"
                                   [value]="newTaskTitle()"
                                   (input)="newTaskTitle.set($any($event.target).value); $any($event.target).style.height='auto'; $any($event.target).style.height=$any($event.target).scrollHeight+'px'"
                                   (blur)="onNewTaskTitleBlur()"
-                                  rows="1"
-                                  autofocus></textarea>
+                                  rows="1"></textarea>
                     </div>
 
                     <textarea class="td-description-input"
