@@ -429,12 +429,24 @@
 .ppl-icon-btn .material-symbols-outlined { font-size: 18px; }
 
 
-.ppl-edit-name-wrap { display: flex; align-items: center; }
-.ppl-edit-name-input {
-  font-size: 16px; font-weight: 700; color: var(--text-primary);
-  background: var(--bg-hover); border: 1px solid var(--accent-primary);
-  border-radius: 6px; padding: 4px 8px; outline: none; width: 220px;
+.ppl-edit-name-wrap {
+  display: flex; flex-direction: column; gap: 4px;
+  flex: 1; min-width: 0;
 }
+.ppl-edit-name-label {
+  font-size: 10px; font-weight: 700; text-transform: uppercase;
+  letter-spacing: .06em; color: var(--text-tertiary);
+}
+.ppl-edit-name-input {
+  font-size: 17px; font-weight: 600; color: var(--text-primary);
+  background: transparent; border: none; border-radius: 0;
+  border-bottom: 2px solid var(--border-subtle);
+  padding: 4px 0; outline: none; width: 100%;
+  transition: border-color .15s;
+  font-family: inherit;
+}
+.ppl-edit-name-input:focus { border-bottom-color: var(--accent-primary); }
+.ppl-edit-name-input::placeholder { color: var(--text-tertiary); font-weight: 400; font-size: 15px; }
 
 .ppl-edit-form {
   padding: 14px 20px;

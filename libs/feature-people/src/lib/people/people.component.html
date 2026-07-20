@@ -165,9 +165,10 @@
             <span class="material-symbols-outlined">person_add</span>
           </div>
           <div class="ppl-edit-name-wrap">
+            <span class="ppl-edit-name-label">Full name</span>
             <input class="ppl-edit-name-input" [value]="editName()"
               (input)="editName.set($any($event.target).value)"
-              placeholder="Full name" autofocus />
+              placeholder="e.g. Jane Smith" autofocus />
           </div>
         </div>
       </div>
@@ -261,8 +262,9 @@
             </div>
           } @else {
             <div class="ppl-edit-name-wrap">
+              <span class="ppl-edit-name-label">Full name</span>
               <input class="ppl-edit-name-input" [value]="editName()"
-                (input)="editName.set($any($event.target).value)" placeholder="Full name" />
+                (input)="editName.set($any($event.target).value)" placeholder="e.g. Jane Smith" />
             </div>
           }
         </div>
