@@ -332,7 +332,6 @@ export class SettingsPageComponent implements OnInit {
   ];
 
   aiProviders: AiProviderOption[] = [
-    { value: 'mock',      label: 'Demo Mode',           icon: 'science' },
     { value: 'local',     label: 'On-Device AI',        icon: 'memory' },
     { value: 'openai',    label: 'OpenAI (GPT)',         icon: 'psychology' },
     { value: 'anthropic', label: 'Anthropic (Claude)',  icon: 'smart_toy' },
@@ -341,6 +340,14 @@ export class SettingsPageComponent implements OnInit {
     { value: 'deepseek',  label: 'DeepSeek',             icon: 'water' },
     { value: 'ollama',    label: 'Ollama (Local)',        icon: 'terminal' },
   ];
+
+  /** True when a real provider is selected and (if needed) an API key is present. */
+  isAiConfigured = computed(() => {
+    const p = this.aiProvider();
+    if (p === 'mock') return false;
+    if (p === 'local' || p === 'ollama') return true;
+    return !!this.aiKey().trim();
+  });
 
   readonly aiFeatureDefs: { id: AiFeature; label: string; icon: string; hint: string }[] = [
     { id: 'writing',   label: 'Writing',   icon: 'edit',           hint: 'Editor assist, improve, expand' },
@@ -714,13 +721,13 @@ export class SettingsPageComponent implements OnInit {
     this.analytics.set(true);
     this.alwaysOnTop.set(false);
     this.minimizeToTray.set(false);
-    this.aiProvider.set('mock');
+    this.aiProvider.set('openai');
     this.aiModel.set('');
     this.aiKey.set('');
     const emptyVisibility = { web: [], desktop: [] };
     this.hiddenNavItems.set(emptyVisibility);
     window.dispatchEvent(new CustomEvent('navVisibilityChanged', { detail: emptyVisibility }));
-    this.aiService.updateConfig('mock', '', '');
+    this.aiService.updateConfig('openai', '', '');
     this.themeService.setTheme('light');
     this.tauri.setAlwaysOnTop(false).catch(() => {});
     localStorage.removeItem('envello-settings');

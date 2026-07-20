@@ -949,3 +949,27 @@ app-novel-editor {
         scroll-behavior: auto !important;
     }
 }
+/* ── Compact mode ── */
+body.compact-mode {
+    --spacing-xs: 2px;
+    --spacing-sm: 4px;
+    --spacing-md: 8px;
+}
+body.compact-mode .setting-item,
+body.compact-mode .setting-row { padding: 8px 0; }
+body.compact-mode .section-header { margin-bottom: 8px; }
+body.compact-mode .sidebar-nav-item,
+body.compact-mode .nav-tab { padding-top: 6px; padding-bottom: 6px; }
+body.compact-mode .mt-item,
+body.compact-mode .log-row,
+body.compact-mode .bin-row { padding-top: 6px; padding-bottom: 6px; }
+
+/* ── Disable animations ── */
+body.no-animations *,
+body.no-animations *::before,
+body.no-animations *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+}

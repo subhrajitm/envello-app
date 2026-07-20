@@ -518,10 +518,19 @@
         <div class="setting-item setting-row">
           <div class="setting-label-group">
             <label>Enable AI Features</label>
-            <span class="setting-desc">AI assistance across the app</span>
+            <span class="setting-desc">
+              @if (!isAiConfigured() && !aiService.aiEnabled()) {
+                Select a provider and enter your API key below, then enable.
+              } @else {
+                AI assistance across the app
+              }
+            </span>
           </div>
-          <label class="toggle">
-            <input type="checkbox" [checked]="aiService.aiEnabled()" (change)="aiService.toggleAi()">
+          <label class="toggle" [title]="!isAiConfigured() ? 'Configure a provider and API key first' : ''">
+            <input type="checkbox"
+              [checked]="aiService.aiEnabled()"
+              [disabled]="!isAiConfigured()"
+              (change)="aiService.toggleAi()">
             <span class="toggle-track"></span>
           </label>
         </div>

@@ -42,8 +42,7 @@ export class OverviewComponent {
 
 
 
-  /* Fill empty cells for illustration */
-  calendarPlaceholders = new Array(3).fill(null);
+  calendarPlaceholders: null[] = [];
   weekDays = ['MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY', 'SATURDAY', 'SUNDAY'];
 
   constructor() {
@@ -117,12 +116,8 @@ export class OverviewComponent {
         const isToday = i === now.getDate() && month === now.getMonth() && year === now.getFullYear();
         const events = [];
 
-        if (i === 1) events.push({ title: 'DRAFT 2 SESSION', time: '09:00 - 11:30', type: 'fiction' });
-        if (isToday) {
-          events.push({ title: 'CHARACTER ARC DUE', type: 'deadline' });
-          events.push({ title: 'EMERALD EDIT', type: 'fiction' });
-        }
-        if (i === 14) events.push({ title: 'KYOTO RELEASE', type: 'deadline' });
+        const dayStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(i).padStart(2, '0')}`;
+        const events = this.getEventsForDate(dayStr);
 
         daysArray.push({
           date: i,
@@ -145,10 +140,8 @@ export class OverviewComponent {
         const isToday = d.getDate() === now.getDate() && d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
         const events = [];
 
-        if (d.getDate() === 1) events.push({ title: 'DRAFT 2 SESSION', time: '09:00 - 11:30', type: 'fiction' });
-        if (isToday) {
-          events.push({ title: 'CHARACTER ARC DUE', type: 'deadline' });
-        }
+        const dayStr2w = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+        const events = this.getEventsForDate(dayStr2w);
 
         daysArray.push({
           date: d.getDate(),
@@ -160,6 +153,21 @@ export class OverviewComponent {
     }
 
     this.days.set(daysArray);
+  }
+
+  private getEventsForDate(dateStr: string): { title: string; time?: string; type: string }[] {
+    const events: { title: string; time?: string; type: string }[] = [];
+    for (const t of this.store.tasks()) {
+      if (t.due && t.due.startsWith(dateStr) && t.status !== 'COMPLETED') {
+        events.push({ title: t.title, type: 'deadline' });
+      }
+    }
+    for (const p of this.store.planningItems()) {
+      if (p.date && p.date.startsWith(dateStr)) {
+        events.push({ title: p.title ?? p.description ?? 'Planning', type: 'plan' });
+      }
+    }
+    return events.slice(0, 3);
   }
 
   formatNumber(num: number): string {

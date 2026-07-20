@@ -196,7 +196,16 @@ export class PowerSyncDataService implements DataService {
   }
 
   async importData(data: any): Promise<void> {
-    this.logging.info('[PowerSyncDataService] importData');
+    this.logging.info('[PowerSyncDataService] importData starting.');
+    const collections: Record<string, any[]> = data?.collections ?? data ?? {};
+    let total = 0;
+    for (const [collection, items] of Object.entries(collections)) {
+      if (!Array.isArray(items) || items.length === 0) continue;
+      for (const item of items) {
+        try { await this.upsert(collection, item); total++; } catch { /* skip bad rows */ }
+      }
+    }
+    this.logging.info(`[PowerSyncDataService] importData complete — ${total} records upserted.`);
   }
 
   async pullFromRemote(_: string): Promise<void> {}

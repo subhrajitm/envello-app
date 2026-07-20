@@ -36,8 +36,8 @@ export interface AiSuggestion {
     providedIn: 'root'
 })
 export class AiService {
-    aiEnabled = signal<boolean>(true);
-    provider = signal<AiProvider>('mock');
+    aiEnabled = signal<boolean>(false);
+    provider = signal<AiProvider>('openai');
     modelName = signal<string>('gpt-4o');
     apiKey = signal<string>('');
     featureConfigs = signal<Partial<Record<AiFeature, AiFeatureConfig>>>({});
@@ -54,7 +54,7 @@ export class AiService {
     private localCurrentModel = '';
     private localCallbacks = new Map<string, { chunk: (t: string) => void; done: () => void; error: (m: string) => void }>();
 
-    private platformProvider: AiProvider = 'mock';
+    private platformProvider: AiProvider = 'openai';
     private platformModel = '';
     private platformKey = '';
 
