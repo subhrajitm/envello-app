@@ -1,7 +1,7 @@
 import { Injectable, signal, computed, inject } from '@angular/core';
 import { DataService } from '@envello/data';
 import { FILE_SYSTEM } from './tokens';
-import { Task, Note, PlanningItem, Activity, Book, Project, Bookmark, BookmarkFolder, Person, MediaItem, Goal, Milestone } from '@envello/domain';
+import { Task, Note, PlanningItem, Activity, Book, Project, Bookmark, BookmarkFolder, Person, MediaItem, Goal, Milestone, UserList, ListItem } from '@envello/domain';
 
 @Injectable({
     providedIn: 'root'
@@ -20,6 +20,7 @@ export class StoreService {
     bookmarkFolders = signal<BookmarkFolder[]>([]);
     spaces = signal<Project[]>([]);
     people = signal<Person[]>([]);
+    lists = signal<UserList[]>([]);
     goals = signal<Goal[]>([]);
     media = signal<MediaItem[]>([]);
 
@@ -84,6 +85,7 @@ export class StoreService {
             this.bookmarkFolders.set([]);
             this.spaces.set([]);
             this.people.set([]);
+            this.lists.set([]);
             this.goals.set([]);
             this.media.set([]);
         });
@@ -142,7 +144,7 @@ export class StoreService {
         const generation = this._loadGeneration;
         try {
             const L = StoreService.LIMITS;
-            const [tasks, notes, planningItems, activities, books, folders, bookmarks, bookmarkFolders, spaces, people, goals, media] = await Promise.all([
+            const [tasks, notes, planningItems, activities, books, folders, bookmarks, bookmarkFolders, spaces, people, lists, goals, media] = await Promise.all([
                 this.db.getAll<Task>('tasks',                                     { limit: L.tasks }),
                 this.db.getAll<Note>('notes',                                     { limit: L.notes }),
                 this.db.getAll<PlanningItem>('planning_items'),
@@ -153,6 +155,7 @@ export class StoreService {
                 this.db.getAll<BookmarkFolder>('bookmark_folders'),
                 this.db.getAll<Project>('projects'),
                 this.db.getAll<Person>('people',                                  { limit: L.people }),
+                this.db.getAll<UserList>('lists'),
                 this.db.getAll<Goal>('goals'),
                 this.db.getAll<MediaItem>('media'),
             ]);
@@ -208,6 +211,9 @@ export class StoreService {
                 (people || []).filter(p => !p.deleted_at).slice(0, StoreService.LIMITS.people)
             );
 
+            // Lists — exclude soft-deleted
+            this.lists.set((lists || []).filter(l => !l.deleted_at));
+
             // Goals — exclude soft-deleted
             this.goals.set((goals || []).filter(g => !g.deleted_at));
 
@@ -249,6 +255,7 @@ export class StoreService {
             this.bookmarkFolders.set([]);
             this.spaces.set([]);
             this.people.set([]);
+            this.lists.set([]);
             this.goals.set([]);
             this.media.set([]);
         } finally {
@@ -707,5 +714,74 @@ export class StoreService {
         this.goals.update(list => list.filter(g => g.id !== id));
         this.db.upsert('goals', { ...goal, deleted_at: new Date().toISOString() })
             .catch(e => console.error('[StoreService] soft-delete goal failed', e));
+    }
+
+    // ─── Lists CRUD ──────────────────────────────────────────────────────────
+
+    private persistList(id: string) {
+        const l = this.lists().find(l => l.id === id);
+        if (l) this.db.upsert('lists', l).catch(e => console.error('[StoreService] persist list failed', e));
+    }
+
+    addList(list: UserList) {
+        this.lists.update(ls => [list, ...ls]);
+        this.db.upsert('lists', list).catch(e => console.error('[StoreService] persist list failed', e));
+    }
+
+    updateList(id: string, updates: Partial<UserList>) {
+        this.lists.update(ls => ls.map(l => l.id === id ? { ...l, ...updates, updatedAt: new Date().toISOString() } : l));
+        this.persistList(id);
+    }
+
+    deleteList(id: string) {
+        const list = this.lists().find(l => l.id === id);
+        if (!list) return;
+        this.lists.update(ls => ls.filter(l => l.id !== id));
+        this.db.upsert('lists', { ...list, deleted_at: new Date().toISOString() })
+            .catch(e => console.error('[StoreService] soft-delete list failed', e));
+    }
+
+    addListItem(listId: string, item: ListItem) {
+        this.lists.update(ls => ls.map(l => l.id === listId
+            ? { ...l, items: [...l.items, item], updatedAt: new Date().toISOString() }
+            : l));
+        this.persistList(listId);
+    }
+
+    toggleListItem(listId: string, itemId: string) {
+        this.lists.update(ls => ls.map(l => l.id !== listId ? l : {
+            ...l,
+            items: l.items.map(i => i.id === itemId ? { ...i, checked: !i.checked } : i),
+            updatedAt: new Date().toISOString(),
+        }));
+        this.persistList(listId);
+    }
+
+    removeListItem(listId: string, itemId: string) {
+        this.lists.update(ls => ls.map(l => l.id !== listId ? l : {
+            ...l,
+            items: l.items.filter(i => i.id !== itemId),
+            updatedAt: new Date().toISOString(),
+        }));
+        this.persistList(listId);
+    }
+
+    clearCheckedItems(listId: string) {
+        this.lists.update(ls => ls.map(l => l.id !== listId ? l : {
+            ...l,
+            items: l.items.filter(i => !i.checked),
+            updatedAt: new Date().toISOString(),
+        }));
+        this.persistList(listId);
+    }
+
+    resetListItems(listId: string) {
+        this.lists.update(ls => ls.map(l => l.id !== listId ? l : {
+            ...l,
+            items: l.items.map(i => ({ ...i, checked: false })),
+            lastResetAt: new Date().toISOString(),
+            updatedAt:   new Date().toISOString(),
+        }));
+        this.persistList(listId);
     }
 }

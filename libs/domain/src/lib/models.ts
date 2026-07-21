@@ -309,6 +309,29 @@ export interface Person {
     deleted_at?: string | null;
 }
 
+export type ListType = 'shopping' | 'packing' | 'checklist' | 'todo';
+
+export interface ListItem {
+    id: string;
+    text: string;
+    checked: boolean;
+    quantity?: string;  // "2 kg", "3 bottles", etc.
+    order: number;
+}
+
+export interface UserList {
+    id: string;
+    title: string;
+    type: ListType;
+    color?: string;         // hex accent colour
+    items: ListItem[];      // stored as JSON
+    isRecurring: boolean;   // if true, Reset unchecks all items for reuse
+    lastResetAt?: string;   // ISO datetime
+    createdAt: string;
+    updatedAt?: string;
+    deleted_at?: string | null;
+}
+
 export type GoalStatus   = 'active' | 'completed' | 'paused' | 'abandoned';
 export type GoalCategory = 'health' | 'career' | 'finance' | 'learning' | 'personal' | 'relationships' | 'creative' | 'other';
 

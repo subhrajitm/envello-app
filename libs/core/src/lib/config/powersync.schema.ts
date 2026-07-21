@@ -373,6 +373,22 @@ const people = new Table(
   { localOnly: true, indexes: { by_profile: ['profile_id'] } }
 );
 
+const lists = new Table(
+  {
+    profile_id:  column.text,
+    title:       column.text,
+    type:        column.text,
+    color:       column.text,
+    items:       column.text,   // JSON ListItem[]
+    isRecurring: column.integer,
+    lastResetAt: column.text,
+    createdAt:   column.text,
+    updatedAt:   column.text,
+    deleted_at:  column.text,
+  },
+  { localOnly: true, indexes: { by_profile_type: ['profile_id', 'type'] } }
+);
+
 const goals = new Table(
   {
     profile_id:   column.text,
@@ -528,6 +544,7 @@ export const AppSchema = new Schema({
   bookmark_folders,
   transactions,
   people,
+  lists,
   goals,
   media,
   user_preferences,
@@ -545,7 +562,7 @@ export const TYPED_TABLES = new Set([
   'tasks', 'notes', 'planning_items', 'activities', 'books', 'book_content',
   'meetings', 'articles', 'research_collections', 'research_sources',
   'research_summaries', 'projects', 'note_folders', 'note_history', 'chapter_history', 'bookmarks',
-  'bookmark_folders', 'transactions', 'people', 'goals', 'media', 'user_preferences', 'library_files',
+  'bookmark_folders', 'transactions', 'people', 'lists', 'goals', 'media', 'user_preferences', 'library_files',
 ]);
 
 /** Fields that are stored as JSON strings in SQLite. */
@@ -561,6 +578,8 @@ export const JSON_FIELDS: Record<string, string[]> = {
   bookmarks:            ['tags'],
   transactions:         ['history'],
   people:               ['tags', 'socialLinks'],
+  lists:                ['items'],
+
   goals:                ['milestones'],
   user_preferences:     ['hiddenNavItems'],
   library_files:        ['tags'],
@@ -568,6 +587,7 @@ export const JSON_FIELDS: Record<string, string[]> = {
 
 /** Fields that are stored as 0/1 integers in SQLite but are booleans in TS. */
 export const BOOL_FIELDS: Record<string, string[]> = {
+  lists:            ['isRecurring'],
   books:            ['isRecentlyUpdated'],
   bookmarks:        ['isArchived', 'isPinned'],
   planning_items:   ['active'],

@@ -1,0 +1,280 @@
+<div class="ls-view">
+
+  <!-- ═══════════ LEFT PANEL — list browser ═══════════ -->
+  <div class="ls-sidebar">
+    <div class="ls-sb-header">
+      <span class="ls-sb-title">Lists</span>
+      <button class="ls-new-btn" (click)="openNewList()" title="New list">
+        <span class="material-symbols-outlined">add</span>
+      </button>
+    </div>
+
+    @if (sortedLists().length === 0) {
+      <div class="ls-sb-empty">
+        <span class="material-symbols-outlined">checklist</span>
+        <span>No lists yet</span>
+        <button class="ls-sb-create-btn" (click)="openNewList()">Create one</button>
+      </div>
+    } @else {
+      <nav class="ls-sb-nav">
+        @for (list of sortedLists(); track list.id) {
+          <button class="ls-sb-item" [class.active]="activeListId() === list.id"
+            (click)="selectList(list.id)">
+            <span class="ls-sb-icon material-symbols-outlined"
+              [style.color]="list.color ?? typeMeta(list.type).color">
+              {{ typeMeta(list.type).icon }}
+            </span>
+            <span class="ls-sb-label">{{ list.title }}</span>
+            <div class="ls-sb-right">
+              @if (checkedCount(list) > 0) {
+                <span class="ls-sb-progress">{{ checkedCount(list) }}/{{ itemCount(list) }}</span>
+              } @else {
+                <span class="ls-sb-count">{{ itemCount(list) }}</span>
+              }
+              @if (list.isRecurring) {
+                <span class="material-symbols-outlined ls-recurring-icon" title="Recurring">repeat</span>
+              }
+            </div>
+          </button>
+        }
+      </nav>
+    }
+  </div>
+
+  <!-- ═══════════ RIGHT PANEL — active list ═══════════ -->
+  <main class="ls-main">
+
+    @if (!activeList()) {
+      <env-empty-state
+        icon="checklist"
+        title="Select or create a list"
+        description="Grocery runs, packing lists, checklists — pick one on the left or start fresh.">
+      </env-empty-state>
+    } @else {
+
+      <!-- List header -->
+      <div class="ls-detail-header" [style.border-bottom-color]="activeList()!.color ?? 'var(--border-subtle)'">
+        <div class="ls-detail-header-left">
+          <span class="ls-detail-icon material-symbols-outlined"
+            [style.color]="activeList()!.color ?? typeMeta(activeList()!.type).color">
+            {{ typeMeta(activeList()!.type).icon }}
+          </span>
+          <div>
+            <div class="ls-detail-title">{{ activeList()!.title }}</div>
+            <div class="ls-detail-meta">
+              <span class="ls-type-badge"
+                [style.color]="activeList()!.color ?? typeMeta(activeList()!.type).color"
+                [style.background]="'color-mix(in srgb, ' + (activeList()!.color ?? typeMeta(activeList()!.type).color) + ' 10%, transparent)'">
+                {{ typeMeta(activeList()!.type).label }}
+              </span>
+              @if (activeList()!.isRecurring) {
+                <span class="ls-recurring-badge">
+                  <span class="material-symbols-outlined">repeat</span> Recurring
+                </span>
+              }
+              @if (itemCount(activeList()!) > 0) {
+                <span class="ls-progress-text">{{ listProgress(activeList()!) }}% done</span>
+              }
+            </div>
+          </div>
+        </div>
+        <div class="ls-detail-actions">
+          @if (hasChecked()) {
+            <button class="ls-action-btn" (click)="clearChecked()" title="Remove checked items">
+              <span class="material-symbols-outlined">playlist_remove</span>
+              Clear checked
+            </button>
+          }
+          @if (activeList()!.isRecurring && hasChecked()) {
+            <button class="ls-action-btn" (click)="resetList()" title="Uncheck all items to reuse this list">
+              <span class="material-symbols-outlined">restart_alt</span>
+              Reset
+            </button>
+          }
+          <button class="ls-action-btn" (click)="openEditList(activeList()!)" title="Edit list">
+            <span class="material-symbols-outlined">edit</span>
+          </button>
+          <button class="ls-action-btn ls-action-btn--danger" (click)="deleteTarget.set(activeList())" title="Delete list">
+            <span class="material-symbols-outlined">delete</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Progress bar -->
+      @if (itemCount(activeList()!) > 0) {
+        <div class="ls-prog-track">
+          <div class="ls-prog-fill"
+            [style.width.%]="listProgress(activeList()!)"
+            [style.background]="activeList()!.color ?? 'var(--accent-primary)'">
+          </div>
+        </div>
+      }
+
+      <!-- Items area -->
+      <div class="ls-items-wrap">
+
+        <!-- Unchecked items -->
+        @for (item of uncheckedItems(); track item.id) {
+          <div class="ls-item ls-item--unchecked">
+            <button class="ls-checkbox" (click)="toggle(item.id)">
+              <span class="material-symbols-outlined">radio_button_unchecked</span>
+            </button>
+            <span class="ls-item-text">{{ item.text }}</span>
+            @if (item.quantity) {
+              <span class="ls-item-qty">{{ item.quantity }}</span>
+            }
+            <button class="ls-item-del" (click)="removeItem(item.id)" title="Remove">
+              <span class="material-symbols-outlined">close</span>
+            </button>
+          </div>
+        }
+
+        <!-- Add item row -->
+        <div class="ls-add-row">
+          <span class="ls-add-icon material-symbols-outlined">add</span>
+          <input #itemInput class="ls-add-input" type="text"
+            [value]="newItemText()"
+            (input)="newItemText.set($any($event.target).value)"
+            (keydown)="onItemKeydown($event)"
+            placeholder="{{ typeMeta(activeList()!.type).label === 'Shopping' ? 'Add item…' : 'Add to list…' }}" />
+          <input class="ls-qty-input" type="text"
+            [value]="newItemQty()"
+            (input)="newItemQty.set($any($event.target).value)"
+            (keydown)="onItemKeydown($event)"
+            placeholder="qty" />
+          @if (newItemText().trim()) {
+            <button class="ls-add-btn" (click)="addItem()">
+              <span class="material-symbols-outlined">check</span>
+            </button>
+          }
+        </div>
+
+        <!-- Checked items (done section) -->
+        @if (checkedItems().length > 0) {
+          <div class="ls-done-section">
+            <div class="ls-done-label">
+              <span class="material-symbols-outlined">done_all</span>
+              {{ checkedItems().length }} done
+            </div>
+            @for (item of checkedItems(); track item.id) {
+              <div class="ls-item ls-item--checked">
+                <button class="ls-checkbox ls-checkbox--checked"
+                  [style.color]="activeList()!.color ?? 'var(--accent-primary)'"
+                  (click)="toggle(item.id)">
+                  <span class="material-symbols-outlined">check_circle</span>
+                </button>
+                <span class="ls-item-text ls-item-text--done">{{ item.text }}</span>
+                @if (item.quantity) {
+                  <span class="ls-item-qty ls-item-qty--done">{{ item.quantity }}</span>
+                }
+                <button class="ls-item-del" (click)="removeItem(item.id)" title="Remove">
+                  <span class="material-symbols-outlined">close</span>
+                </button>
+              </div>
+            }
+          </div>
+        }
+
+        <!-- Empty state for the list -->
+        @if (itemCount(activeList()!) === 0) {
+          <div class="ls-list-empty">
+            <span class="material-symbols-outlined">{{ typeMeta(activeList()!.type).icon }}</span>
+            <span>Nothing here yet — type above to add your first item</span>
+          </div>
+        }
+
+      </div>
+    }
+  </main>
+</div>
+
+<!-- ═══════════ SLIDER — New / Edit list ═══════════ -->
+<env-slider-panel [isOpen]="showSlider()" (closed)="showSlider.set(false)" width="380px">
+  <div class="ls-slider">
+
+    <div class="ls-sl-hdr">
+      <span class="ls-sl-hdr-title">{{ isEditMode() ? 'Edit List' : 'New List' }}</span>
+      @if (isEditMode()) {
+        <button class="ls-sl-del-btn" (click)="deleteEditing()" title="Delete list">
+          <span class="material-symbols-outlined">delete</span>
+        </button>
+      }
+    </div>
+
+    <div class="ls-sl-body">
+
+      <!-- Title -->
+      <div class="ls-sl-field">
+        <span class="ls-sl-label">NAME</span>
+        <input class="ls-sl-title-input" [value]="formTitle()"
+          (input)="formTitle.set($any($event.target).value)"
+          placeholder="e.g. Grocery, Paris Trip…" autofocus />
+      </div>
+
+      <!-- Type -->
+      <div class="ls-sl-field">
+        <span class="ls-sl-label">TYPE</span>
+        <div class="ls-type-chips">
+          @for (t of typeOptions; track t) {
+            <button type="button" class="ls-type-chip"
+              [class.active]="formType() === t"
+              [style.--tc]="typeMeta(t).color"
+              (click)="formType.set(t)">
+              <span class="material-symbols-outlined">{{ typeMeta(t).icon }}</span>
+              {{ typeMeta(t).label }}
+            </button>
+          }
+        </div>
+      </div>
+
+      <!-- Color -->
+      <div class="ls-sl-field">
+        <span class="ls-sl-label">COLOUR</span>
+        <div class="ls-color-row">
+          @for (c of colorOptions; track c) {
+            <button type="button" class="ls-color-dot"
+              [style.background]="c"
+              [class.active]="formColor() === c"
+              (click)="formColor.set(c)"
+              [title]="c">
+            </button>
+          }
+        </div>
+      </div>
+
+      <!-- Recurring -->
+      <div class="ls-sl-field">
+        <div class="ls-recurring-row">
+          <div>
+            <div class="ls-sl-label">RECURRING</div>
+            <div class="ls-recurring-hint">Reset unchecks all items so you can reuse this list</div>
+          </div>
+          <button type="button" class="ls-toggle" [class.on]="formIsRecurring()"
+            (click)="formIsRecurring.set(!formIsRecurring())">
+            <span class="ls-toggle-knob"></span>
+          </button>
+        </div>
+      </div>
+
+    </div>
+
+    <div class="ls-sl-foot">
+      <button class="ls-btn-ghost" (click)="showSlider.set(false)">Cancel</button>
+      <button class="ls-btn-primary" [disabled]="!formTitle().trim()" (click)="saveList()">
+        {{ isEditMode() ? 'Save' : 'Create List' }}
+      </button>
+    </div>
+  </div>
+</env-slider-panel>
+
+<!-- ═══════════ DELETE CONFIRM ═══════════ -->
+<env-confirm-dialog
+  [isOpen]="!!deleteTarget()"
+  title="Delete List"
+  icon="delete"
+  variant="danger"
+  confirmLabel="Delete"
+  (confirmed)="doDelete()"
+  (cancelled)="deleteTarget.set(null)">
+  Delete <strong>{{ deleteTarget()?.title }}</strong> and all its items? This cannot be undone.
+</env-confirm-dialog>

@@ -121,6 +121,12 @@ export const routes: Routes = [
     data: { hasSidebar: true },
   },
   {
+    path: 'lists',
+    loadComponent: () => import('@envello/feature-lists').then(m => m.ListsComponent),
+    canActivate: [authGuard],
+    data: { hasSidebar: true },
+  },
+  {
     path: 'goals',
     loadComponent: () => import('@envello/feature-goals').then(m => m.GoalsComponent),
     canActivate: [authGuard],
