@@ -1,7 +1,7 @@
 import { Injectable, signal, computed, inject } from '@angular/core';
 import { DataService } from '@envello/data';
 import { FILE_SYSTEM } from './tokens';
-import { Task, Note, PlanningItem, Activity, Book, Project, Bookmark, BookmarkFolder, Person, MediaItem } from '@envello/domain';
+import { Task, Note, PlanningItem, Activity, Book, Project, Bookmark, BookmarkFolder, Person, MediaItem, Goal, Milestone } from '@envello/domain';
 
 @Injectable({
     providedIn: 'root'
@@ -20,6 +20,7 @@ export class StoreService {
     bookmarkFolders = signal<BookmarkFolder[]>([]);
     spaces = signal<Project[]>([]);
     people = signal<Person[]>([]);
+    goals = signal<Goal[]>([]);
     media = signal<MediaItem[]>([]);
 
     // Memory caps — prevents unbounded growth for heavy collections
@@ -83,6 +84,7 @@ export class StoreService {
             this.bookmarkFolders.set([]);
             this.spaces.set([]);
             this.people.set([]);
+            this.goals.set([]);
             this.media.set([]);
         });
     }
@@ -140,7 +142,7 @@ export class StoreService {
         const generation = this._loadGeneration;
         try {
             const L = StoreService.LIMITS;
-            const [tasks, notes, planningItems, activities, books, folders, bookmarks, bookmarkFolders, spaces, people, media] = await Promise.all([
+            const [tasks, notes, planningItems, activities, books, folders, bookmarks, bookmarkFolders, spaces, people, goals, media] = await Promise.all([
                 this.db.getAll<Task>('tasks',                                     { limit: L.tasks }),
                 this.db.getAll<Note>('notes',                                     { limit: L.notes }),
                 this.db.getAll<PlanningItem>('planning_items'),
@@ -151,6 +153,7 @@ export class StoreService {
                 this.db.getAll<BookmarkFolder>('bookmark_folders'),
                 this.db.getAll<Project>('projects'),
                 this.db.getAll<Person>('people',                                  { limit: L.people }),
+                this.db.getAll<Goal>('goals'),
                 this.db.getAll<MediaItem>('media'),
             ]);
 
@@ -205,6 +208,9 @@ export class StoreService {
                 (people || []).filter(p => !p.deleted_at).slice(0, StoreService.LIMITS.people)
             );
 
+            // Goals — exclude soft-deleted
+            this.goals.set((goals || []).filter(g => !g.deleted_at));
+
             // Media — exclude soft-deleted
             this.media.set((media || []).filter(m => !m.deleted_at));
 
@@ -243,6 +249,7 @@ export class StoreService {
             this.bookmarkFolders.set([]);
             this.spaces.set([]);
             this.people.set([]);
+            this.goals.set([]);
             this.media.set([]);
         } finally {
             this._loadInProgress = false;
@@ -665,5 +672,40 @@ export class StoreService {
         this.media.update(list => list.filter(m => m.id !== id));
         this.db.upsert('media', { ...item, deleted_at: new Date().toISOString() })
             .catch(e => console.error('[StoreService] soft-delete media failed', e));
+    }
+
+    // ─── Goals CRUD ──────────────────────────────────────────────────────────
+
+    addGoal(goal: Goal) {
+        this.goals.update(list => [goal, ...list]);
+        this.db.upsert('goals', goal).catch(e => console.error('[StoreService] persist goal failed', e));
+    }
+
+    updateGoal(id: string, updates: Partial<Goal>) {
+        const updated = { updatedAt: new Date().toISOString(), ...updates };
+        this.goals.update(list => list.map(g => g.id === id ? { ...g, ...updated } : g));
+        const goal = this.goals().find(g => g.id === id);
+        if (goal) this.db.upsert('goals', goal).catch(e => console.error('[StoreService] update goal failed', e));
+    }
+
+    updateMilestone(goalId: string, milestoneId: string, updates: Partial<Milestone>) {
+        this.goals.update(list => list.map(g => {
+            if (g.id !== goalId) return g;
+            const milestones = (g.milestones ?? []).map(m => m.id === milestoneId ? { ...m, ...updates } : m);
+            const progress = g.progressMode === 'milestones' && milestones.length
+                ? Math.round(milestones.filter(m => m.completedAt).length / milestones.length * 100)
+                : g.progress;
+            return { ...g, milestones, progress, updatedAt: new Date().toISOString() };
+        }));
+        const goal = this.goals().find(g => g.id === goalId);
+        if (goal) this.db.upsert('goals', goal).catch(e => console.error('[StoreService] update milestone failed', e));
+    }
+
+    deleteGoal(id: string) {
+        const goal = this.goals().find(g => g.id === id);
+        if (!goal) return;
+        this.goals.update(list => list.filter(g => g.id !== id));
+        this.db.upsert('goals', { ...goal, deleted_at: new Date().toISOString() })
+            .catch(e => console.error('[StoreService] soft-delete goal failed', e));
     }
 }

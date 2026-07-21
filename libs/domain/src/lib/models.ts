@@ -309,6 +309,34 @@ export interface Person {
     deleted_at?: string | null;
 }
 
+export type GoalStatus   = 'active' | 'completed' | 'paused' | 'abandoned';
+export type GoalCategory = 'health' | 'career' | 'finance' | 'learning' | 'personal' | 'relationships' | 'creative' | 'other';
+
+export interface Milestone {
+    id: string;
+    title: string;
+    completedAt?: string;  // ISO datetime — null/undefined = not done
+    dueDate?: string;      // YYYY-MM-DD optional
+    order: number;
+}
+
+export interface Goal {
+    id: string;
+    title: string;
+    description?: string;
+    category?: GoalCategory;
+    status: GoalStatus;
+    targetDate?: string;       // YYYY-MM-DD
+    progress: number;          // 0–100; auto-computed when progressMode='milestones'
+    progressMode: 'manual' | 'milestones';
+    milestones?: Milestone[];  // stored as JSON
+    notes?: string;
+    createdAt: string;
+    updatedAt?: string;
+    completedAt?: string;
+    deleted_at?: string | null;
+}
+
 export type MediaType   = 'movie' | 'show' | 'book' | 'podcast';
 export type MediaStatus = 'want' | 'watching' | 'watched' | 'dropped';
 

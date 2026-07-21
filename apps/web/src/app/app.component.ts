@@ -140,6 +140,7 @@ export class AppComponent implements OnInit, AfterViewInit, OnDestroy {
       // vault is desktop-only
       'transactions': 'Transactions',
       'people': 'People',
+      'goals': 'Goals',
       'media': 'Media',
       'analytics': 'Analytics',
       'bin': 'Bin',

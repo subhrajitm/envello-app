@@ -1,0 +1,328 @@
+<div class="gl-view">
+
+  <!-- ═══════════ SIDEBAR ═══════════ -->
+  <env-feature-sidebar title="Goals">
+    <nav class="gl-sb-nav">
+      @for (item of sidebarNavItems(); track item.id; let i = $index) {
+        @if (i === 4) {
+          <div class="gl-sb-divider"></div>
+          <div class="gl-sb-section-lbl">BY CATEGORY</div>
+        }
+        <button class="gl-sb-item" [class.active]="activeFilter() === item.id"
+          (click)="onNavItemClick(item.id)">
+          <span class="material-symbols-outlined">{{ item.icon }}</span>
+          <span class="gl-sb-label">{{ item.label }}</span>
+          <span class="gl-sb-count">{{ item.count }}</span>
+        </button>
+      }
+    </nav>
+  </env-feature-sidebar>
+
+  <!-- ═══════════ MAIN ═══════════ -->
+  <main class="gl-main">
+
+    <!-- Toolbar -->
+    <div class="gl-toolbar">
+      <div class="gl-search-wrap">
+        <span class="material-symbols-outlined gl-search-icon">search</span>
+        <input class="gl-search-input" type="text" placeholder="Search goals…"
+          [value]="searchQuery()" (input)="searchQuery.set($any($event.target).value)" />
+      </div>
+      <button class="gl-add-btn" (click)="openAdd()">
+        <span class="material-symbols-outlined">add</span>
+        New Goal
+      </button>
+    </div>
+
+    <!-- Cards -->
+    <div class="gl-grid-wrap">
+      @if (filtered().length === 0) {
+        @if (all().length === 0) {
+          <env-empty-state
+            icon="flag"
+            title="No goals yet"
+            description="Set a goal — track it with milestones and a progress bar over weeks or months.">
+          </env-empty-state>
+        } @else {
+          <env-empty-state icon="search_off" title="No goals match this filter"></env-empty-state>
+        }
+      } @else {
+        <div class="gl-grid">
+          @for (goal of filtered(); track goal.id) {
+            @let prog = goalProgress(goal);
+            @let cat  = categoryMeta(goal.category);
+            @let stat = statusMeta(goal.status);
+            @let due  = daysUntil(goal.targetDate);
+
+            <div class="gl-card" [class.gl-card--completed]="goal.status === 'completed'" (click)="openEdit(goal)">
+
+              <!-- Top row: category icon + status badge + actions -->
+              <div class="gl-card-top">
+                <div class="gl-cat-icon"
+                  [style.background]="cat ? 'color-mix(in srgb, ' + cat.color + ' 12%, transparent)' : 'var(--bg-hover)'"
+                  [style.color]="cat?.color ?? 'var(--text-tertiary)'">
+                  <span class="material-symbols-outlined">{{ cat?.icon ?? 'flag' }}</span>
+                </div>
+                <div class="gl-card-top-right">
+                  <span class="gl-status-badge"
+                    [style.color]="stat.color"
+                    [style.background]="'color-mix(in srgb, ' + stat.color + ' 10%, transparent)'">
+                    <span class="material-symbols-outlined">{{ stat.icon }}</span>
+                    {{ stat.label }}
+                  </span>
+                  <button class="gl-card-del" title="Delete" (click)="confirmDelete(goal, $event)">
+                    <span class="material-symbols-outlined">delete</span>
+                  </button>
+                </div>
+              </div>
+
+              <!-- Title -->
+              <div class="gl-card-title">{{ goal.title }}</div>
+              @if (goal.description) {
+                <div class="gl-card-desc">{{ goal.description }}</div>
+              }
+
+              <!-- Progress bar -->
+              <div class="gl-prog-wrap">
+                <div class="gl-prog-bar">
+                  <div class="gl-prog-fill"
+                    [style.width.%]="prog"
+                    [style.background]="cat?.color ?? 'var(--accent-primary)'">
+                  </div>
+                </div>
+                <span class="gl-prog-pct">{{ prog }}%</span>
+              </div>
+
+              <!-- Milestones summary -->
+              @if ((goal.milestones?.length ?? 0) > 0) {
+                @let total = goalMilestones(goal).length;
+                @let done  = milestoneDoneCount(goal);
+                <div class="gl-ms-summary">
+                  <span class="material-symbols-outlined">checklist</span>
+                  <span>{{ done }} / {{ total }} milestones</span>
+                  <div class="gl-ms-pills">
+                    @for (m of goalMilestones(goal).slice(0, 4); track m.id) {
+                      <span class="gl-ms-pill" [class.gl-ms-pill--done]="!!m.completedAt"
+                        (click)="quickToggleMilestone(goal.id, m.id, !!m.completedAt, $event)"
+                        [title]="m.title">
+                        <span class="material-symbols-outlined">{{ m.completedAt ? 'check_circle' : 'radio_button_unchecked' }}</span>
+                      </span>
+                    }
+                    @if (total > 4) { <span class="gl-ms-more">+{{ total - 4 }}</span> }
+                  </div>
+                </div>
+              }
+
+              <!-- Target date -->
+              @if (due) {
+                <div class="gl-due" [class.gl-due--overdue]="isOverdue(goal.targetDate) && goal.status === 'active'">
+                  <span class="material-symbols-outlined">calendar_month</span>
+                  {{ due }}
+                </div>
+              }
+            </div>
+          }
+        </div>
+      }
+    </div>
+  </main>
+</div>
+
+<!-- ═══════════ SLIDER (Add / Edit) ═══════════ -->
+<env-slider-panel [isOpen]="showSlider()" (closed)="closeSlider()" width="440px">
+  <div class="gl-slider">
+
+    <!-- Header -->
+    <div class="gl-sl-hdr">
+      <div class="gl-sl-hdr-left">
+        @if (formCategory()) {
+          <div class="gl-sl-cat-dot"
+            [style.background]="'color-mix(in srgb, ' + (categoryMeta(formCategory())?.color ?? '#6b7280') + ' 15%, transparent)'"
+            [style.color]="categoryMeta(formCategory())?.color ?? '#6b7280'">
+            <span class="material-symbols-outlined">{{ categoryMeta(formCategory())?.icon ?? 'flag' }}</span>
+          </div>
+        } @else {
+          <div class="gl-sl-cat-dot gl-sl-cat-dot--empty">
+            <span class="material-symbols-outlined">flag</span>
+          </div>
+        }
+        <span class="gl-sl-hdr-title">{{ isEditMode() ? 'Edit Goal' : 'New Goal' }}</span>
+      </div>
+      @if (isEditMode()) {
+        <button class="gl-sl-del-btn" (click)="deleteEditing()" title="Delete">
+          <span class="material-symbols-outlined">delete</span>
+        </button>
+      }
+    </div>
+
+    <!-- Body -->
+    <div class="gl-sl-body">
+
+      <!-- Title -->
+      <div class="gl-sl-field">
+        <span class="gl-sl-label">GOAL</span>
+        <input class="gl-sl-title-input" [value]="formTitle()"
+          (input)="formTitle.set($any($event.target).value)"
+          placeholder="What do you want to achieve?" autofocus />
+      </div>
+
+      <!-- Description -->
+      <div class="gl-sl-field">
+        <span class="gl-sl-label">DESCRIPTION <span class="gl-sl-opt">optional</span></span>
+        <textarea class="gl-sl-input gl-sl-textarea" rows="2" [value]="formDescription()"
+          (input)="formDescription.set($any($event.target).value)"
+          placeholder="Why this goal matters to you…"></textarea>
+      </div>
+
+      <!-- Category -->
+      <div class="gl-sl-field">
+        <span class="gl-sl-label">CATEGORY</span>
+        <div class="gl-chips">
+          @for (cat of categoryOptions; track cat) {
+            @let meta = categoryMeta(cat)!;
+            <button type="button" class="gl-chip"
+              [class.gl-chip--active]="formCategory() === cat"
+              [style.--chip-color]="meta.color"
+              (click)="formCategory.set(formCategory() === cat ? '' : cat)">
+              <span class="material-symbols-outlined">{{ meta.icon }}</span>
+              {{ meta.label }}
+            </button>
+          }
+        </div>
+      </div>
+
+      <!-- Status -->
+      <div class="gl-sl-field">
+        <span class="gl-sl-label">STATUS</span>
+        <div class="gl-seg">
+          @for (s of statusOptions; track s) {
+            <button type="button" class="gl-seg-btn"
+              [class.gl-seg-btn--active]="formStatus() === s"
+              [style.--seg-color]="statusMeta(s).color"
+              (click)="formStatus.set(s)">
+              {{ statusMeta(s).label }}
+            </button>
+          }
+        </div>
+      </div>
+
+      <!-- Target date -->
+      <div class="gl-sl-field">
+        <span class="gl-sl-label">TARGET DATE <span class="gl-sl-opt">optional</span></span>
+        <input class="gl-sl-input" type="date" [value]="formTargetDate()"
+          (input)="formTargetDate.set($any($event.target).value)" />
+      </div>
+
+      <!-- Progress mode -->
+      <div class="gl-sl-field">
+        <span class="gl-sl-label">TRACK PROGRESS BY</span>
+        <div class="gl-prog-mode">
+          <button type="button" class="gl-mode-btn" [class.active]="formProgressMode() === 'milestones'"
+            (click)="formProgressMode.set('milestones')">
+            <span class="material-symbols-outlined">checklist</span>
+            Milestones
+          </button>
+          <button type="button" class="gl-mode-btn" [class.active]="formProgressMode() === 'manual'"
+            (click)="formProgressMode.set('manual')">
+            <span class="material-symbols-outlined">tune</span>
+            Manual %
+          </button>
+        </div>
+      </div>
+
+      <!-- Manual progress slider -->
+      @if (formProgressMode() === 'manual') {
+        <div class="gl-sl-field">
+          <div class="gl-manual-prog">
+            <input class="gl-prog-slider" type="range" min="0" max="100" step="1"
+              [value]="formProgress()"
+              (input)="formProgress.set(+$any($event.target).value)" />
+            <span class="gl-manual-pct">{{ formProgress() }}%</span>
+          </div>
+        </div>
+      }
+
+      <!-- Milestones -->
+      @if (formProgressMode() === 'milestones') {
+        <div class="gl-sl-field">
+          <div class="gl-ms-header">
+            <span class="gl-sl-label">MILESTONES</span>
+            @if (formMilestones().length) {
+              <span class="gl-ms-counter">
+                {{ formMilestoneDone() }} / {{ formMilestones().length }}
+              </span>
+            }
+          </div>
+
+          <!-- Progress preview bar -->
+          @if (formMilestones().length) {
+            <div class="gl-prog-bar gl-prog-bar--sm">
+              <div class="gl-prog-fill" [style.width.%]="effectiveProgress()"></div>
+            </div>
+          }
+
+          <!-- Milestone list -->
+          <div class="gl-ms-list">
+            @for (m of formMilestones(); track m.id) {
+              <div class="gl-ms-item">
+                <button type="button" class="gl-ms-check" [class.done]="!!m.completedAt"
+                  (click)="toggleMilestone(m.id)">
+                  <span class="material-symbols-outlined">
+                    {{ m.completedAt ? 'check_circle' : 'radio_button_unchecked' }}
+                  </span>
+                </button>
+                <span class="gl-ms-title" [class.gl-ms-title--done]="!!m.completedAt">{{ m.title }}</span>
+                <button type="button" class="gl-ms-del" (click)="deleteMilestone(m.id)">
+                  <span class="material-symbols-outlined">close</span>
+                </button>
+              </div>
+            }
+          </div>
+
+          <!-- Add milestone input -->
+          <div class="gl-ms-add-wrap">
+            <input class="gl-ms-add-input" [value]="newMilestoneText()"
+              (input)="newMilestoneText.set($any($event.target).value)"
+              (keydown.enter)="addMilestone()"
+              placeholder="Add a milestone… (Enter to add)" />
+            @if (newMilestoneText().trim()) {
+              <button type="button" class="gl-ms-add-btn" (click)="addMilestone()">
+                <span class="material-symbols-outlined">add</span>
+              </button>
+            }
+          </div>
+        </div>
+      }
+
+      <!-- Notes -->
+      <div class="gl-sl-field">
+        <span class="gl-sl-label">NOTES <span class="gl-sl-opt">optional</span></span>
+        <textarea class="gl-sl-input gl-sl-textarea" rows="3" [value]="formNotes()"
+          (input)="formNotes.set($any($event.target).value)"
+          placeholder="Reflections, strategies, context…"></textarea>
+      </div>
+
+    </div><!-- /body -->
+
+    <!-- Footer -->
+    <div class="gl-sl-foot">
+      <button class="gl-btn-ghost" (click)="closeSlider()">Cancel</button>
+      <button class="gl-btn-primary" [disabled]="!canSave()" (click)="save()">
+        {{ isEditMode() ? 'Save Changes' : 'Create Goal' }}
+      </button>
+    </div>
+
+  </div>
+</env-slider-panel>
+
+<!-- ═══════════ DELETE CONFIRM ═══════════ -->
+<env-confirm-dialog
+  [isOpen]="!!deleteTarget()"
+  title="Delete Goal"
+  icon="delete"
+  variant="danger"
+  confirmLabel="Delete"
+  (confirmed)="doDelete()"
+  (cancelled)="deleteTarget.set(null)">
+  Delete <strong>{{ deleteTarget()?.title }}</strong>? All milestones and progress will be lost.
+</env-confirm-dialog>
