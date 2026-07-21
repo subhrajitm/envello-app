@@ -1,7 +1,7 @@
 import { Injectable, signal, computed, inject } from '@angular/core';
 import { DataService } from '@envello/data';
 import { FILE_SYSTEM } from './tokens';
-import { Task, Note, PlanningItem, Activity, Book, Project, Bookmark, BookmarkFolder, Person, MediaItem, Goal, Milestone, UserList, ListItem } from '@envello/domain';
+import { Task, Note, PlanningItem, Activity, Book, Project, Bookmark, BookmarkFolder, Person, MediaItem, Goal, Milestone, UserList, ListItem, Recipe } from '@envello/domain';
 
 @Injectable({
     providedIn: 'root'
@@ -20,6 +20,7 @@ export class StoreService {
     bookmarkFolders = signal<BookmarkFolder[]>([]);
     spaces = signal<Project[]>([]);
     people = signal<Person[]>([]);
+    recipes = signal<Recipe[]>([]);
     lists = signal<UserList[]>([]);
     goals = signal<Goal[]>([]);
     media = signal<MediaItem[]>([]);
@@ -85,6 +86,7 @@ export class StoreService {
             this.bookmarkFolders.set([]);
             this.spaces.set([]);
             this.people.set([]);
+            this.recipes.set([]);
             this.lists.set([]);
             this.goals.set([]);
             this.media.set([]);
@@ -144,7 +146,7 @@ export class StoreService {
         const generation = this._loadGeneration;
         try {
             const L = StoreService.LIMITS;
-            const [tasks, notes, planningItems, activities, books, folders, bookmarks, bookmarkFolders, spaces, people, lists, goals, media] = await Promise.all([
+            const [tasks, notes, planningItems, activities, books, folders, bookmarks, bookmarkFolders, spaces, people, recipes, lists, goals, media] = await Promise.all([
                 this.db.getAll<Task>('tasks',                                     { limit: L.tasks }),
                 this.db.getAll<Note>('notes',                                     { limit: L.notes }),
                 this.db.getAll<PlanningItem>('planning_items'),
@@ -155,6 +157,7 @@ export class StoreService {
                 this.db.getAll<BookmarkFolder>('bookmark_folders'),
                 this.db.getAll<Project>('projects'),
                 this.db.getAll<Person>('people',                                  { limit: L.people }),
+                this.db.getAll<Recipe>('recipes'),
                 this.db.getAll<UserList>('lists'),
                 this.db.getAll<Goal>('goals'),
                 this.db.getAll<MediaItem>('media'),
@@ -211,6 +214,9 @@ export class StoreService {
                 (people || []).filter(p => !p.deleted_at).slice(0, StoreService.LIMITS.people)
             );
 
+            // Recipes — exclude soft-deleted
+            this.recipes.set((recipes || []).filter(r => !r.deleted_at));
+
             // Lists — exclude soft-deleted
             this.lists.set((lists || []).filter(l => !l.deleted_at));
 
@@ -255,6 +261,7 @@ export class StoreService {
             this.bookmarkFolders.set([]);
             this.spaces.set([]);
             this.people.set([]);
+            this.recipes.set([]);
             this.lists.set([]);
             this.goals.set([]);
             this.media.set([]);
@@ -714,6 +721,27 @@ export class StoreService {
         this.goals.update(list => list.filter(g => g.id !== id));
         this.db.upsert('goals', { ...goal, deleted_at: new Date().toISOString() })
             .catch(e => console.error('[StoreService] soft-delete goal failed', e));
+    }
+
+    // ─── Recipes CRUD ────────────────────────────────────────────────────────
+
+    addRecipe(recipe: Recipe) {
+        this.recipes.update(list => [recipe, ...list]);
+        this.db.upsert('recipes', recipe).catch(e => console.error('[StoreService] persist recipe failed', e));
+    }
+
+    updateRecipe(id: string, updates: Partial<Recipe>) {
+        this.recipes.update(list => list.map(r => r.id === id ? { ...r, ...updates, updatedAt: new Date().toISOString() } : r));
+        const recipe = this.recipes().find(r => r.id === id);
+        if (recipe) this.db.upsert('recipes', recipe).catch(e => console.error('[StoreService] update recipe failed', e));
+    }
+
+    deleteRecipe(id: string) {
+        const recipe = this.recipes().find(r => r.id === id);
+        if (!recipe) return;
+        this.recipes.update(list => list.filter(r => r.id !== id));
+        this.db.upsert('recipes', { ...recipe, deleted_at: new Date().toISOString() })
+            .catch(e => console.error('[StoreService] soft-delete recipe failed', e));
     }
 
     // ─── Lists CRUD ──────────────────────────────────────────────────────────

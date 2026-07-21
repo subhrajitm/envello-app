@@ -30,7 +30,8 @@
       "@envello/feature-analytics": ["libs/feature-analytics/src/index.ts"],
       "@envello/feature-media": ["libs/feature-media/src/index.ts"],
       "@envello/feature-goals": ["libs/feature-goals/src/index.ts"],
-      "@envello/feature-lists": ["libs/feature-lists/src/index.ts"]
+      "@envello/feature-lists": ["libs/feature-lists/src/index.ts"],
+      "@envello/feature-recipes": ["libs/feature-recipes/src/index.ts"]
     }
   }
 }

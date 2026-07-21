@@ -373,6 +373,34 @@ const people = new Table(
   { localOnly: true, indexes: { by_profile: ['profile_id'] } }
 );
 
+const recipes = new Table(
+  {
+    profile_id:  column.text,
+    title:       column.text,
+    description: column.text,
+    category:    column.text,
+    servings:    column.real,
+    prepTime:    column.real,
+    cookTime:    column.real,
+    ingredients: column.text,  // JSON RecipeIngredient[]
+    steps:       column.text,  // JSON RecipeStep[]
+    tags:        column.text,  // JSON string[]
+    sourceUrl:   column.text,
+    notes:       column.text,
+    isFavorite:  column.integer,
+    createdAt:   column.text,
+    updatedAt:   column.text,
+    deleted_at:  column.text,
+  },
+  {
+    localOnly: true,
+    indexes: {
+      by_profile_category: ['profile_id', 'category'],
+      by_profile_fav:      ['profile_id', 'isFavorite'],
+    },
+  }
+);
+
 const lists = new Table(
   {
     profile_id:  column.text,
@@ -544,6 +572,7 @@ export const AppSchema = new Schema({
   bookmark_folders,
   transactions,
   people,
+  recipes,
   lists,
   goals,
   media,
@@ -562,7 +591,7 @@ export const TYPED_TABLES = new Set([
   'tasks', 'notes', 'planning_items', 'activities', 'books', 'book_content',
   'meetings', 'articles', 'research_collections', 'research_sources',
   'research_summaries', 'projects', 'note_folders', 'note_history', 'chapter_history', 'bookmarks',
-  'bookmark_folders', 'transactions', 'people', 'lists', 'goals', 'media', 'user_preferences', 'library_files',
+  'bookmark_folders', 'transactions', 'people', 'recipes', 'lists', 'goals', 'media', 'user_preferences', 'library_files',
 ]);
 
 /** Fields that are stored as JSON strings in SQLite. */
@@ -578,6 +607,7 @@ export const JSON_FIELDS: Record<string, string[]> = {
   bookmarks:            ['tags'],
   transactions:         ['history'],
   people:               ['tags', 'socialLinks'],
+  recipes:              ['ingredients', 'steps', 'tags'],
   lists:                ['items'],
 
   goals:                ['milestones'],
@@ -587,6 +617,7 @@ export const JSON_FIELDS: Record<string, string[]> = {
 
 /** Fields that are stored as 0/1 integers in SQLite but are booleans in TS. */
 export const BOOL_FIELDS: Record<string, string[]> = {
+  recipes:          ['isFavorite'],
   lists:            ['isRecurring'],
   books:            ['isRecentlyUpdated'],
   bookmarks:        ['isArchived', 'isPinned'],

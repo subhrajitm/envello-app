@@ -309,6 +309,42 @@ export interface Person {
     deleted_at?: string | null;
 }
 
+export type RecipeCategory = 'breakfast' | 'lunch' | 'dinner' | 'snack' | 'dessert' | 'drink' | 'other';
+
+export interface RecipeIngredient {
+    id: string;
+    amount: string;   // "1", "1/2", "2–3"
+    unit: string;     // "cup", "tbsp", "g", "" (empty = no unit)
+    name: string;
+    note?: string;    // "finely chopped", "room temperature"
+}
+
+export interface RecipeStep {
+    id: string;
+    order: number;
+    instruction: string;
+    duration?: string;  // "5 minutes"
+}
+
+export interface Recipe {
+    id: string;
+    title: string;
+    description?: string;
+    category?: RecipeCategory;
+    servings?: number;
+    prepTime?: number;    // minutes
+    cookTime?: number;    // minutes
+    ingredients: RecipeIngredient[];
+    steps: RecipeStep[];
+    tags?: string[];
+    sourceUrl?: string;
+    notes?: string;
+    isFavorite: boolean;
+    createdAt: string;
+    updatedAt?: string;
+    deleted_at?: string | null;
+}
+
 export type ListType = 'shopping' | 'packing' | 'checklist' | 'todo';
 
 export interface ListItem {

@@ -121,6 +121,12 @@ export const routes: Routes = [
     data: { hasSidebar: true },
   },
   {
+    path: 'recipes',
+    loadComponent: () => import('@envello/feature-recipes').then(m => m.RecipesComponent),
+    canActivate: [authGuard],
+    data: { hasSidebar: true },
+  },
+  {
     path: 'lists',
     loadComponent: () => import('@envello/feature-lists').then(m => m.ListsComponent),
     canActivate: [authGuard],

@@ -126,6 +126,7 @@ export class HeaderComponent implements OnInit, OnDestroy {
     { id: 'transactions',  label: 'Transactions',   icon: 'receipt_long', route: 'transactions' },
     { id: 'bookmarks',     label: 'Bookmarks',      icon: 'bookmarks',    route: 'bookmarks' },
     { id: 'people',        label: 'People',          icon: 'group',        route: 'people' },
+    { id: 'recipes',       label: 'Recipes',         icon: 'restaurant_menu', route: 'recipes' },
     { id: 'lists',         label: 'Lists',           icon: 'checklist',    route: 'lists' },
     { id: 'goals',         label: 'Goals',           icon: 'flag',         route: 'goals' },
     { id: 'media',         label: 'Media',           icon: 'movie',        route: 'media' },

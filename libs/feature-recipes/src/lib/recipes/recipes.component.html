@@ -1,0 +1,482 @@
+<div class="rc-view">
+
+  <!-- ═══════════ SIDEBAR ═══════════ -->
+  <env-feature-sidebar title="Recipes">
+    <nav class="rc-sb-nav">
+      @for (item of sidebarNavItems(); track item.id; let i = $index) {
+        @if (i === 2) {
+          <div class="rc-sb-divider"></div>
+          <div class="rc-sb-section-lbl">BY CATEGORY</div>
+        }
+        <button class="rc-sb-item" [class.active]="activeFilter() === item.id"
+          (click)="onNavItemClick(item.id)">
+          <span class="material-symbols-outlined"
+            [style.color]="i >= 2 ? catMeta($any(item.id))?.color : ''">{{ item.icon }}</span>
+          <span class="rc-sb-label">{{ item.label }}</span>
+          <span class="rc-sb-count">{{ item.count }}</span>
+        </button>
+      }
+    </nav>
+  </env-feature-sidebar>
+
+  <!-- ═══════════ MAIN ═══════════ -->
+  <main class="rc-main">
+
+    <!-- Toolbar -->
+    <div class="rc-toolbar">
+      <div class="rc-search-wrap">
+        <span class="material-symbols-outlined rc-search-icon">search</span>
+        <input class="rc-search-input" type="text" placeholder="Search recipes, ingredients…"
+          [value]="searchQuery()" (input)="searchQuery.set($any($event.target).value)" />
+      </div>
+      <button class="rc-add-btn" (click)="openNew()">
+        <span class="material-symbols-outlined">add</span>
+        New Recipe
+      </button>
+    </div>
+
+    <!-- Grid -->
+    <div class="rc-grid-wrap">
+      @if (filtered().length === 0) {
+        @if (all().length === 0) {
+          <env-empty-state
+            icon="restaurant_menu"
+            title="No recipes saved yet"
+            description="Add your favourite recipes with structured ingredients and step-by-step instructions.">
+          </env-empty-state>
+        } @else {
+          <env-empty-state icon="search_off" title="No recipes match this filter"></env-empty-state>
+        }
+      } @else {
+        <div class="rc-grid">
+          @for (recipe of filtered(); track recipe.id) {
+            @let cat = catMeta(recipe.category);
+            <div class="rc-card" (click)="openView(recipe)">
+
+              <!-- Avatar + fav -->
+              <div class="rc-card-top">
+                <div class="rc-card-avatar" [style.background]="avatarColor(recipe.title)">
+                  {{ recipe.title.charAt(0).toUpperCase() }}
+                </div>
+                <div class="rc-card-top-right">
+                  @if (cat) {
+                    <span class="rc-cat-badge"
+                      [style.color]="cat.color"
+                      [style.background]="'color-mix(in srgb, ' + cat.color + ' 10%, transparent)'">
+                      <span class="material-symbols-outlined">{{ cat.icon }}</span>
+                      {{ cat.label }}
+                    </span>
+                  }
+                  <button class="rc-fav-btn" [class.active]="recipe.isFavorite"
+                    (click)="toggleFav(recipe, $event)" title="Favourite">
+                    <span class="material-symbols-outlined">{{ recipe.isFavorite ? 'star' : 'star_border' }}</span>
+                  </button>
+                </div>
+              </div>
+
+              <!-- Title -->
+              <div class="rc-card-title">{{ recipe.title }}</div>
+              @if (recipe.description) {
+                <div class="rc-card-desc">{{ recipe.description }}</div>
+              }
+
+              <!-- Meta row: time + servings + ingredients -->
+              <div class="rc-card-meta">
+                @if (totalTime(recipe) > 0) {
+                  <span class="rc-meta-chip">
+                    <span class="material-symbols-outlined">schedule</span>
+                    {{ formatTime(totalTime(recipe)) }}
+                  </span>
+                }
+                @if (recipe.servings) {
+                  <span class="rc-meta-chip">
+                    <span class="material-symbols-outlined">group</span>
+                    {{ recipe.servings }}
+                  </span>
+                }
+                <span class="rc-meta-chip">
+                  <span class="material-symbols-outlined">grocery</span>
+                  {{ recipe.ingredients.length }}
+                </span>
+              </div>
+
+              <!-- Tags -->
+              @if ((recipe.tags?.length ?? 0) > 0) {
+                <div class="rc-card-tags">
+                  @for (tag of recipe.tags!.slice(0, 3); track tag) {
+                    <span class="rc-tag">{{ tag }}</span>
+                  }
+                  @if ((recipe.tags?.length ?? 0) > 3) {
+                    <span class="rc-tag rc-tag--more">+{{ (recipe.tags?.length ?? 0) - 3 }}</span>
+                  }
+                </div>
+              }
+            </div>
+          }
+        </div>
+      }
+    </div>
+  </main>
+</div>
+
+<!-- ═══════════ SLIDER ═══════════ -->
+<env-slider-panel [isOpen]="showSlider()" (closed)="closeSlider()" width="520px">
+
+  <!-- ── VIEW MODE ── -->
+  @if (sliderMode() === 'view' && selectedRecipe()) {
+    @let r = selectedRecipe()!;
+    @let cat = catMeta(r.category);
+    <div class="rc-slider">
+
+      <div class="rc-sl-hdr">
+        <div class="rc-sl-hdr-left">
+          <div class="rc-sl-avatar" [style.background]="avatarColor(r.title)">
+            {{ r.title.charAt(0).toUpperCase() }}
+          </div>
+          <div>
+            <div class="rc-sl-title">{{ r.title }}</div>
+            @if (cat) {
+              <span class="rc-cat-badge rc-cat-badge--sm"
+                [style.color]="cat.color"
+                [style.background]="'color-mix(in srgb, ' + cat.color + ' 10%, transparent)'">
+                <span class="material-symbols-outlined">{{ cat.icon }}</span>
+                {{ cat.label }}
+              </span>
+            }
+          </div>
+        </div>
+        <div class="rc-sl-hdr-actions">
+          <button class="rc-sl-icon-btn" [class.active]="r.isFavorite" (click)="toggleFav(r)" title="Favourite">
+            <span class="material-symbols-outlined">{{ r.isFavorite ? 'star' : 'star_border' }}</span>
+          </button>
+          <button class="rc-sl-icon-btn" (click)="openEditMode()" title="Edit">
+            <span class="material-symbols-outlined">edit</span>
+          </button>
+          <button class="rc-sl-icon-btn rc-sl-icon-btn--danger" (click)="deleteSelected()" title="Delete">
+            <span class="material-symbols-outlined">delete</span>
+          </button>
+        </div>
+      </div>
+
+      <div class="rc-sl-body">
+
+        <!-- Meta chips -->
+        <div class="rc-sl-meta">
+          @if (r.prepTime) {
+            <div class="rc-sl-meta-item">
+              <span class="material-symbols-outlined">timer</span>
+              <div>
+                <div class="rc-sl-meta-label">Prep</div>
+                <div class="rc-sl-meta-val">{{ formatTime(r.prepTime) }}</div>
+              </div>
+            </div>
+          }
+          @if (r.cookTime) {
+            <div class="rc-sl-meta-item">
+              <span class="material-symbols-outlined">local_fire_department</span>
+              <div>
+                <div class="rc-sl-meta-label">Cook</div>
+                <div class="rc-sl-meta-val">{{ formatTime(r.cookTime) }}</div>
+              </div>
+            </div>
+          }
+          @if (r.servings) {
+            <div class="rc-sl-meta-item">
+              <span class="material-symbols-outlined">group</span>
+              <div>
+                <div class="rc-sl-meta-label">Serves</div>
+                <div class="rc-sl-meta-val">{{ r.servings }}</div>
+              </div>
+            </div>
+          }
+        </div>
+
+        @if (r.description) {
+          <p class="rc-sl-desc">{{ r.description }}</p>
+        }
+
+        <!-- Ingredients -->
+        <div class="rc-sl-section">
+          <div class="rc-sl-section-hdr">
+            <span class="rc-sl-section-title">Ingredients</span>
+            @if (anyIngChecked()) {
+              <button class="rc-sl-clear-btn" (click)="clearCooking()">Reset</button>
+            }
+          </div>
+          <div class="rc-ing-list">
+            @for (ing of r.ingredients; track ing.id) {
+              <div class="rc-ing-row" [class.rc-ing-row--done]="isIngChecked(ing.id)"
+                (click)="toggleIngredient(ing.id)">
+                <span class="rc-ing-check material-symbols-outlined">
+                  {{ isIngChecked(ing.id) ? 'check_circle' : 'radio_button_unchecked' }}
+                </span>
+                <span class="rc-ing-text">{{ formatIngredient(ing) }}</span>
+              </div>
+            }
+          </div>
+        </div>
+
+        <!-- Steps -->
+        @if (r.steps.length > 0) {
+          <div class="rc-sl-section">
+            <div class="rc-sl-section-hdr">
+              <span class="rc-sl-section-title">Instructions</span>
+            </div>
+            <ol class="rc-steps-list">
+              @for (step of r.steps; track step.id) {
+                <li class="rc-step-item">
+                  <div class="rc-step-num">{{ step.order + 1 }}</div>
+                  <div class="rc-step-body">
+                    <p class="rc-step-text">{{ step.instruction }}</p>
+                    @if (step.duration) {
+                      <span class="rc-step-dur">
+                        <span class="material-symbols-outlined">timer</span>
+                        {{ step.duration }}
+                      </span>
+                    }
+                  </div>
+                </li>
+              }
+            </ol>
+          </div>
+        }
+
+        <!-- Notes -->
+        @if (r.notes) {
+          <div class="rc-sl-section">
+            <div class="rc-sl-section-hdr"><span class="rc-sl-section-title">Notes</span></div>
+            <p class="rc-sl-notes">{{ r.notes }}</p>
+          </div>
+        }
+
+        <!-- Tags + source -->
+        @if ((r.tags?.length ?? 0) > 0 || r.sourceUrl) {
+          <div class="rc-sl-section rc-sl-section--footer">
+            @if ((r.tags?.length ?? 0) > 0) {
+              <div class="rc-tag-row">
+                @for (tag of r.tags!; track tag) {
+                  <span class="rc-tag">{{ tag }}</span>
+                }
+              </div>
+            }
+            @if (r.sourceUrl) {
+              <a class="rc-source-link" [href]="r.sourceUrl" target="_blank" rel="noopener">
+                <span class="material-symbols-outlined">link</span>
+                Source recipe
+              </a>
+            }
+          </div>
+        }
+
+      </div>
+    </div>
+  }
+
+  <!-- ── EDIT MODE ── -->
+  @if (sliderMode() === 'edit') {
+    <div class="rc-slider">
+
+      <div class="rc-sl-hdr">
+        <span class="rc-sl-hdr-title">{{ selectedId() ? 'Edit Recipe' : 'New Recipe' }}</span>
+        @if (selectedId()) {
+          <button class="rc-sl-icon-btn rc-sl-icon-btn--danger" (click)="deleteSelected()" title="Delete">
+            <span class="material-symbols-outlined">delete</span>
+          </button>
+        }
+      </div>
+
+      <div class="rc-sl-body">
+
+        <!-- Title -->
+        <div class="rc-form-field">
+          <span class="rc-form-label">RECIPE NAME</span>
+          <input class="rc-title-input" [value]="formTitle()"
+            (input)="formTitle.set($any($event.target).value)"
+            placeholder="e.g. Chicken Tikka Masala" autofocus />
+        </div>
+
+        <!-- Category -->
+        <div class="rc-form-field">
+          <span class="rc-form-label">CATEGORY</span>
+          <div class="rc-chips">
+            @for (cat of categoryOptions; track cat) {
+              @let meta = catMeta(cat)!;
+              <button type="button" class="rc-chip"
+                [class.active]="formCategory() === cat"
+                [style.--cc]="meta.color"
+                (click)="formCategory.set(formCategory() === cat ? '' : cat)">
+                <span class="material-symbols-outlined">{{ meta.icon }}</span>
+                {{ meta.label }}
+              </button>
+            }
+          </div>
+        </div>
+
+        <!-- Description -->
+        <div class="rc-form-field">
+          <span class="rc-form-label">DESCRIPTION <span class="rc-opt">optional</span></span>
+          <textarea class="rc-input rc-textarea" rows="2" [value]="formDescription()"
+            (input)="formDescription.set($any($event.target).value)"
+            placeholder="Brief description or tagline…"></textarea>
+        </div>
+
+        <!-- Servings / Prep / Cook -->
+        <div class="rc-form-row3">
+          <div class="rc-form-field">
+            <span class="rc-form-label">SERVES</span>
+            <input class="rc-input" type="number" min="1" [value]="formServings()"
+              (input)="formServings.set($any($event.target).value)" placeholder="4" />
+          </div>
+          <div class="rc-form-field">
+            <span class="rc-form-label">PREP (min)</span>
+            <input class="rc-input" type="number" min="0" [value]="formPrepTime()"
+              (input)="formPrepTime.set($any($event.target).value)" placeholder="20" />
+          </div>
+          <div class="rc-form-field">
+            <span class="rc-form-label">COOK (min)</span>
+            <input class="rc-input" type="number" min="0" [value]="formCookTime()"
+              (input)="formCookTime.set($any($event.target).value)" placeholder="40" />
+          </div>
+        </div>
+
+        <!-- Ingredients -->
+        <div class="rc-form-field">
+          <div class="rc-section-hdr">
+            <span class="rc-form-label">INGREDIENTS</span>
+            @if (formIngredients().length) {
+              <span class="rc-count-badge">{{ formIngredients().length }}</span>
+            }
+          </div>
+
+          <!-- Ingredient list -->
+          @for (ing of formIngredients(); track ing.id) {
+            <div class="rc-ing-form-row">
+              @if (ing.amount) { <span class="rc-ing-amt">{{ ing.amount }}</span> }
+              @if (ing.unit)   { <span class="rc-ing-unit">{{ ing.unit }}</span> }
+              <span class="rc-ing-name">{{ ing.name }}</span>
+              <button type="button" class="rc-row-del" (click)="removeIngredient(ing.id)">
+                <span class="material-symbols-outlined">close</span>
+              </button>
+            </div>
+          }
+
+          <!-- Add ingredient row -->
+          <div class="rc-add-ing-row">
+            <input class="rc-input rc-ing-add-amt" type="text" [value]="newIngAmount()"
+              (input)="newIngAmount.set($any($event.target).value)"
+              (keydown)="onIngKeydown($event)"
+              placeholder="1½" />
+            <input class="rc-input rc-ing-add-unit" type="text" [value]="newIngUnit()"
+              (input)="newIngUnit.set($any($event.target).value)"
+              (keydown)="onIngKeydown($event)"
+              placeholder="cup" />
+            <input class="rc-input rc-ing-add-name" type="text" [value]="newIngName()"
+              (input)="newIngName.set($any($event.target).value)"
+              (keydown)="onIngKeydown($event)"
+              placeholder="Ingredient name… (Enter to add)" />
+            @if (newIngName().trim()) {
+              <button type="button" class="rc-add-inline-btn" (click)="addIngredient()">
+                <span class="material-symbols-outlined">add</span>
+              </button>
+            }
+          </div>
+        </div>
+
+        <!-- Steps -->
+        <div class="rc-form-field">
+          <div class="rc-section-hdr">
+            <span class="rc-form-label">STEPS</span>
+            @if (formSteps().length) {
+              <span class="rc-count-badge">{{ formSteps().length }}</span>
+            }
+          </div>
+
+          <!-- Step list -->
+          @for (step of formSteps(); track step.id) {
+            <div class="rc-step-form-row">
+              <span class="rc-step-form-num">{{ step.order + 1 }}</span>
+              <span class="rc-step-form-text">{{ step.instruction }}</span>
+              <button type="button" class="rc-row-del" (click)="removeStep(step.id)">
+                <span class="material-symbols-outlined">close</span>
+              </button>
+            </div>
+          }
+
+          <!-- Add step row -->
+          <div class="rc-add-step-row">
+            <span class="rc-step-form-num rc-step-form-num--new">{{ formSteps().length + 1 }}</span>
+            <textarea class="rc-input rc-step-add-input" rows="2" [value]="newStepText()"
+              (input)="newStepText.set($any($event.target).value)"
+              (keydown)="onStepKeydown($event)"
+              placeholder="Describe this step… (Enter to add)"></textarea>
+            @if (newStepText().trim()) {
+              <button type="button" class="rc-add-inline-btn" (click)="addStep()">
+                <span class="material-symbols-outlined">add</span>
+              </button>
+            }
+          </div>
+        </div>
+
+        <!-- Tags -->
+        <div class="rc-form-field">
+          <span class="rc-form-label">TAGS <span class="rc-opt">optional</span></span>
+          <div class="rc-tag-editor">
+            @for (tag of formTags(); track tag) {
+              <span class="rc-tag rc-tag--editable">
+                {{ tag }}
+                <button type="button" class="rc-tag-remove" (click)="removeTag(tag)">
+                  <span class="material-symbols-outlined">close</span>
+                </button>
+              </span>
+            }
+            <input class="rc-tag-input" [value]="formTagInput()"
+              (input)="formTagInput.set($any($event.target).value)"
+              (keydown)="onTagKeydown($event)"
+              placeholder="Add tag…" />
+          </div>
+        </div>
+
+        <!-- Source URL -->
+        <div class="rc-form-field">
+          <span class="rc-form-label">SOURCE URL <span class="rc-opt">optional</span></span>
+          <input class="rc-input" type="url" [value]="formSourceUrl()"
+            (input)="formSourceUrl.set($any($event.target).value)"
+            placeholder="https://…" />
+        </div>
+
+        <!-- Notes -->
+        <div class="rc-form-field">
+          <span class="rc-form-label">NOTES <span class="rc-opt">optional</span></span>
+          <textarea class="rc-input rc-textarea" rows="3" [value]="formNotes()"
+            (input)="formNotes.set($any($event.target).value)"
+            placeholder="Tips, substitutions, variations…"></textarea>
+        </div>
+
+      </div>
+
+      <!-- Footer -->
+      <div class="rc-sl-foot">
+        <button class="rc-btn-ghost" (click)="selectedId() ? sliderMode.set('view') : closeSlider()">
+          {{ selectedId() ? 'Cancel' : 'Discard' }}
+        </button>
+        <button class="rc-btn-primary" [disabled]="!canSave()" (click)="save()">
+          {{ selectedId() ? 'Save Changes' : 'Save Recipe' }}
+        </button>
+      </div>
+
+    </div>
+  }
+
+</env-slider-panel>
+
+<!-- ═══════════ DELETE CONFIRM ═══════════ -->
+<env-confirm-dialog
+  [isOpen]="!!deleteTarget()"
+  title="Delete Recipe"
+  icon="delete"
+  variant="danger"
+  confirmLabel="Delete"
+  (confirmed)="doDelete()"
+  (cancelled)="deleteTarget.set(null)">
+  Delete <strong>{{ deleteTarget()?.title }}</strong>? Ingredients and steps will be permanently removed.
+</env-confirm-dialog>
