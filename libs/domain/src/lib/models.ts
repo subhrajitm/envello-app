@@ -308,3 +308,25 @@ export interface Person {
     createdAt: string;
     deleted_at?: string | null;
 }
+
+export type MediaType   = 'movie' | 'show' | 'book' | 'podcast';
+export type MediaStatus = 'want' | 'watching' | 'watched' | 'dropped';
+
+export interface MediaItem {
+    id: string;
+    title: string;
+    type: MediaType;
+    status: MediaStatus;
+    creator?: string;        // Director / Author / Host
+    year?: number;
+    genre?: string;
+    rating?: number;         // 1–5
+    notes?: string;
+    link?: string;           // URL to watch / read / listen
+    episode?: number;        // current episode (shows/podcasts)
+    totalEpisodes?: number;
+    startedAt?: string;      // ISO date
+    finishedAt?: string;     // ISO date
+    createdAt: string;
+    deleted_at?: string | null;
+}

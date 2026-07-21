@@ -1,0 +1,275 @@
+<div class="med-view">
+
+  <!-- ═══════════ SIDEBAR ═══════════ -->
+  <env-feature-sidebar title="Media">
+    <nav class="med-sb-nav">
+      @for (item of sidebarNavItems(); track item.id) {
+        <button class="med-sb-item" [class.active]="activeFilter() === item.id"
+          (click)="onNavItemClick(item.id)">
+          <span class="material-symbols-outlined" [class.med-sb-icon--type]="['movie','show','book','podcast'].includes(item.id)"
+            [style.color]="['movie','show','book','podcast'].includes(item.id) ? typeMeta($any(item.id)).color : ''">
+            {{ item.icon }}
+          </span>
+          <span class="med-sb-label">{{ item.label }}</span>
+          <span class="med-sb-count">{{ item.count }}</span>
+        </button>
+        @if (item.id === 'dropped') {
+          <div class="med-sb-divider"></div>
+          <div class="med-sb-section-lbl">BY TYPE</div>
+        }
+      }
+    </nav>
+  </env-feature-sidebar>
+
+  <!-- ═══════════ MAIN ═══════════ -->
+  <main class="med-main">
+
+    <!-- Toolbar -->
+    <div class="med-toolbar">
+      <div class="med-search-wrap">
+        <span class="material-symbols-outlined med-search-icon">search</span>
+        <input class="med-search-input" type="text" placeholder="Search titles, creators…"
+          [value]="searchQuery()" (input)="searchQuery.set($any($event.target).value)" />
+      </div>
+      <button class="med-add-btn" (click)="openAdd()">
+        <span class="material-symbols-outlined">add</span>
+        Add Media
+      </button>
+    </div>
+
+    <!-- Grid -->
+    <div class="med-grid-wrap">
+      @if (filtered().length === 0) {
+        @if (all().length === 0) {
+          <env-empty-state
+            icon="movie"
+            title="No media tracked yet"
+            description="Add movies, shows, books or podcasts you want to watch, read or listen to.">
+          </env-empty-state>
+        } @else {
+          <env-empty-state icon="search_off" title="No results for this filter"></env-empty-state>
+        }
+      } @else {
+        <div class="med-grid">
+          @for (item of filtered(); track item.id) {
+            <div class="med-card" (click)="openEdit(item)">
+              <!-- Card header: avatar + type badge -->
+              <div class="med-card-top">
+                <div class="med-card-avatar" [style.background]="avatarColor(item.title)">
+                  {{ item.title.charAt(0).toUpperCase() }}
+                </div>
+                <div class="med-card-badges">
+                  <span class="med-type-badge" [style.color]="typeMeta(item.type).color"
+                    [style.background]="'color-mix(in srgb, ' + typeMeta(item.type).color + ' 10%, transparent)'">
+                    <span class="material-symbols-outlined">{{ typeMeta(item.type).icon }}</span>
+                    {{ typeMeta(item.type).label }}
+                  </span>
+                </div>
+              </div>
+
+              <!-- Title & meta -->
+              <div class="med-card-title">{{ item.title }}</div>
+              @if (item.creator) {
+                <div class="med-card-creator">{{ item.creator }}</div>
+              }
+              @if (item.year || item.genre) {
+                <div class="med-card-sub">
+                  {{ item.year }}{{ item.year && item.genre ? ' · ' : '' }}{{ item.genre }}
+                </div>
+              }
+
+              <!-- Episode progress (shows/podcasts) -->
+              @if ((item.type === 'show' || item.type === 'podcast') && item.episode) {
+                <div class="med-card-ep">
+                  <span class="material-symbols-outlined">radio_button_checked</span>
+                  Ep {{ item.episode }}{{ item.totalEpisodes ? ' / ' + item.totalEpisodes : '' }}
+                </div>
+              }
+
+              <!-- Rating -->
+              @if (item.rating) {
+                <div class="med-card-stars">
+                  @for (filled of stars(item.rating); track $index) {
+                    <span class="med-star" [class.med-star--filled]="filled">★</span>
+                  }
+                </div>
+              }
+
+              <!-- Footer: status chip + actions -->
+              <div class="med-card-footer">
+                <span class="med-status-chip"
+                  [style.color]="statusMeta(item.status).color"
+                  [style.background]="'color-mix(in srgb, ' + statusMeta(item.status).color + ' 10%, transparent)'">
+                  {{ statusLabel(item) }}
+                </span>
+                <div class="med-card-actions">
+                  <button class="med-card-btn" title="Cycle status" (click)="cycleStatus(item, $event)">
+                    <span class="material-symbols-outlined">update</span>
+                  </button>
+                  <button class="med-card-btn med-card-btn--danger" title="Delete" (click)="confirmDelete(item, $event)">
+                    <span class="material-symbols-outlined">delete</span>
+                  </button>
+                </div>
+              </div>
+            </div>
+          }
+        </div>
+      }
+    </div>
+  </main>
+</div>
+
+<!-- ═══════════ SLIDER (Add / Edit) ═══════════ -->
+<env-slider-panel [isOpen]="showSlider()" (closed)="closeSlider()" width="420px">
+  <div class="med-slider">
+
+    <!-- Header -->
+    <div class="med-sl-hdr">
+      <div class="med-sl-hdr-left">
+        <span class="material-symbols-outlined med-sl-hdr-icon"
+          [style.color]="typeMeta(formType()).color">
+          {{ typeMeta(formType()).icon }}
+        </span>
+        <span class="med-sl-hdr-title">{{ isEditMode() ? 'Edit Entry' : 'Add Media' }}</span>
+      </div>
+      @if (isEditMode()) {
+        <button class="med-sl-del-btn" (click)="deleteEditing($event)" title="Delete">
+          <span class="material-symbols-outlined">delete</span>
+        </button>
+      }
+    </div>
+
+    <!-- Body -->
+    <div class="med-sl-body">
+
+      <!-- Title -->
+      <div class="med-sl-field">
+        <span class="med-sl-label">TITLE</span>
+        <input class="med-sl-title-input" [value]="formTitle()"
+          (input)="formTitle.set($any($event.target).value)"
+          placeholder="e.g. Inception" autofocus />
+      </div>
+
+      <!-- Type -->
+      <div class="med-sl-field">
+        <span class="med-sl-label">TYPE</span>
+        <div class="med-chips">
+          @for (t of typeOptions; track t) {
+            <button type="button" class="med-chip"
+              [class.med-chip--active]="formType() === t"
+              [style.--chip-color]="typeMeta(t).color"
+              (click)="formType.set(t)">
+              <span class="material-symbols-outlined">{{ typeMeta(t).icon }}</span>
+              {{ typeMeta(t).label }}
+            </button>
+          }
+        </div>
+      </div>
+
+      <!-- Status -->
+      <div class="med-sl-field">
+        <span class="med-sl-label">STATUS</span>
+        <div class="med-chips">
+          @for (s of statusOptions; track s) {
+            <button type="button" class="med-chip"
+              [class.med-chip--active]="formStatus() === s"
+              [style.--chip-color]="statusMeta(s).color"
+              (click)="formStatus.set(s)">
+              {{ statusMeta(s).label }}
+            </button>
+          }
+        </div>
+      </div>
+
+      <!-- Rating -->
+      <div class="med-sl-field">
+        <span class="med-sl-label">RATING</span>
+        <div class="med-rating">
+          @for (i of [1,2,3,4,5]; track i) {
+            <button type="button" class="med-rating-star"
+              [class.active]="i <= (formHoverRating() || formRating())"
+              (mouseenter)="formHoverRating.set(i)"
+              (mouseleave)="formHoverRating.set(0)"
+              (click)="setRating(i)">★</button>
+          }
+          @if (formRating()) {
+            <button type="button" class="med-rating-clear" (click)="setRating(formRating())">Clear</button>
+          }
+        </div>
+      </div>
+
+      <!-- Creator / Year / Genre row -->
+      <div class="med-sl-field">
+        <span class="med-sl-label">{{ formType() === 'book' ? 'AUTHOR' : formType() === 'podcast' ? 'HOST' : 'DIRECTOR / STUDIO' }}</span>
+        <input class="med-sl-input" [value]="formCreator()"
+          (input)="formCreator.set($any($event.target).value)"
+          [placeholder]="formType() === 'book' ? 'Author name' : formType() === 'podcast' ? 'Host name' : 'Director or studio'" />
+      </div>
+
+      <div class="med-sl-row2">
+        <div class="med-sl-field">
+          <span class="med-sl-label">YEAR</span>
+          <input class="med-sl-input" type="number" min="1900" max="2099" [value]="formYear()"
+            (input)="formYear.set($any($event.target).value)" placeholder="2024" />
+        </div>
+        <div class="med-sl-field" style="flex:2">
+          <span class="med-sl-label">GENRE</span>
+          <input class="med-sl-input" [value]="formGenre()"
+            (input)="formGenre.set($any($event.target).value)" placeholder="Sci-fi, Drama…" />
+        </div>
+      </div>
+
+      <!-- Episode tracker (shows / podcasts only) -->
+      @if (formType() === 'show' || formType() === 'podcast') {
+        <div class="med-sl-field">
+          <span class="med-sl-label">EPISODE PROGRESS</span>
+          <div class="med-ep-row">
+            <input class="med-sl-input med-ep-input" type="number" min="0" [value]="formEpisode()"
+              (input)="formEpisode.set($any($event.target).value)" placeholder="Current ep" />
+            <span class="med-ep-sep">of</span>
+            <input class="med-sl-input med-ep-input" type="number" min="0" [value]="formTotalEpisodes()"
+              (input)="formTotalEpisodes.set($any($event.target).value)" placeholder="Total" />
+          </div>
+        </div>
+      }
+
+      <!-- Link -->
+      <div class="med-sl-field">
+        <span class="med-sl-label">LINK <span class="med-sl-opt">optional</span></span>
+        <input class="med-sl-input" type="url" [value]="formLink()"
+          (input)="formLink.set($any($event.target).value)"
+          placeholder="https://…  (streaming, store page…)" />
+      </div>
+
+      <!-- Notes -->
+      <div class="med-sl-field">
+        <span class="med-sl-label">NOTES <span class="med-sl-opt">optional</span></span>
+        <textarea class="med-sl-input med-sl-textarea" rows="3" [value]="formNotes()"
+          (input)="formNotes.set($any($event.target).value)"
+          placeholder="Your thoughts, recommendations…"></textarea>
+      </div>
+
+    </div><!-- /body -->
+
+    <!-- Footer -->
+    <div class="med-sl-foot">
+      <button class="med-btn-ghost" (click)="closeSlider()">Cancel</button>
+      <button class="med-btn-primary" [disabled]="!canSave()" (click)="save()">
+        {{ isEditMode() ? 'Save Changes' : 'Add to Tracker' }}
+      </button>
+    </div>
+
+  </div>
+</env-slider-panel>
+
+<!-- ═══════════ DELETE CONFIRM ═══════════ -->
+<env-confirm-dialog
+  [isOpen]="!!deleteTarget()"
+  title="Remove from Tracker"
+  icon="delete"
+  variant="danger"
+  confirmLabel="Remove"
+  (confirmed)="doDelete()"
+  (cancelled)="deleteTarget.set(null)">
+  Remove <strong>{{ deleteTarget()?.title }}</strong> from your media tracker?
+</env-confirm-dialog>

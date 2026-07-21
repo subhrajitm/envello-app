@@ -360,10 +360,39 @@ const people = new Table(
     tags:            column.text,  // JSON string[]
     notes:           column.text,
     lastInteraction: column.text,
+    // CRM fields
+    birthday:        column.text,
+    lastContacted:   column.text,
+    reminderDate:    column.text,
+    relationshipType:column.text,
+    location:        column.text,
+    socialLinks:     column.text,  // JSON { linkedin?, twitter?, website? }
     createdAt:       column.text,
     deleted_at:      column.text,
   },
   { localOnly: true, indexes: { by_profile: ['profile_id'] } }
+);
+
+const media = new Table(
+  {
+    profile_id:    column.text,
+    title:         column.text,
+    type:          column.text,
+    status:        column.text,
+    creator:       column.text,
+    year:          column.real,
+    genre:         column.text,
+    rating:        column.real,
+    notes:         column.text,
+    link:          column.text,
+    episode:       column.real,
+    totalEpisodes: column.real,
+    startedAt:     column.text,
+    finishedAt:    column.text,
+    createdAt:     column.text,
+    deleted_at:    column.text,
+  },
+  { localOnly: true, indexes: { by_profile_status: ['profile_id', 'status'], by_profile_type: ['profile_id', 'type'] } }
 );
 
 const note_history = new Table(
@@ -476,6 +505,7 @@ export const AppSchema = new Schema({
   bookmark_folders,
   transactions,
   people,
+  media,
   user_preferences,
   library_files,
   // CRDT state store — local only, never synced directly
@@ -491,7 +521,7 @@ export const TYPED_TABLES = new Set([
   'tasks', 'notes', 'planning_items', 'activities', 'books', 'book_content',
   'meetings', 'articles', 'research_collections', 'research_sources',
   'research_summaries', 'projects', 'note_folders', 'note_history', 'chapter_history', 'bookmarks',
-  'bookmark_folders', 'transactions', 'people', 'user_preferences', 'library_files',
+  'bookmark_folders', 'transactions', 'people', 'media', 'user_preferences', 'library_files',
 ]);
 
 /** Fields that are stored as JSON strings in SQLite. */
@@ -506,7 +536,7 @@ export const JSON_FIELDS: Record<string, string[]> = {
   projects:             ['team', 'tags', 'linkedResources'],
   bookmarks:            ['tags'],
   transactions:         ['history'],
-  people:               ['tags'],
+  people:               ['tags', 'socialLinks'],
   user_preferences:     ['hiddenNavItems'],
   library_files:        ['tags'],
 };

@@ -1,7 +1,7 @@
 import { Injectable, signal, computed, inject } from '@angular/core';
 import { DataService } from '@envello/data';
 import { FILE_SYSTEM } from './tokens';
-import { Task, Note, PlanningItem, Activity, Book, Project, Bookmark, BookmarkFolder, Person } from '@envello/domain';
+import { Task, Note, PlanningItem, Activity, Book, Project, Bookmark, BookmarkFolder, Person, MediaItem } from '@envello/domain';
 
 @Injectable({
     providedIn: 'root'
@@ -20,6 +20,7 @@ export class StoreService {
     bookmarkFolders = signal<BookmarkFolder[]>([]);
     spaces = signal<Project[]>([]);
     people = signal<Person[]>([]);
+    media = signal<MediaItem[]>([]);
 
     // Memory caps — prevents unbounded growth for heavy collections
     private static readonly LIMITS = {
@@ -82,6 +83,7 @@ export class StoreService {
             this.bookmarkFolders.set([]);
             this.spaces.set([]);
             this.people.set([]);
+            this.media.set([]);
         });
     }
 
@@ -138,7 +140,7 @@ export class StoreService {
         const generation = this._loadGeneration;
         try {
             const L = StoreService.LIMITS;
-            const [tasks, notes, planningItems, activities, books, folders, bookmarks, bookmarkFolders, spaces, people] = await Promise.all([
+            const [tasks, notes, planningItems, activities, books, folders, bookmarks, bookmarkFolders, spaces, people, media] = await Promise.all([
                 this.db.getAll<Task>('tasks',                                     { limit: L.tasks }),
                 this.db.getAll<Note>('notes',                                     { limit: L.notes }),
                 this.db.getAll<PlanningItem>('planning_items'),
@@ -149,6 +151,7 @@ export class StoreService {
                 this.db.getAll<BookmarkFolder>('bookmark_folders'),
                 this.db.getAll<Project>('projects'),
                 this.db.getAll<Person>('people',                                  { limit: L.people }),
+                this.db.getAll<MediaItem>('media'),
             ]);
 
             // A profile switch happened while we were reading — discard stale results.
@@ -202,6 +205,9 @@ export class StoreService {
                 (people || []).filter(p => !p.deleted_at).slice(0, StoreService.LIMITS.people)
             );
 
+            // Media — exclude soft-deleted
+            this.media.set((media || []).filter(m => !m.deleted_at));
+
             if (folders?.length) {
                 this.noteFolders.set(folders);
             } else {
@@ -237,6 +243,7 @@ export class StoreService {
             this.bookmarkFolders.set([]);
             this.spaces.set([]);
             this.people.set([]);
+            this.media.set([]);
         } finally {
             this._loadInProgress = false;
             // If a profile switched while we were loading, run again immediately for the new profile.
@@ -637,5 +644,26 @@ export class StoreService {
         this.addActivity('Person removed', 'system');
         this.db.upsert('people', { ...person, deleted_at: new Date().toISOString() })
             .catch(e => console.error('[StoreService] soft-delete person failed', e));
+    }
+
+    // ─── Media CRUD ──────────────────────────────────────────────────────────
+
+    addMedia(item: MediaItem) {
+        this.media.update(list => [item, ...list]);
+        this.db.upsert('media', item).catch(e => console.error('[StoreService] persist media failed', e));
+    }
+
+    updateMedia(id: string, updates: Partial<MediaItem>) {
+        this.media.update(list => list.map(m => m.id === id ? { ...m, ...updates } : m));
+        const item = this.media().find(m => m.id === id);
+        if (item) this.db.upsert('media', item).catch(e => console.error('[StoreService] update media failed', e));
+    }
+
+    deleteMedia(id: string) {
+        const item = this.media().find(m => m.id === id);
+        if (!item) return;
+        this.media.update(list => list.filter(m => m.id !== id));
+        this.db.upsert('media', { ...item, deleted_at: new Date().toISOString() })
+            .catch(e => console.error('[StoreService] soft-delete media failed', e));
     }
 }

@@ -121,6 +121,12 @@ export const routes: Routes = [
     data: { hasSidebar: true },
   },
   {
+    path: 'media',
+    loadComponent: () => import('@envello/feature-media').then(m => m.MediaComponent),
+    canActivate: [authGuard],
+    data: { hasSidebar: true },
+  },
+  {
     path: 'analytics',
     loadComponent: () => import('@envello/feature-analytics').then(m => m.AnalyticsComponent),
     canActivate: [authGuard],
