@@ -132,6 +132,7 @@ export class HeaderComponent implements OnInit, OnDestroy {
     { id: 'goals',         label: 'Goals',           icon: 'flag',         route: 'goals' },
     { id: 'media',         label: 'Media',           icon: 'movie',        route: 'media' },
     { id: 'journal',       label: 'Journal',         icon: 'auto_stories', route: 'journal' },
+    { id: 'reminders',    label: 'Reminders',       icon: 'notifications_active', route: 'reminders' },
   ];
 
   private hiddenNavItemIds = signal<string[]>([]);

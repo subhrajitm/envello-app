@@ -1,7 +1,7 @@
 import { Injectable, signal, computed, inject } from '@angular/core';
 import { DataService } from '@envello/data';
 import { FILE_SYSTEM } from './tokens';
-import { Task, Note, PlanningItem, Activity, Book, Project, Bookmark, BookmarkFolder, Person, MediaItem, Goal, Milestone, UserList, ListItem, Recipe, Habit, JournalEntry } from '@envello/domain';
+import { Task, Note, PlanningItem, Activity, Book, Project, Bookmark, BookmarkFolder, Person, MediaItem, Goal, Milestone, UserList, ListItem, Recipe, Habit, JournalEntry, Reminder } from '@envello/domain';
 
 @Injectable({
     providedIn: 'root'
@@ -26,6 +26,7 @@ export class StoreService {
     goals = signal<Goal[]>([]);
     media = signal<MediaItem[]>([]);
     journalEntries = signal<JournalEntry[]>([]);
+    reminders = signal<Reminder[]>([]);
 
     // Memory caps — prevents unbounded growth for heavy collections
     private static readonly LIMITS = {
@@ -94,6 +95,7 @@ export class StoreService {
             this.goals.set([]);
             this.media.set([]);
             this.journalEntries.set([]);
+            this.reminders.set([]);
         });
     }
 
@@ -150,7 +152,7 @@ export class StoreService {
         const generation = this._loadGeneration;
         try {
             const L = StoreService.LIMITS;
-            const [tasks, notes, planningItems, activities, books, folders, bookmarks, bookmarkFolders, spaces, people, habits, recipes, lists, goals, media, journalEntries] = await Promise.all([
+            const [tasks, notes, planningItems, activities, books, folders, bookmarks, bookmarkFolders, spaces, people, habits, recipes, lists, goals, media, journalEntries, reminders] = await Promise.all([
                 this.db.getAll<Task>('tasks',                                     { limit: L.tasks }),
                 this.db.getAll<Note>('notes',                                     { limit: L.notes }),
                 this.db.getAll<PlanningItem>('planning_items'),
@@ -167,6 +169,7 @@ export class StoreService {
                 this.db.getAll<Goal>('goals'),
                 this.db.getAll<MediaItem>('media'),
                 this.db.getAll<JournalEntry>('journal_entries'),
+                this.db.getAll<Reminder>('reminders'),
             ]);
 
             // A profile switch happened while we were reading — discard stale results.
@@ -238,6 +241,9 @@ export class StoreService {
             // Journal entries — exclude soft-deleted
             this.journalEntries.set((journalEntries || []).filter(e => !e.deleted_at));
 
+            // Reminders — exclude soft-deleted
+            this.reminders.set((reminders || []).filter(r => !r.deleted_at));
+
             if (folders?.length) {
                 this.noteFolders.set(folders);
             } else {
@@ -279,6 +285,7 @@ export class StoreService {
             this.goals.set([]);
             this.media.set([]);
             this.journalEntries.set([]);
+            this.reminders.set([]);
         } finally {
             this._loadInProgress = false;
             // If a profile switched while we were loading, run again immediately for the new profile.
@@ -894,5 +901,27 @@ export class StoreService {
         this.journalEntries.update(list => list.filter(e => e.id !== id));
         this.db.upsert('journal_entries', { ...entry, deleted_at: new Date().toISOString() })
             .catch(e => console.error('[StoreService] soft-delete journal_entry failed', e));
+    }
+
+    // ─── Reminder CRUD ───────────────────────────────────────────────────────
+
+    addReminder(reminder: Reminder) {
+        this.reminders.update(list => [reminder, ...list]);
+        this.db.upsert('reminders', reminder).catch(e => console.error('[StoreService] persist reminder failed', e));
+    }
+
+    updateReminder(id: string, updates: Partial<Reminder>) {
+        const updated = { ...updates, updatedAt: new Date().toISOString() };
+        this.reminders.update(list => list.map(r => r.id === id ? { ...r, ...updated } : r));
+        const reminder = this.reminders().find(r => r.id === id);
+        if (reminder) this.db.upsert('reminders', reminder).catch(e => console.error('[StoreService] update reminder failed', e));
+    }
+
+    deleteReminder(id: string) {
+        const reminder = this.reminders().find(r => r.id === id);
+        if (!reminder) return;
+        this.reminders.update(list => list.filter(r => r.id !== id));
+        this.db.upsert('reminders', { ...reminder, deleted_at: new Date().toISOString() })
+            .catch(e => console.error('[StoreService] soft-delete reminder failed', e));
     }
 }

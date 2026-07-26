@@ -432,6 +432,24 @@ export interface JournalEntry {
     deleted_at?: string | null;
 }
 
+export type ReminderRepeat = 'none' | 'daily' | 'weekly' | 'monthly' | 'yearly';
+export type ReminderStatus = 'pending' | 'done' | 'snoozed';
+
+export interface Reminder {
+    id: string;
+    title: string;
+    notes?: string;
+    dueAt: string;              // ISO datetime e.g. "2026-07-26T09:00:00"
+    repeat: ReminderRepeat;
+    status: ReminderStatus;
+    tags?: string[];
+    priority?: 'high' | 'medium' | 'low';
+    createdAt: string;
+    updatedAt?: string;
+    snoozedUntil?: string;
+    deleted_at?: string | null;
+}
+
 export type MediaType   = 'movie' | 'show' | 'book' | 'podcast';
 export type MediaStatus = 'want' | 'watching' | 'watched' | 'dropped';
 

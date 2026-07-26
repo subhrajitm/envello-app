@@ -146,6 +146,7 @@ export class AppComponent implements OnInit, AfterViewInit, OnDestroy {
       'goals': 'Goals',
       'media': 'Media',
       'journal': 'Journal',
+      'reminders': 'Reminders',
       'analytics': 'Analytics',
       'bin': 'Bin',
       'activity-log': 'Activity Log',

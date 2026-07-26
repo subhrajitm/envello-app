@@ -1,0 +1,289 @@
+<div class="rm-view">
+
+  <!-- ═══════════ SIDEBAR ═══════════ -->
+  <aside class="rm-sidebar">
+    <div class="rm-sb-top">
+      <div class="rm-sb-heading">Reminders</div>
+    </div>
+
+    <div class="rm-sb-section">
+      @for (f of filters; track f.key) {
+        <button
+          class="rm-filter-btn"
+          [class.active]="activeFilter() === f.key"
+          (click)="setFilter(f.key)"
+        >
+          <span class="material-symbols-outlined rm-filter-icon">{{ f.icon }}</span>
+          <span class="rm-filter-label">{{ f.label }}</span>
+          @if (counts()[f.key] > 0) {
+            <span class="rm-filter-count">{{ counts()[f.key] }}</span>
+          }
+        </button>
+      }
+    </div>
+
+    @if (allTags().length > 0) {
+      <div class="rm-sb-divider"></div>
+      <div class="rm-sb-section">
+        <div class="rm-sb-sublabel">Tags</div>
+        @for (tag of allTags(); track tag) {
+          <button
+            class="rm-filter-btn"
+            [class.active]="activeTag() === tag"
+            (click)="setTagFilter(tag)"
+          >
+            <span class="material-symbols-outlined rm-filter-icon">label</span>
+            <span class="rm-filter-label">{{ tag }}</span>
+          </button>
+        }
+      </div>
+    }
+  </aside>
+
+  <!-- ═══════════ MAIN ═══════════ -->
+  <main class="rm-main">
+
+    <!-- Toolbar -->
+    <div class="rm-toolbar">
+      <div class="rm-toolbar-left">
+        <div class="rm-search-wrap">
+          <span class="material-symbols-outlined rm-search-icon">search</span>
+          <input
+            class="rm-search-input"
+            placeholder="Search reminders…"
+            [value]="searchQuery()"
+            (input)="onSearchInput($event)"
+          >
+        </div>
+      </div>
+      <button class="rm-add-btn" (click)="openAdd()">
+        <span class="material-symbols-outlined">add</span>
+        New Reminder
+      </button>
+    </div>
+
+    <!-- List area -->
+    <div class="rm-scroll">
+      @if (isEmpty()) {
+        <div class="rm-empty">
+          <span class="material-symbols-outlined rm-empty-icon">notifications_none</span>
+          <div class="rm-empty-title">No reminders here</div>
+          <div class="rm-empty-sub">
+            @if (activeFilter() === 'today') { Nothing due today. }
+            @else if (activeFilter() === 'overdue') { All caught up! }
+            @else if (activeFilter() === 'upcoming') { Nothing scheduled ahead. }
+            @else if (activeFilter() === 'done') { No completed reminders. }
+            @else { Add a reminder to stay on top of things. }
+          </div>
+          @if (activeFilter() === 'all') {
+            <button class="rm-empty-btn" (click)="openAdd()">
+              <span class="material-symbols-outlined">add</span>
+              Add Reminder
+            </button>
+          }
+        </div>
+      }
+
+      @for (group of groups(); track group.label) {
+        @if (group.items.length > 0) {
+          <div class="rm-group">
+            @if (group.label) {
+              <div class="rm-group-label" [class.is-overdue]="group.isOverdue" [class.is-done]="group.isDone">
+                @if (group.isOverdue) {
+                  <span class="material-symbols-outlined rm-group-icon">warning</span>
+                }
+                {{ group.label }}
+                <span class="rm-group-count">{{ group.items.length }}</span>
+              </div>
+            }
+
+            @for (r of group.items; track r.id) {
+              <div
+                class="rm-item"
+                [class.rm-item--done]="r.status === 'done'"
+                [class.rm-item--overdue]="isOverdue(r)"
+                (click)="openEdit(r)"
+              >
+                <!-- Priority indicator -->
+                @if (r.priority) {
+                  <div class="rm-priority-dot" [style.background]="priorityColor(r.priority)" [title]="r.priority + ' priority'"></div>
+                }
+
+                <!-- Checkbox -->
+                <button
+                  class="rm-checkbox"
+                  [class.rm-checkbox--checked]="r.status === 'done'"
+                  (click)="toggleDone(r, $event)"
+                  [title]="r.status === 'done' ? 'Mark as pending' : 'Mark as done'"
+                >
+                  <span class="material-symbols-outlined">
+                    {{ r.status === 'done' ? 'check_circle' : 'radio_button_unchecked' }}
+                  </span>
+                </button>
+
+                <!-- Content -->
+                <div class="rm-item-body">
+                  <div class="rm-item-title">{{ r.title }}</div>
+                  <div class="rm-item-meta">
+                    <span class="rm-due-chip" [class.rm-due-chip--overdue]="isOverdue(r)">
+                      <span class="material-symbols-outlined">schedule</span>
+                      {{ formatDue(r.dueAt) }}
+                    </span>
+
+                    @if (r.repeat !== 'none') {
+                      <span class="rm-repeat-chip">
+                        <span class="material-symbols-outlined">repeat</span>
+                        {{ repeatLabel(r.repeat) }}
+                      </span>
+                    }
+
+                    @if (r.notes) {
+                      <span class="rm-notes-chip" [title]="r.notes">
+                        <span class="material-symbols-outlined">notes</span>
+                      </span>
+                    }
+
+                    @for (tag of (r.tags || []); track tag) {
+                      <span class="rm-tag-chip">{{ tag }}</span>
+                    }
+                  </div>
+                </div>
+
+                <!-- Delete -->
+                <button
+                  class="rm-item-del"
+                  (click)="deleteReminder(r, $event)"
+                  title="Delete reminder"
+                >
+                  <span class="material-symbols-outlined">delete_outline</span>
+                </button>
+              </div>
+            }
+          </div>
+        }
+      }
+    </div>
+  </main>
+
+  <!-- ═══════════ FORM PANEL ═══════════ -->
+  @if (showForm()) {
+    <div class="rm-backdrop" (click)="closeForm()"></div>
+    <aside class="rm-form-panel">
+      <div class="rm-form-header">
+        <span class="rm-form-title">{{ editingId() ? 'Edit Reminder' : 'New Reminder' }}</span>
+        <button class="rm-form-close" (click)="closeForm()" title="Close">
+          <span class="material-symbols-outlined">close</span>
+        </button>
+      </div>
+
+      <div class="rm-form-body">
+        <!-- Title -->
+        <div class="rm-field">
+          <label class="rm-field-label">Title</label>
+          <input
+            #titleInput
+            class="rm-input"
+            placeholder="What do you need to be reminded of?"
+            [value]="formTitle()"
+            (input)="formTitle.set($any($event.target).value)"
+            (keydown.enter)="saveForm()"
+          >
+        </div>
+
+        <!-- Date & Time -->
+        <div class="rm-field-row">
+          <div class="rm-field">
+            <label class="rm-field-label">Date</label>
+            <input
+              type="date"
+              class="rm-input"
+              [value]="formDueDate()"
+              (input)="formDueDate.set($any($event.target).value)"
+            >
+          </div>
+          <div class="rm-field">
+            <label class="rm-field-label">Time</label>
+            <input
+              type="time"
+              class="rm-input"
+              [value]="formDueTime()"
+              (input)="formDueTime.set($any($event.target).value)"
+            >
+          </div>
+        </div>
+
+        <!-- Repeat & Priority -->
+        <div class="rm-field-row">
+          <div class="rm-field">
+            <label class="rm-field-label">Repeat</label>
+            <select
+              class="rm-select"
+              [value]="formRepeat()"
+              (change)="formRepeat.set($any($event.target).value)"
+            >
+              <option value="none">No repeat</option>
+              <option value="daily">Daily</option>
+              <option value="weekly">Weekly</option>
+              <option value="monthly">Monthly</option>
+              <option value="yearly">Yearly</option>
+            </select>
+          </div>
+          <div class="rm-field">
+            <label class="rm-field-label">Priority</label>
+            <select
+              class="rm-select"
+              [value]="formPriority()"
+              (change)="formPriority.set($any($event.target).value)"
+            >
+              <option value="">None</option>
+              <option value="high">High</option>
+              <option value="medium">Medium</option>
+              <option value="low">Low</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Tags -->
+        <div class="rm-field">
+          <label class="rm-field-label">
+            Tags
+            <span class="rm-field-hint">comma-separated</span>
+          </label>
+          <input
+            class="rm-input"
+            placeholder="work, personal, health…"
+            [value]="formTags()"
+            (input)="formTags.set($any($event.target).value)"
+          >
+        </div>
+
+        <!-- Notes -->
+        <div class="rm-field">
+          <label class="rm-field-label">Notes</label>
+          <textarea
+            class="rm-input rm-textarea"
+            placeholder="Additional details…"
+            rows="3"
+            [value]="formNotes()"
+            (input)="formNotes.set($any($event.target).value)"
+          ></textarea>
+        </div>
+      </div>
+
+      <div class="rm-form-footer">
+        <span class="rm-form-hint">⌘ Enter to save</span>
+        <div class="rm-form-actions">
+          <button class="rm-btn-cancel" (click)="closeForm()">Cancel</button>
+          <button
+            class="rm-btn-save"
+            (click)="saveForm()"
+            [disabled]="!formTitle().trim()"
+          >
+            {{ editingId() ? 'Save Changes' : 'Add Reminder' }}
+          </button>
+        </div>
+      </div>
+    </aside>
+  }
+
+</div>
