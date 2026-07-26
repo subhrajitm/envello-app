@@ -373,6 +373,27 @@ const people = new Table(
   { localOnly: true, indexes: { by_profile: ['profile_id'] } }
 );
 
+const habits = new Table(
+  {
+    profile_id:  column.text,
+    title:       column.text,
+    description: column.text,
+    category:    column.text,
+    frequency:   column.text,
+    targetDays:  column.text,  // JSON number[]
+    color:       column.text,
+    icon:        column.text,
+    logs:        column.text,  // JSON HabitLog[]
+    createdAt:   column.text,
+    archivedAt:  column.text,
+    deleted_at:  column.text,
+  },
+  {
+    localOnly: true,
+    indexes: { by_profile: ['profile_id'], by_profile_archived: ['profile_id', 'archivedAt'] },
+  }
+);
+
 const recipes = new Table(
   {
     profile_id:  column.text,
@@ -572,6 +593,7 @@ export const AppSchema = new Schema({
   bookmark_folders,
   transactions,
   people,
+  habits,
   recipes,
   lists,
   goals,
@@ -591,7 +613,7 @@ export const TYPED_TABLES = new Set([
   'tasks', 'notes', 'planning_items', 'activities', 'books', 'book_content',
   'meetings', 'articles', 'research_collections', 'research_sources',
   'research_summaries', 'projects', 'note_folders', 'note_history', 'chapter_history', 'bookmarks',
-  'bookmark_folders', 'transactions', 'people', 'recipes', 'lists', 'goals', 'media', 'user_preferences', 'library_files',
+  'bookmark_folders', 'transactions', 'people', 'habits', 'recipes', 'lists', 'goals', 'media', 'user_preferences', 'library_files',
 ]);
 
 /** Fields that are stored as JSON strings in SQLite. */
@@ -607,6 +629,7 @@ export const JSON_FIELDS: Record<string, string[]> = {
   bookmarks:            ['tags'],
   transactions:         ['history'],
   people:               ['tags', 'socialLinks'],
+  habits:               ['logs', 'targetDays'],
   recipes:              ['ingredients', 'steps', 'tags'],
   lists:                ['items'],
 

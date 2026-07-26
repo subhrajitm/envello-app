@@ -309,6 +309,28 @@ export interface Person {
     deleted_at?: string | null;
 }
 
+export type HabitFrequency = 'daily' | 'weekly';
+export type HabitCategory = 'health' | 'fitness' | 'mindfulness' | 'learning' | 'productivity' | 'social' | 'other';
+
+export interface HabitLog {
+    date: string;  // YYYY-MM-DD
+}
+
+export interface Habit {
+    id: string;
+    title: string;
+    description?: string;
+    category?: HabitCategory;
+    frequency: HabitFrequency;
+    targetDays?: number[];   // weekly: [0-6] where 0=Sun; undefined = all days
+    color?: string;
+    icon?: string;           // material symbol name
+    logs: HabitLog[];        // last 365 days max
+    createdAt: string;
+    archivedAt?: string;     // set when archived, cleared on restore
+    deleted_at?: string | null;
+}
+
 export type RecipeCategory = 'breakfast' | 'lunch' | 'dinner' | 'snack' | 'dessert' | 'drink' | 'other';
 
 export interface RecipeIngredient {
@@ -393,6 +415,20 @@ export interface Goal {
     createdAt: string;
     updatedAt?: string;
     completedAt?: string;
+    deleted_at?: string | null;
+}
+
+export type JournalMood = 'great' | 'good' | 'okay' | 'bad' | 'awful';
+
+export interface JournalEntry {
+    id: string;
+    date: string;          // YYYY-MM-DD — one per day (enforced by component)
+    content?: string;      // HTML from Tiptap
+    mood?: JournalMood;
+    tags?: string[];
+    wordCount?: number;
+    createdAt: string;
+    updatedAt?: string;
     deleted_at?: string | null;
 }
 

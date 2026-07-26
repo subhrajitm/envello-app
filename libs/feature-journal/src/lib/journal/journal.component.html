@@ -1,0 +1,170 @@
+<div class="jn-view">
+
+  <!-- ═══════════ SIDEBAR ═══════════ -->
+  <aside class="jn-sidebar">
+
+    <!-- Month calendar -->
+    <div class="jn-cal-header">
+      <button class="jn-cal-nav" (click)="prevMonth()" title="Previous month">
+        <span class="material-symbols-outlined">chevron_left</span>
+      </button>
+      <span class="jn-cal-month">{{ calendarMonthLabel() }}</span>
+      <button class="jn-cal-nav" (click)="nextMonth()" [disabled]="isNextMonthDisabled()" title="Next month">
+        <span class="material-symbols-outlined">chevron_right</span>
+      </button>
+    </div>
+
+    <div class="jn-cal-grid">
+      @for (d of weekDays; track d) {
+        <div class="jn-cal-wday">{{ d }}</div>
+      }
+      @for (cell of calendarDays(); track $index) {
+        @if (cell === null) {
+          <div></div>
+        } @else {
+          <button
+            class="jn-cal-day"
+            [class.today]="cell.date === todayStr"
+            [class.selected]="cell.date === selectedDate()"
+            [class.has-entry]="entryDates().has(cell.date)"
+            [class.future]="isFutureDate(cell.date)"
+            [disabled]="isFutureDate(cell.date)"
+            (click)="selectDate(cell.date)"
+          >{{ cell.day }}</button>
+        }
+      }
+    </div>
+
+    <div class="jn-sb-divider"></div>
+
+    <!-- Recent entries list -->
+    <div class="jn-recent-header">
+      <span>Recent Entries</span>
+      <span class="jn-recent-count">{{ recentEntries().length }}</span>
+    </div>
+
+    <div class="jn-recent-list">
+      @if (recentEntries().length === 0) {
+        <div class="jn-recent-empty">No entries yet.<br>Start writing today.</div>
+      }
+      @for (entry of recentEntries(); track entry.id) {
+        <button
+          class="jn-recent-item"
+          [class.selected]="entry.date === selectedDate()"
+          (click)="selectDate(entry.date)"
+        >
+          <div class="jn-recent-left">
+            <span class="jn-recent-date">{{ formatEntryDate(entry.date) }}</span>
+            @if (entry.mood) {
+              <span class="jn-recent-mood">{{ moodFor(entry.mood)?.emoji }}</span>
+            }
+          </div>
+          @if (entryWordCount(entry)) {
+            <span class="jn-recent-wc">{{ entryWordCount(entry) }}</span>
+          }
+        </button>
+      }
+    </div>
+  </aside>
+
+  <!-- ═══════════ MAIN ═══════════ -->
+  <main class="jn-main">
+
+    <!-- Toolbar -->
+    <div class="jn-toolbar">
+      <div class="jn-toolbar-left">
+        <div class="jn-date-heading">
+          <span class="jn-date-label">{{ selectedDateLabel() }}</span>
+          @if (selectedDateSubLabel()) {
+            <span class="jn-date-sub">{{ selectedDateSubLabel() }}</span>
+          }
+        </div>
+      </div>
+
+      <div class="jn-toolbar-right">
+        <!-- Word count -->
+        @if (wordCount() > 0) {
+          <span class="jn-wc">{{ wordCount() }} words</span>
+        }
+
+        <!-- Save status -->
+        @if (saveStatusLabel()) {
+          <span class="jn-save-status">{{ saveStatusLabel() }}</span>
+        }
+
+        <!-- Prompts toggle -->
+        <button class="jn-tool-btn" [class.active]="showPrompts()" (click)="togglePrompts()" title="Writing prompts">
+          <span class="material-symbols-outlined">lightbulb</span>
+        </button>
+
+        <!-- Mood picker -->
+        <div class="jn-mood-wrap">
+          <button class="jn-tool-btn jn-mood-btn" (click)="toggleMoodPicker()" title="Set mood">
+            @if (selectedMood()) {
+              <span class="jn-mood-emoji">{{ moodFor(selectedMood()!)?.emoji }}</span>
+            } @else {
+              <span class="material-symbols-outlined">sentiment_neutral</span>
+            }
+          </button>
+
+          @if (showMoodPicker()) {
+            <div class="jn-mood-dropdown">
+              <div class="jn-mood-row">
+                @for (m of moods; track m.value) {
+                  <button
+                    class="jn-mood-option"
+                    [class.active]="selectedMood() === m.value"
+                    (click)="setMood(m.value)"
+                    [title]="m.label"
+                  >{{ m.emoji }}</button>
+                }
+              </div>
+              @if (selectedMood()) {
+                <button class="jn-mood-clear" (click)="clearMood()">Clear mood</button>
+              }
+            </div>
+          }
+        </div>
+
+        <!-- Today button (only show when not on today) -->
+        @if (selectedDate() !== todayStr) {
+          <button class="jn-today-btn" (click)="goToToday()">Today</button>
+        }
+      </div>
+    </div>
+
+    <!-- Prompts banner -->
+    @if (showPrompts()) {
+      <div class="jn-prompt-bar">
+        <span class="material-symbols-outlined jn-prompt-icon">lightbulb</span>
+        <span class="jn-prompt-text">{{ currentPrompt() }}</span>
+        <button class="jn-prompt-action" (click)="insertPrompt()" title="Insert prompt into editor">Use</button>
+        <button class="jn-prompt-nav" (click)="nextPrompt()" title="Next prompt">
+          <span class="material-symbols-outlined">refresh</span>
+        </button>
+        <button class="jn-prompt-close" (click)="showPrompts.set(false)">
+          <span class="material-symbols-outlined">close</span>
+        </button>
+      </div>
+    }
+
+    <!-- Editor area -->
+    <div class="jn-editor-wrap">
+      <tiptap-editor class="jn-editor-inner" [editor]="editor"></tiptap-editor>
+    </div>
+
+    <!-- Footer streak / stats bar -->
+    @if (selectedEntry()) {
+      <div class="jn-footer">
+        @if (selectedEntry()!.createdAt) {
+          <span class="jn-footer-meta">Created {{ selectedEntry()!.createdAt | date:'mediumDate' }}</span>
+        }
+        @if (selectedEntry()!.updatedAt) {
+          <span class="jn-footer-sep">·</span>
+          <span class="jn-footer-meta">Last edited {{ selectedEntry()!.updatedAt | date:'shortTime' }}</span>
+        }
+      </div>
+    }
+  </main>
+
+</div>

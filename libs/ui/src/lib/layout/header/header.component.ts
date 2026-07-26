@@ -126,10 +126,12 @@ export class HeaderComponent implements OnInit, OnDestroy {
     { id: 'transactions',  label: 'Transactions',   icon: 'receipt_long', route: 'transactions' },
     { id: 'bookmarks',     label: 'Bookmarks',      icon: 'bookmarks',    route: 'bookmarks' },
     { id: 'people',        label: 'People',          icon: 'group',        route: 'people' },
+    { id: 'habits',        label: 'Habits',          icon: 'local_fire_department', route: 'habits' },
     { id: 'recipes',       label: 'Recipes',         icon: 'restaurant_menu', route: 'recipes' },
     { id: 'lists',         label: 'Lists',           icon: 'checklist',    route: 'lists' },
     { id: 'goals',         label: 'Goals',           icon: 'flag',         route: 'goals' },
     { id: 'media',         label: 'Media',           icon: 'movie',        route: 'media' },
+    { id: 'journal',       label: 'Journal',         icon: 'auto_stories', route: 'journal' },
   ];
 
   private hiddenNavItemIds = signal<string[]>([]);

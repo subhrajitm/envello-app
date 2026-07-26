@@ -1,0 +1,440 @@
+<div class="hb-view">
+
+  <!-- ═══════════ SIDEBAR ═══════════ -->
+  <env-feature-sidebar title="Habits">
+    <nav class="hb-sb-nav">
+      @for (item of sidebarNavItems(); track item.id; let i = $index) {
+        @if (i === 2) {
+          <div class="hb-sb-divider"></div>
+          <div class="hb-sb-section-lbl">CATEGORIES</div>
+        }
+        @if (i === sidebarNavItems().length - 1) {
+          <div class="hb-sb-divider"></div>
+        }
+        <button class="hb-sb-item" [class.active]="activeFilter() === item.id"
+          (click)="onNavItemClick(item.id)">
+          <span class="material-symbols-outlined">{{ item.icon }}</span>
+          <span class="hb-sb-label">{{ item.label }}</span>
+          <span class="hb-sb-count">{{ item.count }}</span>
+        </button>
+      }
+    </nav>
+  </env-feature-sidebar>
+
+  <!-- ═══════════ MAIN ═══════════ -->
+  <main class="hb-main">
+
+    <!-- Toolbar -->
+    <div class="hb-toolbar">
+      @if (isTodayFilter()) {
+        <div class="hb-today-label">{{ todayLabel() }}</div>
+      } @else {
+        <div class="hb-today-label">{{ isArchivedFilter() ? 'Archived' : 'All Habits' }}</div>
+      }
+      @if (!isArchivedFilter()) {
+        <button class="hb-add-btn" (click)="openNew()">
+          <span class="material-symbols-outlined">add</span>
+          New Habit
+        </button>
+      }
+    </div>
+
+    <!-- ── TODAY VIEW ── -->
+    @if (isTodayFilter()) {
+
+      <!-- Progress summary -->
+      @if (todayHabits().length > 0) {
+        <div class="hb-progress-bar">
+          <div class="hb-prog-fill"
+            [style.width.%]="todayProgress()"
+            [class.hb-prog-fill--done]="todayProgress() === 100">
+          </div>
+        </div>
+        <div class="hb-progress-summary">
+          @if (todayProgress() === 100) {
+            <span class="hb-all-done">All done for today! 🎉</span>
+          } @else {
+            <span>{{ todayDone().length }} of {{ todayHabits().length }} done</span>
+          }
+        </div>
+      }
+
+      <div class="hb-scroll">
+        @if (todayHabits().length === 0) {
+          <env-empty-state icon="checklist" title="No habits for today"
+            description="Add your first habit to start tracking daily check-ins.">
+          </env-empty-state>
+        } @else {
+
+          <!-- Pending -->
+          @if (todayPending().length > 0) {
+            <div class="hb-group-label">TO DO</div>
+            @for (habit of todayPending(); track habit.id) {
+              <div class="hb-card hb-card--pending" (click)="openDetail(habit)">
+                <div class="hb-card-icon"
+                  [style.background]="'color-mix(in srgb, ' + habitColor(habit) + ' 15%, transparent)'"
+                  [style.color]="habitColor(habit)">
+                  <span class="material-symbols-outlined">{{ habitIcon(habit) }}</span>
+                </div>
+                <div class="hb-card-body">
+                  <div class="hb-card-title">{{ habit.title }}</div>
+                  <div class="hb-card-dots">
+                    @for (done of last7Days(habit); track $index) {
+                      <span class="hb-dot" [class.hb-dot--done]="done"
+                        [style.background]="done ? habitColor(habit) : ''"></span>
+                    }
+                  </div>
+                </div>
+                <div class="hb-card-streak">{{ streakLabel(streak(habit)) }}</div>
+                <button class="hb-check-btn" [style.--hc]="habitColor(habit)"
+                  (click)="checkIn(habit, $event)" title="Check in">
+                  <span class="material-symbols-outlined">check</span>
+                </button>
+              </div>
+            }
+          }
+
+          <!-- Done -->
+          @if (todayDone().length > 0) {
+            <div class="hb-group-label hb-group-label--done">
+              <span class="material-symbols-outlined">done_all</span>
+              DONE
+            </div>
+            @for (habit of todayDone(); track habit.id) {
+              <div class="hb-card hb-card--done" (click)="openDetail(habit)">
+                <div class="hb-card-icon hb-card-icon--done"
+                  [style.background]="'color-mix(in srgb, ' + habitColor(habit) + ' 15%, transparent)'"
+                  [style.color]="habitColor(habit)">
+                  <span class="material-symbols-outlined">check_circle</span>
+                </div>
+                <div class="hb-card-body">
+                  <div class="hb-card-title hb-card-title--done">{{ habit.title }}</div>
+                  <div class="hb-card-dots">
+                    @for (done of last7Days(habit); track $index) {
+                      <span class="hb-dot" [class.hb-dot--done]="done"
+                        [style.background]="done ? habitColor(habit) : ''"></span>
+                    }
+                  </div>
+                </div>
+                <div class="hb-card-streak" [style.color]="habitColor(habit)">{{ streakLabel(streak(habit)) }}</div>
+                <button class="hb-uncheck-btn" (click)="checkIn(habit, $event)" title="Undo">
+                  <span class="material-symbols-outlined">undo</span>
+                </button>
+              </div>
+            }
+          }
+
+        }
+      </div>
+    }
+
+    <!-- ── ALL / CATEGORY / ARCHIVED VIEW ── -->
+    @if (!isTodayFilter()) {
+      <div class="hb-scroll">
+        @if (filtered().length === 0) {
+          @if (isArchivedFilter()) {
+            <env-empty-state icon="archive" title="No archived habits"></env-empty-state>
+          } @else {
+            <env-empty-state icon="checklist" title="No habits here"
+              description="Start tracking a new habit.">
+            </env-empty-state>
+          }
+        } @else {
+          <div class="hb-grid">
+            @for (habit of filtered(); track habit.id) {
+              <div class="hb-grid-card"
+                [class.hb-grid-card--done]="isDoneToday(habit)"
+                [style.border-color]="isDoneToday(habit) ? habitColor(habit) : ''"
+                (click)="isArchivedFilter() ? null : openDetail(habit)">
+                <div class="hb-gc-top">
+                  <div class="hb-card-icon"
+                    [style.background]="'color-mix(in srgb, ' + habitColor(habit) + ' 15%, transparent)'"
+                    [style.color]="habitColor(habit)">
+                    <span class="material-symbols-outlined">{{ habitIcon(habit) }}</span>
+                  </div>
+                  @if (isDoneToday(habit)) {
+                    <span class="hb-done-chip" [style.color]="habitColor(habit)">✓ Done</span>
+                  } @else if (!isArchivedFilter()) {
+                    <button class="hb-check-btn hb-check-btn--sm" [style.--hc]="habitColor(habit)"
+                      (click)="checkIn(habit, $event)">
+                      <span class="material-symbols-outlined">check</span>
+                    </button>
+                  }
+                </div>
+                <div class="hb-gc-title">{{ habit.title }}</div>
+                @if (catMeta(habit.category)) {
+                  <span class="hb-gc-cat" [style.color]="catMeta(habit.category)!.color">
+                    {{ catMeta(habit.category)!.label }}
+                  </span>
+                }
+                <div class="hb-gc-stats">
+                  <span class="hb-gc-streak">{{ streakLabel(streak(habit)) }}</span>
+                  <div class="hb-card-dots hb-card-dots--sm">
+                    @for (done of last7Days(habit); track $index) {
+                      <span class="hb-dot hb-dot--sm" [class.hb-dot--done]="done"
+                        [style.background]="done ? habitColor(habit) : ''"></span>
+                    }
+                  </div>
+                </div>
+                @if (isArchivedFilter()) {
+                  <button class="hb-restore-btn" (click)="restoreHabit(habit, $event)">
+                    <span class="material-symbols-outlined">unarchive</span>
+                    Restore
+                  </button>
+                }
+              </div>
+            }
+          </div>
+        }
+      </div>
+    }
+  </main>
+</div>
+
+<!-- ═══════════ SLIDER ═══════════ -->
+<env-slider-panel [isOpen]="showSlider()" (closed)="closeSlider()" width="400px">
+
+  <!-- ── VIEW MODE ── -->
+  @if (sliderMode() === 'view' && selectedHabit()) {
+    @let h = selectedHabit()!;
+    <div class="hb-slider">
+      <div class="hb-sl-hdr">
+        <div class="hb-sl-hdr-left">
+          <div class="hb-card-icon hb-card-icon--lg"
+            [style.background]="'color-mix(in srgb, ' + habitColor(h) + ' 18%, transparent)'"
+            [style.color]="habitColor(h)">
+            <span class="material-symbols-outlined">{{ habitIcon(h) }}</span>
+          </div>
+          <div>
+            <div class="hb-sl-title">{{ h.title }}</div>
+            @if (catMeta(h.category)) {
+              <span class="hb-sl-cat" [style.color]="catMeta(h.category)!.color">
+                {{ catMeta(h.category)!.label }} ·
+              </span>
+            }
+            <span class="hb-sl-freq">{{ h.frequency === 'daily' ? 'Daily' : 'Weekly' }}</span>
+          </div>
+        </div>
+        <div class="hb-sl-hdr-btns">
+          <button class="hb-sl-icon-btn" (click)="openEditMode()" title="Edit">
+            <span class="material-symbols-outlined">edit</span>
+          </button>
+          <button class="hb-sl-icon-btn" (click)="archiveHabit(h)" title="Archive">
+            <span class="material-symbols-outlined">archive</span>
+          </button>
+          <button class="hb-sl-icon-btn hb-sl-icon-btn--danger" (click)="deleteSelected()" title="Delete">
+            <span class="material-symbols-outlined">delete</span>
+          </button>
+        </div>
+      </div>
+
+      <div class="hb-sl-body">
+
+        <!-- Check in button (big) -->
+        <div class="hb-sl-checkin">
+          @if (isDoneToday(h)) {
+            <div class="hb-sl-done-banner" [style.background]="'color-mix(in srgb, ' + habitColor(h) + ' 10%, transparent)'">
+              <span class="material-symbols-outlined" [style.color]="habitColor(h)">check_circle</span>
+              <span [style.color]="habitColor(h)">Done for today!</span>
+              <button class="hb-undo-link" (click)="checkIn(h, $event)">undo</button>
+            </div>
+          } @else {
+            <button class="hb-sl-big-check" [style.--hc]="habitColor(h)" (click)="checkIn(h, $event)">
+              <span class="material-symbols-outlined">check_circle</span>
+              Mark as done today
+            </button>
+          }
+        </div>
+
+        <!-- Stats row -->
+        <div class="hb-stats-row">
+          <div class="hb-stat">
+            <div class="hb-stat-val" [style.color]="habitColor(h)">{{ detailStreak() }}{{ detailStreak() > 0 ? ' 🔥' : '' }}</div>
+            <div class="hb-stat-lbl">Current streak</div>
+          </div>
+          <div class="hb-stat">
+            <div class="hb-stat-val">{{ detailLongest() }}</div>
+            <div class="hb-stat-lbl">Longest streak</div>
+          </div>
+          <div class="hb-stat">
+            <div class="hb-stat-val">{{ detailTotal() }}</div>
+            <div class="hb-stat-lbl">Total check-ins</div>
+          </div>
+          <div class="hb-stat">
+            <div class="hb-stat-val">{{ detailRate() }}%</div>
+            <div class="hb-stat-lbl">Completion rate</div>
+          </div>
+        </div>
+
+        <!-- 28-day calendar -->
+        <div class="hb-calendar-section">
+          <div class="hb-calendar-label">LAST 28 DAYS</div>
+          <div class="hb-calendar-grid">
+            @for (day of detailCalendar(); track day.dateStr) {
+              <span class="hb-cal-dot"
+                [class.hb-cal-dot--done]="day.done"
+                [class.hb-cal-dot--today]="day.isToday"
+                [class.hb-cal-dot--skip]="!day.scheduled"
+                [style.background]="day.done ? habitColor(h) : ''"
+                [title]="day.dateStr">
+              </span>
+            }
+          </div>
+        </div>
+
+        @if (h.description) {
+          <div class="hb-sl-notes">{{ h.description }}</div>
+        }
+
+        @if (h.frequency === 'weekly' && h.targetDays) {
+          <div class="hb-sl-days">
+            <span class="hb-sl-days-label">Scheduled:</span>
+            @for (d of h.targetDays; track d) {
+              <span class="hb-day-chip" [style.background]="'color-mix(in srgb, ' + habitColor(h) + ' 12%, transparent)'"
+                [style.color]="habitColor(h)">
+                {{ dayLabels[d] }}
+              </span>
+            }
+          </div>
+        }
+
+      </div>
+    </div>
+  }
+
+  <!-- ── EDIT MODE ── -->
+  @if (sliderMode() === 'edit') {
+    <div class="hb-slider">
+      <div class="hb-sl-hdr">
+        <span class="hb-sl-hdr-title">{{ selectedId() ? 'Edit Habit' : 'New Habit' }}</span>
+        @if (selectedId()) {
+          <button class="hb-sl-icon-btn hb-sl-icon-btn--danger" (click)="deleteSelected()" title="Delete">
+            <span class="material-symbols-outlined">delete</span>
+          </button>
+        }
+      </div>
+
+      <div class="hb-sl-body">
+
+        <!-- Title -->
+        <div class="hb-form-field">
+          <span class="hb-form-label">HABIT</span>
+          <input class="hb-title-input" [value]="formTitle()"
+            (input)="formTitle.set($any($event.target).value)"
+            placeholder="e.g. Drink 8 glasses of water" autofocus />
+        </div>
+
+        <!-- Icon picker -->
+        <div class="hb-form-field">
+          <span class="hb-form-label">ICON</span>
+          <div class="hb-icon-grid">
+            @for (icon of iconOptions; track icon) {
+              <button type="button" class="hb-icon-opt"
+                [class.active]="formIcon() === icon"
+                [style.--hi]="formColor()"
+                (click)="formIcon.set(icon)">
+                <span class="material-symbols-outlined">{{ icon }}</span>
+              </button>
+            }
+          </div>
+        </div>
+
+        <!-- Color picker -->
+        <div class="hb-form-field">
+          <span class="hb-form-label">COLOUR</span>
+          <div class="hb-color-row">
+            @for (c of colorOptions; track c) {
+              <button type="button" class="hb-color-dot"
+                [style.background]="c"
+                [class.active]="formColor() === c"
+                (click)="formColor.set(c)">
+              </button>
+            }
+          </div>
+        </div>
+
+        <!-- Category -->
+        <div class="hb-form-field">
+          <span class="hb-form-label">CATEGORY</span>
+          <div class="hb-chips">
+            @for (cat of categoryOptions; track cat) {
+              @let meta = catMeta(cat)!;
+              <button type="button" class="hb-chip"
+                [class.active]="formCategory() === cat"
+                [style.--cc]="meta.color"
+                (click)="formCategory.set(formCategory() === cat ? '' : cat)">
+                <span class="material-symbols-outlined">{{ meta.icon }}</span>
+                {{ meta.label }}
+              </button>
+            }
+          </div>
+        </div>
+
+        <!-- Frequency -->
+        <div class="hb-form-field">
+          <span class="hb-form-label">FREQUENCY</span>
+          <div class="hb-freq-seg">
+            <button type="button" class="hb-freq-btn" [class.active]="formFrequency() === 'daily'"
+              (click)="formFrequency.set('daily')">
+              <span class="material-symbols-outlined">today</span>
+              Every day
+            </button>
+            <button type="button" class="hb-freq-btn" [class.active]="formFrequency() === 'weekly'"
+              (click)="formFrequency.set('weekly')">
+              <span class="material-symbols-outlined">date_range</span>
+              Specific days
+            </button>
+          </div>
+        </div>
+
+        <!-- Day selector (weekly only) -->
+        @if (formFrequency() === 'weekly') {
+          <div class="hb-form-field">
+            <span class="hb-form-label">ON THESE DAYS</span>
+            <div class="hb-day-selector">
+              @for (label of dayLabels; track $index) {
+                <button type="button" class="hb-day-btn"
+                  [class.active]="isTargetDay($index)"
+                  [style.--hc]="formColor()"
+                  (click)="toggleTargetDay($index)">
+                  {{ label.charAt(0) }}
+                </button>
+              }
+            </div>
+          </div>
+        }
+
+        <!-- Description -->
+        <div class="hb-form-field">
+          <span class="hb-form-label">DESCRIPTION <span class="hb-opt">optional</span></span>
+          <textarea class="hb-input hb-textarea" rows="2" [value]="formDescription()"
+            (input)="formDescription.set($any($event.target).value)"
+            placeholder="Why this habit matters to you…"></textarea>
+        </div>
+
+      </div>
+
+      <div class="hb-sl-foot">
+        <button class="hb-btn-ghost" (click)="selectedId() ? sliderMode.set('view') : closeSlider()">
+          {{ selectedId() ? 'Cancel' : 'Discard' }}
+        </button>
+        <button class="hb-btn-primary" [disabled]="!canSave()" (click)="save()">
+          {{ selectedId() ? 'Save' : 'Add Habit' }}
+        </button>
+      </div>
+    </div>
+  }
+
+</env-slider-panel>
+
+<!-- ═══════════ DELETE CONFIRM ═══════════ -->
+<env-confirm-dialog
+  [isOpen]="!!deleteTarget()"
+  title="Delete Habit"
+  icon="delete"
+  variant="danger"
+  confirmLabel="Delete"
+  (confirmed)="doDelete()"
+  (cancelled)="deleteTarget.set(null)">
+  Delete <strong>{{ deleteTarget()?.title }}</strong>? All check-in history will be lost.
+</env-confirm-dialog>

@@ -1,7 +1,7 @@
 import { Injectable, signal, computed, inject } from '@angular/core';
 import { DataService } from '@envello/data';
 import { FILE_SYSTEM } from './tokens';
-import { Task, Note, PlanningItem, Activity, Book, Project, Bookmark, BookmarkFolder, Person, MediaItem, Goal, Milestone, UserList, ListItem, Recipe } from '@envello/domain';
+import { Task, Note, PlanningItem, Activity, Book, Project, Bookmark, BookmarkFolder, Person, MediaItem, Goal, Milestone, UserList, ListItem, Recipe, Habit, JournalEntry } from '@envello/domain';
 
 @Injectable({
     providedIn: 'root'
@@ -20,10 +20,12 @@ export class StoreService {
     bookmarkFolders = signal<BookmarkFolder[]>([]);
     spaces = signal<Project[]>([]);
     people = signal<Person[]>([]);
+    habits  = signal<Habit[]>([]);
     recipes = signal<Recipe[]>([]);
     lists = signal<UserList[]>([]);
     goals = signal<Goal[]>([]);
     media = signal<MediaItem[]>([]);
+    journalEntries = signal<JournalEntry[]>([]);
 
     // Memory caps — prevents unbounded growth for heavy collections
     private static readonly LIMITS = {
@@ -86,10 +88,12 @@ export class StoreService {
             this.bookmarkFolders.set([]);
             this.spaces.set([]);
             this.people.set([]);
+            this.habits.set([]);
             this.recipes.set([]);
             this.lists.set([]);
             this.goals.set([]);
             this.media.set([]);
+            this.journalEntries.set([]);
         });
     }
 
@@ -146,7 +150,7 @@ export class StoreService {
         const generation = this._loadGeneration;
         try {
             const L = StoreService.LIMITS;
-            const [tasks, notes, planningItems, activities, books, folders, bookmarks, bookmarkFolders, spaces, people, recipes, lists, goals, media] = await Promise.all([
+            const [tasks, notes, planningItems, activities, books, folders, bookmarks, bookmarkFolders, spaces, people, habits, recipes, lists, goals, media, journalEntries] = await Promise.all([
                 this.db.getAll<Task>('tasks',                                     { limit: L.tasks }),
                 this.db.getAll<Note>('notes',                                     { limit: L.notes }),
                 this.db.getAll<PlanningItem>('planning_items'),
@@ -157,10 +161,12 @@ export class StoreService {
                 this.db.getAll<BookmarkFolder>('bookmark_folders'),
                 this.db.getAll<Project>('projects'),
                 this.db.getAll<Person>('people',                                  { limit: L.people }),
+                this.db.getAll<Habit>('habits'),
                 this.db.getAll<Recipe>('recipes'),
                 this.db.getAll<UserList>('lists'),
                 this.db.getAll<Goal>('goals'),
                 this.db.getAll<MediaItem>('media'),
+                this.db.getAll<JournalEntry>('journal_entries'),
             ]);
 
             // A profile switch happened while we were reading — discard stale results.
@@ -214,6 +220,9 @@ export class StoreService {
                 (people || []).filter(p => !p.deleted_at).slice(0, StoreService.LIMITS.people)
             );
 
+            // Habits — exclude soft-deleted
+            this.habits.set((habits || []).filter(h => !h.deleted_at));
+
             // Recipes — exclude soft-deleted
             this.recipes.set((recipes || []).filter(r => !r.deleted_at));
 
@@ -225,6 +234,9 @@ export class StoreService {
 
             // Media — exclude soft-deleted
             this.media.set((media || []).filter(m => !m.deleted_at));
+
+            // Journal entries — exclude soft-deleted
+            this.journalEntries.set((journalEntries || []).filter(e => !e.deleted_at));
 
             if (folders?.length) {
                 this.noteFolders.set(folders);
@@ -261,10 +273,12 @@ export class StoreService {
             this.bookmarkFolders.set([]);
             this.spaces.set([]);
             this.people.set([]);
+            this.habits.set([]);
             this.recipes.set([]);
             this.lists.set([]);
             this.goals.set([]);
             this.media.set([]);
+            this.journalEntries.set([]);
         } finally {
             this._loadInProgress = false;
             // If a profile switched while we were loading, run again immediately for the new profile.
@@ -723,6 +737,48 @@ export class StoreService {
             .catch(e => console.error('[StoreService] soft-delete goal failed', e));
     }
 
+    // ─── Habits CRUD ─────────────────────────────────────────────────────────
+
+    private persistHabit(id: string) {
+        const h = this.habits().find(h => h.id === id);
+        if (h) this.db.upsert('habits', h).catch(e => console.error('[StoreService] persist habit failed', e));
+    }
+
+    addHabit(habit: Habit) {
+        this.habits.update(list => [habit, ...list]);
+        this.db.upsert('habits', habit).catch(e => console.error('[StoreService] add habit failed', e));
+    }
+
+    updateHabit(id: string, updates: Partial<Habit>) {
+        this.habits.update(list => list.map(h => h.id === id ? { ...h, ...updates } : h));
+        this.persistHabit(id);
+    }
+
+    deleteHabit(id: string) {
+        const habit = this.habits().find(h => h.id === id);
+        if (!habit) return;
+        this.habits.update(list => list.filter(h => h.id !== id));
+        this.db.upsert('habits', { ...habit, deleted_at: new Date().toISOString() })
+            .catch(e => console.error('[StoreService] soft-delete habit failed', e));
+    }
+
+    checkInHabit(id: string) {
+        const today = new Date().toISOString().split('T')[0];
+        const oneYearAgo = new Date();
+        oneYearAgo.setFullYear(oneYearAgo.getFullYear() - 1);
+        const cutoff = oneYearAgo.toISOString().split('T')[0];
+
+        this.habits.update(list => list.map(h => {
+            if (h.id !== id) return h;
+            const isDone = h.logs.some(l => l.date === today);
+            const logs = isDone
+                ? h.logs.filter(l => l.date !== today)
+                : [...h.logs, { date: today }].filter(l => l.date >= cutoff);
+            return { ...h, logs };
+        }));
+        this.persistHabit(id);
+    }
+
     // ─── Recipes CRUD ────────────────────────────────────────────────────────
 
     addRecipe(recipe: Recipe) {
@@ -811,5 +867,32 @@ export class StoreService {
             updatedAt:   new Date().toISOString(),
         }));
         this.persistList(listId);
+    }
+
+    // ─── Journal CRUD ────────────────────────────────────────────────────────
+
+    upsertJournalEntry(entry: JournalEntry) {
+        const exists = this.journalEntries().some(e => e.id === entry.id);
+        if (exists) {
+            this.journalEntries.update(list => list.map(e => e.id === entry.id ? entry : e));
+        } else {
+            this.journalEntries.update(list => [entry, ...list]);
+        }
+        this.db.upsert('journal_entries', entry).catch(e => console.error('[StoreService] persist journal_entry failed', e));
+    }
+
+    updateJournalEntry(id: string, updates: Partial<JournalEntry>) {
+        const updated = { ...updates, updatedAt: new Date().toISOString() };
+        this.journalEntries.update(list => list.map(e => e.id === id ? { ...e, ...updated } : e));
+        const entry = this.journalEntries().find(e => e.id === id);
+        if (entry) this.db.upsert('journal_entries', entry).catch(e => console.error('[StoreService] update journal_entry failed', e));
+    }
+
+    deleteJournalEntry(id: string) {
+        const entry = this.journalEntries().find(e => e.id === id);
+        if (!entry) return;
+        this.journalEntries.update(list => list.filter(e => e.id !== id));
+        this.db.upsert('journal_entries', { ...entry, deleted_at: new Date().toISOString() })
+            .catch(e => console.error('[StoreService] soft-delete journal_entry failed', e));
     }
 }

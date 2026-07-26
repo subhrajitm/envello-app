@@ -121,6 +121,12 @@ export const routes: Routes = [
     data: { hasSidebar: true },
   },
   {
+    path: 'habits',
+    loadComponent: () => import('@envello/feature-habits').then(m => m.HabitsComponent),
+    canActivate: [authGuard],
+    data: { hasSidebar: true },
+  },
+  {
     path: 'recipes',
     loadComponent: () => import('@envello/feature-recipes').then(m => m.RecipesComponent),
     canActivate: [authGuard],
@@ -141,6 +147,12 @@ export const routes: Routes = [
   {
     path: 'media',
     loadComponent: () => import('@envello/feature-media').then(m => m.MediaComponent),
+    canActivate: [authGuard],
+    data: { hasSidebar: true },
+  },
+  {
+    path: 'journal',
+    loadComponent: () => import('@envello/feature-journal').then(m => m.JournalComponent),
     canActivate: [authGuard],
     data: { hasSidebar: true },
   },
