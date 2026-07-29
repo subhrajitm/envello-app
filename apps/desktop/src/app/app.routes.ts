@@ -19,7 +19,6 @@ export const routes: Routes = [
     canActivate: [authGuard],
     data: { hasSidebar: true },
   },
-
   {
     path: 'write',
     loadComponent: () => import('@envello/feature-write').then(m => m.WriteComponent),
@@ -32,8 +31,8 @@ export const routes: Routes = [
     canActivate: [authGuard],
     data: { immersive: true },
   },
-  { path: 'novels', redirectTo: 'write', pathMatch: 'full' },
-  { path: 'articles', redirectTo: 'write', pathMatch: 'full' },
+  { path: 'novels',   redirectTo: 'write',    pathMatch: 'full' },
+  { path: 'articles', redirectTo: 'write',    pathMatch: 'full' },
   {
     path: 'knowledge',
     loadComponent: () => import('@envello/feature-knowledge').then(m => m.KnowledgeComponent),
@@ -42,25 +41,22 @@ export const routes: Routes = [
   },
   { path: 'library', redirectTo: 'knowledge', pathMatch: 'full' },
 
-  {
-    path: 'daily-notes',
-    loadComponent: () => import('@envello/feature-daily-notes').then(m => m.DailyNotesComponent),
-    canActivate: [authGuard],
-    data: { hasSidebar: true },
-  },
+  // ── Tasks hub (Tasks · Lists · Reminders) ──────────────────────────────────
   {
     path: 'tasks',
-    loadComponent: () => import('@envello/feature-tasks').then(m => m.TasksComponent),
+    loadComponent: () => import('@envello/feature-hubs').then(m => m.TasksHubComponent),
     canActivate: [authGuard],
     data: { hasSidebar: true },
   },
+  { path: 'lists',     redirectTo: 'tasks', pathMatch: 'full' },
+  { path: 'reminders', redirectTo: 'tasks', pathMatch: 'full' },
+
   {
     path: 'meetings',
     loadComponent: () => import('@envello/feature-meetings').then(m => m.MeetingsComponent),
     canActivate: [authGuard],
     data: { hasSidebar: true },
   },
-
   {
     path: 'activity-log',
     loadComponent: () => import('./components/activity-log/activity-log.component').then(m => m.ActivityLogComponent),
@@ -122,26 +118,8 @@ export const routes: Routes = [
     data: { hasSidebar: true },
   },
   {
-    path: 'habits',
-    loadComponent: () => import('@envello/feature-habits').then(m => m.HabitsComponent),
-    canActivate: [authGuard],
-    data: { hasSidebar: true },
-  },
-  {
     path: 'recipes',
     loadComponent: () => import('@envello/feature-recipes').then(m => m.RecipesComponent),
-    canActivate: [authGuard],
-    data: { hasSidebar: true },
-  },
-  {
-    path: 'lists',
-    loadComponent: () => import('@envello/feature-lists').then(m => m.ListsComponent),
-    canActivate: [authGuard],
-    data: { hasSidebar: true },
-  },
-  {
-    path: 'goals',
-    loadComponent: () => import('@envello/feature-goals').then(m => m.GoalsComponent),
     canActivate: [authGuard],
     data: { hasSidebar: true },
   },
@@ -151,18 +129,26 @@ export const routes: Routes = [
     canActivate: [authGuard],
     data: { hasSidebar: true },
   },
+
+  // ── Journal hub (Journal · Notes) ─────────────────────────────────────────
   {
     path: 'journal',
-    loadComponent: () => import('@envello/feature-journal').then(m => m.JournalComponent),
+    loadComponent: () => import('@envello/feature-hubs').then(m => m.JournalHubComponent),
     canActivate: [authGuard],
     data: { hasSidebar: true },
   },
+  { path: 'daily-notes', redirectTo: 'journal', pathMatch: 'full' },
+
+  // ── Growth hub (Goals · Habits) ────────────────────────────────────────────
   {
-    path: 'reminders',
-    loadComponent: () => import('@envello/feature-reminders').then(m => m.RemindersComponent),
+    path: 'growth',
+    loadComponent: () => import('@envello/feature-hubs').then(m => m.GrowthHubComponent),
     canActivate: [authGuard],
     data: { hasSidebar: true },
   },
+  { path: 'goals',  redirectTo: 'growth', pathMatch: 'full' },
+  { path: 'habits', redirectTo: 'growth', pathMatch: 'full' },
+
   {
     path: 'analytics',
     loadComponent: () => import('@envello/feature-analytics').then(m => m.AnalyticsComponent),

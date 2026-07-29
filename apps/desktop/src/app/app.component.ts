@@ -212,11 +212,16 @@ export class AppComponent implements OnInit, OnDestroy {
 
   mapUrlToTabName(url: string): string {
     const map: Record<string, string> = {
-      'workspace': 'Workspace', 'tasks': 'Tasks', 'meetings': 'Meetings',
-      'daily-notes': 'Notes', 'knowledge': 'Knowledge', 'write': 'Write',
-      'spaces': 'Workspaces', 'bin': 'Bin', 'activity-log': 'Activity Log',
-      'settings': 'Settings',      'bookmarks': 'Bookmarks', 'vault': 'Vault', 'transactions': 'Transactions',
-      'people': 'People', 'habits': 'Habits', 'recipes': 'Recipes', 'lists': 'Lists', 'goals': 'Goals', 'media': 'Media', 'journal': 'Journal', 'reminders': 'Reminders', 'analytics': 'Analytics',
+      'workspace':    'Workspace',
+      'tasks':        'Tasks',        'lists':     'Tasks',    'reminders': 'Tasks',
+      'meetings':     'Meetings',
+      'daily-notes':  'Journal',      'journal':   'Journal',
+      'knowledge':    'Knowledge',    'write':     'Write',
+      'spaces':       'Workspaces',   'bin':       'Bin',      'activity-log': 'Activity Log',
+      'settings':     'Settings',     'bookmarks': 'Bookmarks','vault':        'Vault',
+      'transactions': 'Transactions',
+      'people':       'People',       'habits':    'Growth',   'goals':   'Growth', 'growth': 'Growth',
+      'recipes':      'Recipes',      'media':     'Media',    'analytics': 'Analytics',
     };
     return map[url] || 'Workspace';
   }

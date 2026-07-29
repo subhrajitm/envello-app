@@ -117,22 +117,18 @@ export class HeaderComponent implements OnInit, OnDestroy {
     typeof window !== 'undefined' && '__TAURI_INTERNALS__' in window;
 
   private readonly navItemDefs: NavItem[] = [
-    { id: 'tasks',         label: 'Tasks',         icon: 'checklist',    route: 'tasks' },
-    { id: 'meetings',      label: 'Meetings',       icon: 'calendar_month', route: 'meetings' },
-    { id: 'daily-notes',   label: 'Notes',          icon: 'note',         route: 'daily-notes' },
-    { id: 'knowledge',     label: 'Knowledge',      icon: 'hub',          route: 'knowledge' },
-    { id: 'write',         label: 'Write',          icon: 'edit',         route: 'write' },
-    { id: 'vault',         label: 'Vault',          icon: 'lock',         route: 'vault' },
-    { id: 'transactions',  label: 'Transactions',   icon: 'receipt_long', route: 'transactions' },
-    { id: 'bookmarks',     label: 'Bookmarks',      icon: 'bookmarks',    route: 'bookmarks' },
-    { id: 'people',        label: 'People',          icon: 'group',        route: 'people' },
-    { id: 'habits',        label: 'Habits',          icon: 'local_fire_department', route: 'habits' },
-    { id: 'recipes',       label: 'Recipes',         icon: 'restaurant_menu', route: 'recipes' },
-    { id: 'lists',         label: 'Lists',           icon: 'checklist',    route: 'lists' },
-    { id: 'goals',         label: 'Goals',           icon: 'flag',         route: 'goals' },
-    { id: 'media',         label: 'Media',           icon: 'movie',        route: 'media' },
-    { id: 'journal',       label: 'Journal',         icon: 'auto_stories', route: 'journal' },
-    { id: 'reminders',    label: 'Reminders',       icon: 'notifications_active', route: 'reminders' },
+    { id: 'tasks',        label: 'Tasks',        icon: 'checklist',           route: 'tasks' },
+    { id: 'meetings',     label: 'Meetings',     icon: 'calendar_month',      route: 'meetings' },
+    { id: 'journal',      label: 'Journal',      icon: 'auto_stories',        route: 'journal' },
+    { id: 'knowledge',    label: 'Knowledge',    icon: 'hub',                 route: 'knowledge' },
+    { id: 'write',        label: 'Write',        icon: 'edit',                route: 'write' },
+    { id: 'vault',        label: 'Vault',        icon: 'lock',                route: 'vault' },
+    { id: 'transactions', label: 'Transactions', icon: 'receipt_long',        route: 'transactions' },
+    { id: 'bookmarks',    label: 'Bookmarks',    icon: 'bookmarks',           route: 'bookmarks' },
+    { id: 'people',       label: 'People',       icon: 'group',               route: 'people' },
+    { id: 'growth',       label: 'Growth',       icon: 'trending_up',         route: 'growth' },
+    { id: 'recipes',      label: 'Recipes',      icon: 'restaurant_menu',     route: 'recipes' },
+    { id: 'media',        label: 'Media',        icon: 'movie',               route: 'media' },
   ];
 
   private hiddenNavItemIds = signal<string[]>([]);

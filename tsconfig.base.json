@@ -34,7 +34,8 @@
       "@envello/feature-recipes": ["libs/feature-recipes/src/index.ts"],
       "@envello/feature-habits": ["libs/feature-habits/src/index.ts"],
       "@envello/feature-journal": ["libs/feature-journal/src/index.ts"],
-      "@envello/feature-reminders": ["libs/feature-reminders/src/index.ts"]
+      "@envello/feature-reminders": ["libs/feature-reminders/src/index.ts"],
+      "@envello/feature-hubs": ["libs/feature-hubs/src/index.ts"]
     }
   }
 }
