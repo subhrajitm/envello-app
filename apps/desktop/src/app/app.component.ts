@@ -220,8 +220,8 @@ export class AppComponent implements OnInit, OnDestroy {
       'spaces':       'Workspaces',   'bin':       'Bin',      'activity-log': 'Activity Log',
       'settings':     'Settings',     'bookmarks': 'Bookmarks','vault':        'Vault',
       'transactions': 'Transactions',
-      'people':       'People',       'habits':    'Growth',   'goals':   'Growth', 'growth': 'Growth',
-      'recipes':      'Recipes',      'media':     'Media',    'analytics': 'Analytics',
+      'people':   'People',   'habits':   'Growth',    'goals':    'Growth',    'growth':   'Growth',
+      'media':    'Personal', 'recipes':  'Personal',  'personal': 'Personal',  'analytics': 'Analytics',
     };
     return map[url] || 'Workspace';
   }

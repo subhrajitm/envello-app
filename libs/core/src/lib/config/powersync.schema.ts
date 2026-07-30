@@ -561,6 +561,45 @@ const library_files = new Table(
   { localOnly: true, indexes: { by_profile: ['profile_id'] } }
 );
 
+const journal_entries = new Table(
+  {
+    profile_id: column.text,
+    date:       column.text,
+    content:    column.text,
+    mood:       column.text,
+    tags:       column.text,  // JSON string[]
+    wordCount:  column.real,
+    createdAt:  column.text,
+    updatedAt:  column.text,
+    deleted_at: column.text,
+  },
+  {
+    localOnly: true,
+    indexes: { by_profile_date: ['profile_id', 'date'] },
+  }
+);
+
+const reminders = new Table(
+  {
+    profile_id:   column.text,
+    title:        column.text,
+    notes:        column.text,
+    dueAt:        column.text,
+    repeat:       column.text,
+    status:       column.text,
+    tags:         column.text,  // JSON string[]
+    priority:     column.text,
+    createdAt:    column.text,
+    updatedAt:    column.text,
+    snoozedUntil: column.text,
+    deleted_at:   column.text,
+  },
+  {
+    localOnly: true,
+    indexes: { by_profile_status: ['profile_id', 'status'], by_due: ['dueAt'] },
+  }
+);
+
 // Stores local Automerge CRDT state per note. Never synced via user_data —
 // the crdt_state field on the note record carries the state across devices.
 const note_crdt = new Table(
@@ -600,6 +639,8 @@ export const AppSchema = new Schema({
   media,
   user_preferences,
   library_files,
+  journal_entries,
+  reminders,
   // CRDT state store — local only, never synced directly
   note_crdt,
 });
@@ -614,6 +655,7 @@ export const TYPED_TABLES = new Set([
   'meetings', 'articles', 'research_collections', 'research_sources',
   'research_summaries', 'projects', 'note_folders', 'note_history', 'chapter_history', 'bookmarks',
   'bookmark_folders', 'transactions', 'people', 'habits', 'recipes', 'lists', 'goals', 'media', 'user_preferences', 'library_files',
+  'journal_entries', 'reminders',
 ]);
 
 /** Fields that are stored as JSON strings in SQLite. */
@@ -636,6 +678,8 @@ export const JSON_FIELDS: Record<string, string[]> = {
   goals:                ['milestones'],
   user_preferences:     ['hiddenNavItems'],
   library_files:        ['tags'],
+  journal_entries:      ['tags'],
+  reminders:            ['tags'],
 };
 
 /** Fields that are stored as 0/1 integers in SQLite but are booleans in TS. */

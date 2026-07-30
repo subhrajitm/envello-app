@@ -117,18 +117,15 @@ export const routes: Routes = [
     canActivate: [authGuard],
     data: { hasSidebar: true },
   },
+  // ── Personal hub (Media · Recipes) ────────────────────────────────────────
   {
-    path: 'recipes',
-    loadComponent: () => import('@envello/feature-recipes').then(m => m.RecipesComponent),
+    path: 'personal',
+    loadComponent: () => import('@envello/feature-hubs').then(m => m.PersonalHubComponent),
     canActivate: [authGuard],
     data: { hasSidebar: true },
   },
-  {
-    path: 'media',
-    loadComponent: () => import('@envello/feature-media').then(m => m.MediaComponent),
-    canActivate: [authGuard],
-    data: { hasSidebar: true },
-  },
+  { path: 'media',   redirectTo: 'personal', pathMatch: 'full' },
+  { path: 'recipes', redirectTo: 'personal', pathMatch: 'full' },
 
   // ── Journal hub (Journal · Notes) ─────────────────────────────────────────
   {
