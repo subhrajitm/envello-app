@@ -8,13 +8,20 @@
     </div>
     <div class="activity-list">
         @for (activity of activities(); track activity.id) {
-        <div class="activity-item flex items-start gap-3">
+        <button class="activity-item" (click)="navigateTo(activity)" title="Open {{ activity.title }}">
             <span class="material-symbols-outlined activity-icon">{{ activity.icon }}</span>
             <div class="activity-content">
-                <div class="activity-action">{{ activity.action }}</div>
-                <div class="activity-time">{{ activity.time }}</div>
+                <div class="activity-title">{{ activity.title }}</div>
+                <div class="activity-meta">
+                    <span class="activity-type">{{ activity.type }}</span>
+                    <span class="activity-dot">·</span>
+                    <span class="activity-time">{{ activity.timeLabel }}</span>
+                </div>
             </div>
-        </div>
+            <span class="material-symbols-outlined activity-arrow">chevron_right</span>
+        </button>
+        } @empty {
+        <div class="activity-empty">No recent activity yet.</div>
         }
     </div>
 </div>

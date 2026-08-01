@@ -1,5 +1,6 @@
-import { Component, computed, inject, signal, HostListener, OnInit, OnDestroy, ChangeDetectionStrategy, ViewChild, ElementRef } from '@angular/core';
+import { Component, computed, inject, signal, effect, untracked, HostListener, OnInit, OnDestroy, ChangeDetectionStrategy, ViewChild, ElementRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { ActivatedRoute } from '@angular/router';
 import { StoreService, Task, NotificationService, FileStorageService, AiService, ThemeService, UserPreferencesService, AppPreferences, ContextService, RecentActivityService } from '@envello/core';
 import { SidebarNavItem, AiAssistantPanelComponent, AiPanelMessage, EmptyStateComponent, ConfirmDialogComponent, BadgeComponent, type BadgeVariant, ChipComponent } from '@envello/ui';
 
@@ -24,6 +25,7 @@ type SubtaskDraft = { title: string; priority: Task['priority']; due?: string };
 export class TasksComponent implements OnInit, OnDestroy {
   readonly today = new Date();
   store = inject(StoreService);
+  private route = inject(ActivatedRoute);
   private notificationService = inject(NotificationService);
   private fileStorage = inject(FileStorageService);
   private aiService = inject(AiService);
@@ -166,6 +168,21 @@ export class TasksComponent implements OnInit, OnDestroy {
   // Error handling
   errorMessage = signal<string | null>(null);
   showError = signal<boolean>(false);
+
+  private _pendingTaskId = signal<string | null>(null);
+
+  constructor() {
+    // Reactively open task details once the store has loaded and the task is found
+    effect(() => {
+      const taskId = this._pendingTaskId();
+      if (!taskId) return;
+      const task = this.store.tasks().find(t => t.id === taskId);
+      if (task) {
+        this._pendingTaskId.set(null);
+        untracked(() => this.openTaskDetails(task));
+      }
+    });
+  }
 
   // Image preview
   previewingImage = signal<string | null>(null);
@@ -2284,6 +2301,14 @@ export class TasksComponent implements OnInit, OnDestroy {
       this.fontSize.set(savedFontSize);
     }
     document.documentElement.setAttribute('data-font-size', this.fontSize());
+
+    // If navigated here with a specific task ID, set the pending signal.
+    // The constructor effect watches store.tasks() and opens the detail panel
+    // as soon as the task appears (handles both instant and deferred DB load).
+    const taskId = this.route.snapshot.queryParamMap.get('taskId');
+    if (taskId) {
+      this._pendingTaskId.set(taskId);
+    }
 
     // Initialize voice recognition if available
     this.initVoiceRecognition();

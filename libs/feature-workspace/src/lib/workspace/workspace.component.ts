@@ -251,7 +251,7 @@ export class WorkspaceComponent {
         icon: 'check_circle_outline', iconColor: '#3b82f6',
         subtitle:     this.taskSubtitle(t, todayStr),
         isOverdue:    !!t.due && t.due < todayStr,
-        route: '/tasks', task: t,
+        route: '/tasks', task: t, queryParams: { taskId: t.id },
         sortDate:     t.due ? `${t.due}T00:00:00` : new Date().toISOString(),
         relativeTime: this.taskRelativeTime(t, todayStr),
       });
@@ -292,7 +292,7 @@ export class WorkspaceComponent {
         kind: 'bookmark', id: bm.id, title: bm.title,
         icon: 'bookmark', iconColor: '#f59e0b',
         subtitle: host && host.toLowerCase() !== titleNorm ? host : undefined,
-        route: '/bookmarks',
+        route: '/bookmarks', queryParams: { bookmarkId: bm.id },
         sortDate:     bm.createdAt,
         relativeTime: this.relativeTimeStr(bm.createdAt),
       });
@@ -312,7 +312,7 @@ export class WorkspaceComponent {
         kind: 'meeting', id: meeting.id, title: meeting.title,
         icon: 'groups', iconColor: '#10b981',
         subtitle: diffMins < 60 ? `in ${diffMins}m` : `${meeting.date} · ${meeting.startTime}`,
-        route: '/meetings',
+        route: '/meetings', queryParams: { meetingId: meeting.id },
         sortDate:     `${meeting.date}T${meeting.startTime}`,
         relativeTime: meeting.date === todayStr ? 'today' : undefined,
       });

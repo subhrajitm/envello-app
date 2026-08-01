@@ -1,6 +1,7 @@
-import { Component, computed, inject, signal, HostListener } from '@angular/core';
+import { Component, computed, inject, signal, effect, untracked, OnInit, HostListener } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { ActivatedRoute } from '@angular/router';
 import {
   MeetingsService,
   Meeting,
@@ -26,12 +27,32 @@ import { BadgeComponent, ChipComponent, ConfirmDialogComponent, FeatureSidebarCo
   templateUrl: './meetings.component.html',
   styleUrl: './meetings.component.css'
 })
-export class MeetingsComponent {
+export class MeetingsComponent implements OnInit {
   meetingsService = inject(MeetingsService);
   syncService = inject(CalendarSyncService);
+  private route = inject(ActivatedRoute);
   private aiService = inject(AiService);
   private contextService = inject(ContextService);
   readonly autopilotService = inject(MeetingAutopilotService);
+
+  private _pendingMeetingId = signal<string | null>(null);
+
+  constructor() {
+    effect(() => {
+      const id = this._pendingMeetingId();
+      if (!id) return;
+      const meeting = this.meetingsService.meetings().find(m => m.id === id);
+      if (meeting) {
+        this._pendingMeetingId.set(null);
+        untracked(() => this.openDetailsModal(meeting));
+      }
+    });
+  }
+
+  ngOnInit() {
+    const meetingId = this.route.snapshot.queryParamMap.get('meetingId');
+    if (meetingId) this._pendingMeetingId.set(meetingId);
+  }
   readonly providerMeta = PROVIDER_META;
 
   protected aiEnabled = computed(() => this.aiService.aiEnabled());

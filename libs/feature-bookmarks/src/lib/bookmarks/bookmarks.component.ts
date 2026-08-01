@@ -1,6 +1,7 @@
-import { Component, computed, inject, signal, OnInit, OnDestroy, ChangeDetectionStrategy } from '@angular/core';
+import { Component, computed, inject, signal, effect, untracked, OnInit, OnDestroy, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { ActivatedRoute } from '@angular/router';
 import { StoreService, Bookmark, BookmarkFolder, AiService, WebPreviewService, ContextService, RecentActivityService } from '@envello/core';
 import { ModalComponent, AiAssistantPanelComponent, AiPanelMessage, BadgeComponent, ChipComponent, TableComponent, ConfirmDialogComponent, FeatureSidebarComponent, EmptyStateComponent, SliderPanelComponent } from '@envello/ui';
 import type { EnvTableAction, EnvTableColumn, EnvTableSortEvent, EnvTableActionEvent } from '@envello/ui';
@@ -23,12 +24,27 @@ interface AoPlan { folders: AoFolder[]; assignments: AoAssignment[]; }
 })
 export class BookmarksComponent implements OnInit, OnDestroy {
   store = inject(StoreService);
+  private route = inject(ActivatedRoute);
   private aiService = inject(AiService);
   private contextService = inject(ContextService);
   private recentActivity = inject(RecentActivityService);
   private webPreview = inject(WebPreviewService);
 
   protected aiEnabled = computed(() => this.aiService.aiEnabled());
+
+  private _pendingBookmarkId = signal<string | null>(null);
+
+  constructor() {
+    effect(() => {
+      const id = this._pendingBookmarkId();
+      if (!id) return;
+      const bookmark = this.store.bookmarks().find(b => b.id === id);
+      if (bookmark) {
+        this._pendingBookmarkId.set(null);
+        untracked(() => this.openEditModal(bookmark));
+      }
+    });
+  }
 
   // ── View state ──────────────────────────────────────────────────────────────
   selectedView = signal<BookmarkView>('all');
@@ -333,6 +349,9 @@ export class BookmarksComponent implements OnInit, OnDestroy {
         if (typeof sortAsc === 'boolean') this.sortAsc.set(sortAsc);
       }
     } catch { /* ignore */ }
+
+    const bookmarkId = this.route.snapshot.queryParamMap.get('bookmarkId');
+    if (bookmarkId) this._pendingBookmarkId.set(bookmarkId);
   }
 
   ngOnDestroy() {
