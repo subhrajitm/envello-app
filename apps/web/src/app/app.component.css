@@ -1,19 +1,30 @@
-/* Offline banner */
+/* Offline banner — floating pill, doesn't obstruct content */
 .offline-banner {
     position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
+    bottom: 24px;
+    left: 50%;
+    transform: translateX(-50%);
     z-index: var(--z-system);
-    background: #92400e;
-    color: #fef3c7;
+    background: rgba(30, 15, 5, 0.85);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    color: #fde68a;
     display: flex;
     align-items: center;
-    justify-content: center;
-    gap: 8px;
-    padding: 6px 16px;
-    font-size: 13px;
+    gap: 7px;
+    padding: 7px 16px 7px 12px;
+    font-size: 12.5px;
     font-weight: 500;
+    border-radius: 100px;
+    border: 1px solid rgba(251, 191, 36, 0.2);
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+    white-space: nowrap;
+    animation: offline-pill-in 0.2s ease;
+}
+
+@keyframes offline-pill-in {
+    from { opacity: 0; transform: translateX(-50%) translateY(8px); }
+    to   { opacity: 1; transform: translateX(-50%) translateY(0); }
 }
 
 /* Service worker update banner */
