@@ -8,8 +8,11 @@ type NavLayout = 'minimized' | 'vertical' | 'horizontal';
   selector: 'app-titlebar',
   standalone: true,
   template: `
-    <div class="titlebar" data-tauri-drag-region>
+    <div class="titlebar" data-tauri-drag-region [class.titlebar--windows]="isWindows()">
+      <!-- macOS traffic-lights spacer (hidden on Windows) -->
+      @if (!isWindows()) {
       <div class="titlebar-traffic" data-tauri-drag-region></div>
+      }
 
       <!-- Space switcher — only shown when authenticated -->
       @if (isAuthenticated()) {
@@ -21,7 +24,7 @@ type NavLayout = 'minimized' | 'vertical' | 'horizontal';
       }
 
       <!-- Layout toggles -->
-      <div class="titlebar-actions">
+      <div class="titlebar-actions" [class.titlebar-actions--win]="isWindows()">
         <button class="tb-btn" [class.active]="layout() === 'minimized'" (click)="setLayout('minimized')" title="Compact sidebar">
           <span class="material-symbols-outlined">dock_to_left</span>
         </button>
@@ -32,6 +35,21 @@ type NavLayout = 'minimized' | 'vertical' | 'horizontal';
           <span class="material-symbols-outlined">view_day</span>
         </button>
       </div>
+
+      <!-- Windows custom window controls -->
+      @if (isWindows()) {
+      <div class="win-controls">
+        <button class="win-btn win-min" (click)="minimizeWindow()" title="Minimize">
+          <span class="material-symbols-outlined">remove</span>
+        </button>
+        <button class="win-btn win-max" (click)="maximizeWindow()" title="Maximize/Restore">
+          <span class="material-symbols-outlined">{{ isMaximized() ? 'filter_none' : 'crop_square' }}</span>
+        </button>
+        <button class="win-btn win-close" (click)="closeWindow()" title="Close">
+          <span class="material-symbols-outlined">close</span>
+        </button>
+      </div>
+      }
     </div>
 
     <!-- Space switcher palette -->
@@ -156,6 +174,10 @@ type NavLayout = 'minimized' | 'vertical' | 'horizontal';
       font-variation-settings: 'wght' 300;
     }
 
+    .titlebar--windows {
+      padding-left: 8px;
+    }
+
     .titlebar-actions {
       display: flex;
       align-items: center;
@@ -163,6 +185,43 @@ type NavLayout = 'minimized' | 'vertical' | 'horizontal';
       margin-left: auto;
       padding-right: 8px;
     }
+
+    .titlebar-actions--win {
+      padding-right: 4px;
+    }
+
+    /* Windows custom window controls */
+    .win-controls {
+      display: flex;
+      align-items: stretch;
+      height: 100%;
+      flex-shrink: 0;
+    }
+
+    .win-btn {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 40px;
+      height: 100%;
+      border: none;
+      background: transparent;
+      color: var(--text-secondary, #666);
+      cursor: pointer;
+      transition: background 0.1s, color 0.1s;
+      padding: 0;
+      border-radius: 0;
+      -webkit-app-region: no-drag;
+      app-region: no-drag;
+    }
+
+    .win-btn .material-symbols-outlined {
+      font-size: 14px;
+      font-variation-settings: 'wght' 300;
+    }
+
+    .win-btn:hover { background: rgba(128, 128, 128, 0.18); color: var(--text-primary, #222); }
+    .win-close:hover { background: #e81123; color: #fff; }
 
     .tb-btn {
       display: flex;
@@ -379,6 +438,8 @@ export class TitlebarComponent implements OnInit, OnDestroy {
   });
 
   layout = signal<NavLayout>('minimized');
+  isWindows = signal(false);
+  isMaximized = signal(false);
 
   ngOnInit() {
     try {
@@ -388,9 +449,54 @@ export class TitlebarComponent implements OnInit, OnDestroy {
         this.layout.set(settings.navigationLayout || 'minimized');
       }
     } catch { /* ignore */ }
+
+    this.detectPlatform();
   }
 
-  ngOnDestroy() {}
+  ngOnDestroy() {
+    this._maxUnlisten?.();
+  }
+
+  private _maxUnlisten?: () => void;
+
+  private async detectPlatform() {
+    try {
+      const { platform } = await import('@tauri-apps/plugin-os');
+      const p = await platform();
+      if (p === 'windows') {
+        this.isWindows.set(true);
+        const { getCurrentWindow } = await import('@tauri-apps/api/window');
+        const win = getCurrentWindow();
+        this.isMaximized.set(await win.isMaximized());
+        this._maxUnlisten = await win.onResized(async () => {
+          this.isMaximized.set(await win.isMaximized());
+        });
+      }
+    } catch { /* not in Tauri or OS plugin unavailable */ }
+  }
+
+  async minimizeWindow() {
+    try {
+      const { getCurrentWindow } = await import('@tauri-apps/api/window');
+      await getCurrentWindow().minimize();
+    } catch { /* ignore */ }
+  }
+
+  async maximizeWindow() {
+    try {
+      const { getCurrentWindow } = await import('@tauri-apps/api/window');
+      const win = getCurrentWindow();
+      if (await win.isMaximized()) await win.unmaximize();
+      else await win.maximize();
+    } catch { /* ignore */ }
+  }
+
+  async closeWindow() {
+    try {
+      const { getCurrentWindow } = await import('@tauri-apps/api/window');
+      await getCurrentWindow().close();
+    } catch { /* ignore */ }
+  }
 
   openSwitcher() {
     this.query.set('');
