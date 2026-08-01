@@ -69,6 +69,8 @@ export interface Note {
     folderId?: string;
     /** Background color class for the editor (e.g. 'note-bg--rose') */
     bgColor?: string;
+    /** ISO datetime string for a scheduled reminder alert */
+    remindAt?: string;
     deleted_at?: string | null;
 }
 

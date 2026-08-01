@@ -2406,6 +2406,106 @@ tiptap-editor:focus,
 /* ══════════════════════════════════════════════════════
    Daily Notes — Mobile Responsive
    ══════════════════════════════════════════════════════ */
+/* ── Reminder picker ─────────────────────────────────────────────────────── */
+
+.reminder-picker-wrapper {
+    position: relative;
+}
+
+.reminder-picker-dropdown {
+    position: absolute;
+    top: calc(100% + 6px);
+    right: 0;
+    width: 240px;
+    padding: 12px;
+    background: var(--bg-panel);
+    border: 1px solid var(--border-subtle);
+    border-radius: 10px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+    z-index: var(--z-dropdown);
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.rpd-header {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.rpd-icon {
+    font-size: 16px;
+    color: var(--accent);
+}
+
+.rpd-title {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.rpd-current {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12px;
+    color: var(--text-secondary);
+    background: var(--bg-hover);
+    border-radius: 6px;
+    padding: 6px 8px;
+}
+
+.rpd-current-icon {
+    font-size: 14px;
+    color: var(--accent);
+    flex-shrink: 0;
+}
+
+.rpd-input {
+    width: 100%;
+    padding: 7px 10px;
+    border: 1px solid var(--border-subtle);
+    border-radius: 6px;
+    background: var(--bg-input, var(--bg-secondary));
+    color: var(--text-primary);
+    font-size: 13px;
+    outline: none;
+    box-sizing: border-box;
+}
+
+.rpd-input:focus {
+    border-color: var(--accent);
+}
+
+.rpd-actions {
+    display: flex;
+    gap: 8px;
+}
+
+.rpd-btn {
+    flex: 1;
+    padding: 6px 10px;
+    border-radius: 6px;
+    border: none;
+    font-size: 12px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: opacity 0.15s;
+}
+
+.rpd-btn:hover { opacity: 0.85; }
+
+.rpd-btn--primary {
+    background: var(--accent);
+    color: #fff;
+}
+
+.rpd-btn--danger {
+    background: var(--bg-hover);
+    color: var(--text-secondary);
+}
+
 @media (max-width: 768px) {
   /* Hide note-tree sidebar; content fills full width */
   .dn-sidebar {
