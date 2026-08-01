@@ -130,6 +130,10 @@ export class KnowledgeComponent implements OnDestroy {
   showUnsavedWarning = signal(false);
   showDetailsMeta    = signal(false);
 
+  // ── Audio transcription ───────────────────────────────────────────────────
+  transcribingId = signal<string | null>(null);
+  transcriptMap  = signal<Record<string, string>>({});
+
   // ── Summary form ──────────────────────────────────────────────────────────
   newSummaryTitle   = signal('');
   newSummaryContent = signal('');
@@ -667,6 +671,92 @@ export class KnowledgeComponent implements OnDestroy {
       this.notify.error('AI failed', 'Could not generate notes. Check your AI configuration in Settings.');
     }
     this.generatingNotes.set(false);
+  }
+
+  // ── Audio transcription ───────────────────────────────────────────────────
+  async transcribeAudio(source: ResearchSource) {
+    if (this.transcribingId()) return;
+    this.transcribingId.set(source.id);
+    try {
+      const transcript = await this.runWebSpeechTranscription(source);
+      if (transcript && transcript.trim()) {
+        this.transcriptMap.update(m => ({ ...m, [source.id]: transcript.trim() }));
+        // Append transcript to notes
+        const existing = this.editNotes();
+        const separator = existing ? '\n\n--- Transcript ---\n' : '--- Transcript ---\n';
+        this.editNotes.set(existing + separator + transcript.trim());
+      }
+    } catch (e: any) {
+      console.error('[Knowledge] Transcription failed:', e);
+      this.notify.error('Transcription failed', e?.message || 'Could not transcribe audio. Your browser may not support the Web Speech API.');
+    } finally {
+      this.transcribingId.set(null);
+    }
+  }
+
+  private async runWebSpeechTranscription(source: ResearchSource): Promise<string> {
+    const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+    if (!SpeechRecognition) {
+      throw new Error('Web Speech API is not available in this browser.');
+    }
+
+    // Resolve the audio URL from the file store
+    let audioUrl = '';
+    if (source.fileId) {
+      const file = this.fileStorage.files().find(f => f.id === source.fileId);
+      if (file) {
+        try {
+          audioUrl = file.publicUrl || await this.fileStorage.getSignedUrl(file.storagePath);
+        } catch {
+          audioUrl = '';
+        }
+      }
+    }
+    if (!audioUrl) {
+      throw new Error('No audio file found for this source.');
+    }
+
+    return new Promise<string>((resolve, reject) => {
+      const audio       = new Audio(audioUrl);
+      audio.crossOrigin = 'anonymous';
+      const recognition = new SpeechRecognition();
+      recognition.continuous      = true;
+      recognition.interimResults  = false;
+      recognition.lang            = 'en-US';
+      const parts: string[]       = [];
+      let ended                   = false;
+      let recEnded                = false;
+
+      const finish = () => {
+        if (ended && recEnded) resolve(parts.join(' '));
+      };
+
+      recognition.onresult = (e: any) => {
+        for (let i = e.resultIndex; i < e.results.length; i++) {
+          if (e.results[i].isFinal) parts.push(e.results[i][0].transcript);
+        }
+      };
+      recognition.onerror  = (e: any) => reject(new Error(e.error || 'Speech recognition error'));
+      recognition.onend    = () => { recEnded = true; finish(); };
+
+      audio.onended = () => { recognition.stop(); ended = true; finish(); };
+      audio.onerror = () => reject(new Error('Failed to load audio file.'));
+
+      audio.play().then(() => recognition.start()).catch(reject);
+    });
+  }
+
+  copyTranscript(sourceId: string) {
+    const text = this.transcriptMap()[sourceId];
+    if (text) navigator.clipboard.writeText(text).catch(err => console.warn('[Knowledge] Copy failed:', err));
+  }
+
+  clearTranscript(sourceId: string) {
+    this.transcriptMap.update(m => {
+      const next = { ...m };
+      delete next[sourceId];
+      return next;
+    });
   }
 
   openDeleteSource(source: ResearchSource, e?: Event) { e?.stopPropagation(); this.sourceToDelete.set(source); this.showDeleteSource.set(true); }

@@ -55,6 +55,12 @@ export const routes: Routes = [
     data: { hasSidebar: true },
   },
   {
+    path: 'goals',
+    loadComponent: () => import('@envello/feature-tasks').then(m => m.GoalsComponent),
+    canActivate: [authGuard],
+    data: { hasSidebar: true },
+  },
+  {
     path: 'meetings',
     loadComponent: () => import('@envello/feature-meetings').then(m => m.MeetingsComponent),
     canActivate: [authGuard],

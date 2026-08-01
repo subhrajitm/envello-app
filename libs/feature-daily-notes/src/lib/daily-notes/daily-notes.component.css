@@ -2506,6 +2506,265 @@ tiptap-editor:focus,
     color: var(--text-secondary);
 }
 
+/* ─── Note-link chip (rendered inside ProseMirror) ──────────────────────────── */
+::ng-deep .dn-editor-text .note-link {
+    display: inline;
+    color: var(--accent-primary);
+    background: color-mix(in srgb, var(--accent-primary) 10%, transparent);
+    border-radius: 4px;
+    padding: 1px 5px;
+    font-size: 0.9em;
+    font-weight: 500;
+    cursor: pointer;
+    text-decoration: none;
+    border-bottom: 1.5px solid color-mix(in srgb, var(--accent-primary) 50%, transparent);
+    transition: background 0.15s, border-color 0.15s, color 0.15s;
+    white-space: nowrap;
+}
+
+::ng-deep .dn-editor-text .note-link:hover {
+    background: color-mix(in srgb, var(--accent-primary) 18%, transparent);
+    border-bottom-color: var(--accent-primary);
+}
+
+/* ─── Note-link autocomplete dropdown ───────────────────────────────────────── */
+.dn-note-link-menu {
+    position: relative;
+    background: var(--bg-panel);
+    border: 1px solid var(--border-subtle);
+    border-radius: 10px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.14), 0 2px 6px rgba(0, 0, 0, 0.07);
+    z-index: var(--z-dropdown);
+    overflow: hidden;
+    margin-bottom: 12px;
+}
+
+.dn-note-link-header {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    padding: 8px 12px;
+    border-bottom: 1px solid var(--border-subtle);
+}
+
+.dn-note-link-icon {
+    font-size: 16px;
+    color: var(--accent-primary);
+    flex-shrink: 0;
+}
+
+.dn-note-link-title {
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    flex-shrink: 0;
+}
+
+.dn-note-link-input {
+    flex: 1;
+    min-width: 0;
+    background: var(--bg-app);
+    border: 1px solid var(--border-subtle);
+    border-radius: 5px;
+    padding: 4px 8px;
+    font-size: 12px;
+    color: var(--text-primary);
+    outline: none;
+    transition: border-color 0.15s;
+}
+
+.dn-note-link-input:focus {
+    border-color: var(--accent-primary);
+}
+
+.dn-note-link-input::placeholder {
+    color: var(--text-tertiary);
+}
+
+.dn-note-link-list {
+    list-style: none;
+    margin: 0;
+    padding: 4px 0;
+    max-height: 220px;
+    overflow-y: auto;
+    scrollbar-width: thin;
+    scrollbar-color: var(--border-highlight) transparent;
+}
+
+.dn-note-link-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 7px 12px;
+    cursor: pointer;
+    transition: background 0.1s;
+}
+
+.dn-note-link-item:hover {
+    background: var(--bg-hover);
+}
+
+.dn-note-link-item-icon {
+    font-size: 15px;
+    color: var(--text-tertiary);
+    flex-shrink: 0;
+}
+
+.dn-note-link-item-title {
+    font-size: 13px;
+    color: var(--text-primary);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.dn-note-link-empty {
+    padding: 12px 14px;
+    font-size: 12px;
+    color: var(--text-tertiary);
+    font-style: italic;
+    text-align: center;
+}
+
+/* ─── Backlinks panel ────────────────────────────────────────────────────────── */
+.dn-backlinks-panel {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    min-height: 0;
+}
+
+.dn-backlinks-count {
+    margin-left: auto;
+    background: color-mix(in srgb, var(--accent-primary) 12%, transparent);
+    color: var(--accent-primary);
+    font-size: 10px;
+    font-weight: 700;
+    padding: 1px 6px;
+    border-radius: 10px;
+    line-height: 1.5;
+}
+
+.dn-backlinks-empty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    padding: 28px 16px;
+    text-align: center;
+}
+
+.dn-backlinks-empty-icon {
+    font-size: 28px;
+    color: var(--text-tertiary);
+    opacity: 0.45;
+}
+
+.dn-backlinks-empty-text {
+    font-size: 12px;
+    color: var(--text-secondary);
+    font-weight: 500;
+}
+
+.dn-backlinks-empty-hint {
+    font-size: 11px;
+    color: var(--text-tertiary);
+    line-height: 1.5;
+}
+
+.dn-backlinks-code {
+    background: var(--bg-app);
+    border: 1px solid var(--border-subtle);
+    border-radius: 3px;
+    padding: 0 4px;
+    font-family: var(--font-mono);
+    font-size: 10px;
+    color: var(--accent-primary);
+}
+
+.dn-backlinks-list {
+    list-style: none;
+    margin: 0;
+    padding: 4px 0;
+    flex: 1;
+    overflow-y: auto;
+    scrollbar-width: thin;
+    scrollbar-color: var(--border-highlight) transparent;
+}
+
+.dn-backlinks-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 12px;
+    cursor: pointer;
+    transition: background 0.1s;
+    border-bottom: 1px solid var(--border-subtle);
+}
+
+.dn-backlinks-item:last-child {
+    border-bottom: none;
+}
+
+.dn-backlinks-item:hover {
+    background: var(--bg-hover);
+}
+
+.dn-backlinks-item-icon {
+    font-size: 15px;
+    color: var(--text-tertiary);
+    flex-shrink: 0;
+}
+
+.dn-backlinks-item-body {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.dn-backlinks-item-title {
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--text-primary);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.dn-backlinks-item-preview {
+    font-size: 10px;
+    color: var(--text-tertiary);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.dn-backlinks-item-arrow {
+    font-size: 14px;
+    color: var(--text-tertiary);
+    opacity: 0;
+    flex-shrink: 0;
+    transition: opacity 0.15s, color 0.15s;
+}
+
+.dn-backlinks-item:hover .dn-backlinks-item-arrow {
+    opacity: 1;
+    color: var(--accent-primary);
+}
+
+/* ─── Floating menu [[]] label ───────────────────────────────────────────────── */
+.env-float-label {
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: -0.03em;
+    line-height: 1;
+    font-family: var(--font-mono);
+}
+
 @media (max-width: 768px) {
   /* Hide note-tree sidebar; content fills full width */
   .dn-sidebar {

@@ -1,7 +1,7 @@
 import { Injectable, signal, computed, inject } from '@angular/core';
 import { DataService } from '@envello/data';
 import { FILE_SYSTEM } from './tokens';
-import { Task, Note, PlanningItem, Activity, Book, Project, Bookmark, BookmarkFolder, Person } from '@envello/domain';
+import { Task, Note, PlanningItem, Activity, Book, Project, Bookmark, BookmarkFolder, Person, Goal } from '@envello/domain';
 
 @Injectable({
     providedIn: 'root'
@@ -20,6 +20,17 @@ export class StoreService {
     bookmarkFolders = signal<BookmarkFolder[]>([]);
     spaces = signal<Project[]>([]);
     people = signal<Person[]>([]);
+    goals = signal<Goal[]>([]);
+
+    /** Active workspace space ID — null means "show all" (default/legacy behaviour) */
+    activeSpaceId = signal<string | null>(null);
+
+    /** Space-filtered views — items with no spaceId are always visible (backward compat) */
+    spaceTasks     = computed(() => this._filterBySpace(this.tasks()));
+    spaceNotes     = computed(() => this._filterBySpace(this.notes()));
+    spaceBookmarks = computed(() => this._filterBySpace(this.bookmarks()));
+    spaceBooks     = computed(() => this._filterBySpace(this.books()));
+    spaceGoals     = computed(() => this._filterBySpace(this.goals()));
 
     // Memory caps — prevents unbounded growth for heavy collections
     private static readonly LIMITS = {
@@ -65,6 +76,9 @@ export class StoreService {
             this._syncDebounceTimer = setTimeout(() => this.loadFromDb(), 300);
         });
         window.addEventListener('envello:db-ready', () => this.loadFromDb());
+        window.addEventListener('envello:space-changed', (e) => {
+            this.activeSpaceId.set((e as CustomEvent<{ spaceId: string | null }>).detail.spaceId);
+        });
         window.addEventListener('envello:profile-switched', () => {
             // Flush in-progress note writes for the old profile before switching.
             this.flushPendingNoteSaves().catch(() => {});
@@ -82,6 +96,7 @@ export class StoreService {
             this.bookmarkFolders.set([]);
             this.spaces.set([]);
             this.people.set([]);
+            this.goals.set([]);
         });
     }
 
@@ -138,7 +153,7 @@ export class StoreService {
         const generation = this._loadGeneration;
         try {
             const L = StoreService.LIMITS;
-            const [tasks, notes, planningItems, activities, books, folders, bookmarks, bookmarkFolders, spaces, people] = await Promise.all([
+            const [tasks, notes, planningItems, activities, books, folders, bookmarks, bookmarkFolders, spaces, people, goals] = await Promise.all([
                 this.db.getAll<Task>('tasks',                                     { limit: L.tasks }),
                 this.db.getAll<Note>('notes',                                     { limit: L.notes }),
                 this.db.getAll<PlanningItem>('planning_items'),
@@ -149,6 +164,7 @@ export class StoreService {
                 this.db.getAll<BookmarkFolder>('bookmark_folders'),
                 this.db.getAll<Project>('projects'),
                 this.db.getAll<Person>('people',                                  { limit: L.people }),
+                this.db.getAll<Goal>('goals'),
             ]);
 
             // A profile switch happened while we were reading — discard stale results.
@@ -201,6 +217,7 @@ export class StoreService {
             this.people.set(
                 (people || []).filter(p => !p.deleted_at).slice(0, StoreService.LIMITS.people)
             );
+            this.goals.set((goals || []).filter(g => !g.deleted_at));
 
             if (folders?.length) {
                 this.noteFolders.set(folders);
@@ -237,6 +254,7 @@ export class StoreService {
             this.bookmarkFolders.set([]);
             this.spaces.set([]);
             this.people.set([]);
+            this.goals.set([]);
         } finally {
             this._loadInProgress = false;
             // If a profile switched while we were loading, run again immediately for the new profile.
@@ -637,5 +655,84 @@ export class StoreService {
         this.addActivity('Person removed', 'system');
         this.db.upsert('people', { ...person, deleted_at: new Date().toISOString() })
             .catch(e => console.error('[StoreService] soft-delete person failed', e));
+    }
+
+    // ── Goals ─────────────────────────────────────────────────────────────────
+
+    addGoal(goal: Goal) {
+        this.goals.update(list => [...list, goal]);
+        this.addActivity('Goal created: ' + goal.title, 'system');
+        this.db.upsert('goals', goal).catch(e => console.error('[StoreService] persist goal failed', e));
+    }
+
+    updateGoal(id: string, updates: Partial<Goal>) {
+        this.goals.update(list => list.map(g => {
+            if (g.id !== id) return g;
+            const updated = { ...g, ...updates };
+            const done = updated.milestones.filter(m => m.done).length;
+            updated.progress = updated.milestones.length
+                ? Math.round((done / updated.milestones.length) * 100)
+                : (updates.progress ?? updated.progress);
+            return updated;
+        }));
+        const goal = this.goals().find(g => g.id === id);
+        if (goal) this.db.upsert('goals', goal).catch(e => console.error('[StoreService] persist goal failed', e));
+    }
+
+    deleteGoal(id: string) {
+        const goal = this.goals().find(g => g.id === id);
+        if (!goal) return;
+        this.goals.update(list => list.filter(g => g.id !== id));
+        this.db.upsert('goals', { ...goal, deleted_at: new Date().toISOString() })
+            .catch(e => console.error('[StoreService] soft-delete goal failed', e));
+    }
+
+    // ── Habit completion ──────────────────────────────────────────────────────
+
+    logHabitCompletion(taskId: string) {
+        const todayStr = new Date().toISOString().slice(0, 10);
+        this.tasks.update(list => list.map(t => {
+            if (t.id !== taskId || !t.isHabit) return t;
+            const log = t.completionLog ?? [];
+            if (log.includes(todayStr)) return t; // already logged today
+            const newLog = [...log, todayStr].sort();
+            const streak = this._calcStreak(newLog);
+            return { ...t, completionLog: newLog, streak, status: 'ACTIVE' as const };
+        }));
+        const task = this.tasks().find(t => t.id === taskId);
+        if (task) this.db.upsert('tasks', task).catch(e => console.error('[StoreService] habit log failed', e));
+    }
+
+    private _calcStreak(sortedDates: string[]): number {
+        if (!sortedDates.length) return 0;
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        let streak = 0;
+        let cursor = new Date(today);
+        // Walk backwards from today
+        for (let i = sortedDates.length - 1; i >= 0; i--) {
+            const d = new Date(sortedDates[i]);
+            d.setHours(0, 0, 0, 0);
+            const diffDays = Math.round((cursor.getTime() - d.getTime()) / 86_400_000);
+            if (diffDays === 0 || diffDays === 1) {
+                streak++;
+                cursor = d;
+            } else {
+                break;
+            }
+        }
+        return streak;
+    }
+
+    // ── Space isolation ───────────────────────────────────────────────────────
+
+    setActiveSpaceId(spaceId: string | null) {
+        this.activeSpaceId.set(spaceId);
+    }
+
+    private _filterBySpace<T extends { spaceId?: string }>(items: T[]): T[] {
+        const active = this.activeSpaceId();
+        if (!active) return items;
+        return items.filter(i => !i.spaceId || i.spaceId === active);
     }
 }

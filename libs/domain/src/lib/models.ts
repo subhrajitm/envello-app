@@ -53,6 +53,14 @@ export interface Task {
     createdAt?: string;
     /** Set when moved to bin; null/undefined means active */
     deleted_at?: string | null;
+    /** Habit tracking — marks task as a daily/recurring habit */
+    isHabit?: boolean;
+    /** Current consecutive completion streak (days) */
+    streak?: number;
+    /** ISO date strings of each habit completion (YYYY-MM-DD) */
+    completionLog?: string[];
+    /** Space this item belongs to; undefined = visible in all spaces */
+    spaceId?: string;
 }
 
 export interface Note {
@@ -72,6 +80,8 @@ export interface Note {
     /** ISO datetime string for a scheduled reminder alert */
     remindAt?: string;
     deleted_at?: string | null;
+    /** Space this item belongs to; undefined = visible in all spaces */
+    spaceId?: string;
 }
 
 export interface NoteHistoryEntry {
@@ -126,6 +136,7 @@ export interface Book {
     isRecentlyUpdated: boolean;
     coverImage?: string;
     deleted_at?: string | null;
+    spaceId?: string;
 }
 
 export interface Project {
@@ -261,6 +272,7 @@ export interface Bookmark {
     isArchived?: boolean;
     isPinned?: boolean;
     deleted_at?: string | null;
+    spaceId?: string;
 }
 
 export interface StorageFile {
@@ -309,4 +321,28 @@ export interface Person {
     lastInteraction?: string;    // ISO date of most recent interaction
     createdAt: string;
     deleted_at?: string | null;
+}
+
+export interface GoalMilestone {
+    id: string;
+    title: string;
+    done: boolean;
+    dueDate?: string;
+}
+
+export type GoalCategory = 'health' | 'career' | 'finance' | 'learning' | 'personal' | 'other';
+
+export interface Goal {
+    id: string;
+    title: string;
+    description?: string;
+    category: GoalCategory;
+    targetDate?: string;
+    progress: number;          // 0–100, auto-computed from milestones
+    status: 'active' | 'completed' | 'paused' | 'abandoned';
+    milestones: GoalMilestone[];
+    linkedTaskIds?: string[];
+    createdAt: string;
+    deleted_at?: string | null;
+    spaceId?: string;
 }

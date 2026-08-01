@@ -134,6 +134,7 @@ export class AppComponent implements OnInit, AfterViewInit, OnDestroy {
       'knowledge': 'Knowledge',
       'daily-notes': 'Notes',
       'tasks': 'Tasks',
+      'goals': 'Goals',
       'meetings': 'Meetings',
       'bookmarks': 'Bookmarks',
       'spaces':  'Workspaces',

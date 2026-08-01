@@ -1,9 +1,9 @@
-import { Component, inject, signal, computed, ChangeDetectionStrategy } from '@angular/core';
+import { Component, inject, signal, computed, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { TransactionStore } from '@envello/state';
 import { Transaction, TransactionType } from '@envello/domain';
-import { AiService } from '@envello/core';
+import { AiService, NotificationService } from '@envello/core';
 import { AiAssistantPanelComponent, AiPanelMessage, TableComponent, ConfirmDialogComponent, FeatureSidebarComponent, EmptyStateComponent, SliderPanelComponent } from '@envello/ui';
 import type { EnvTableColumn, EnvTableAction, EnvTableSortEvent, EnvTableActionEvent } from '@envello/ui';
 import {
@@ -401,9 +401,11 @@ import { TransactionFormComponent } from './transaction-form.component';
 
     `]
 })
-export class VendorComponent {
+export class VendorComponent implements OnInit {
     public transactionStore = inject(TransactionStore);
     private aiService       = inject(AiService);
+    private notify          = inject(NotificationService);
+    private _billingTimeouts: ReturnType<typeof setTimeout>[] = [];
 
     protected aiEnabled = computed(() => this.aiService.aiEnabled());
 
@@ -575,6 +577,33 @@ export class VendorComponent {
         };
         const col = colMap[event.key];
         if (col) { this.sortCol.set(col); this.sortDir.set(event.direction); }
+    }
+
+    ngOnInit() {
+        this._scheduleBillingAlerts();
+    }
+
+    private _scheduleBillingAlerts() {
+        const now = Date.now();
+        const DAY_MS = 86_400_000;
+        for (const tx of this.transactionStore.transactions()) {
+            if ((tx.type !== 'recurring' && tx.type !== 'bill') || tx.status === 'cancelled' || !tx.date) continue;
+            const due = new Date(tx.date).getTime();
+            const diff = due - now;
+            // Alert 1 day before billing
+            const oneDayBefore = diff - DAY_MS;
+            if (oneDayBefore > 0) {
+                this._billingTimeouts.push(setTimeout(() => {
+                    this.notify.info('Upcoming billing', `${tx.name} bills tomorrow (${tx.currency ?? ''}${tx.amount}).`);
+                }, oneDayBefore));
+            }
+            // Alert on billing day
+            if (diff > 0 && diff <= DAY_MS * 7) {
+                this._billingTimeouts.push(setTimeout(() => {
+                    this.notify.info('Billing today', `${tx.name} is due today (${tx.currency ?? ''}${tx.amount}).`);
+                }, Math.max(diff, 0)));
+            }
+        }
     }
 
     private formatDateDisplay(t: Transaction): string {

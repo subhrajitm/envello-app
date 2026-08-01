@@ -59,6 +59,11 @@ export class SqliteDataService implements DataService {
             case 'bookmarks':                    rows = await this.sqlite.getAllBookmarks()             as unknown as T[]; break;
             case 'bookmark_folders':             rows = await this.sqlite.getAllBookmarkFolders()      as unknown as T[]; break;
             case 'people':                       rows = await this.sqlite.getAllPeople()               as unknown as T[]; break;
+            case 'goals': {
+                const raw = localStorage.getItem(this.getFallbackKey('goals'));
+                rows = (raw ? JSON.parse(raw) : []) as unknown as T[];
+                break;
+            }
             case 'note_history':                 rows = await this.sqlite.getAllNoteHistory()           as unknown as T[]; break;
             case 'chapter_history':              rows = await this.sqlite.getAllChapterHistory()        as unknown as T[]; break;
             default:
@@ -106,6 +111,14 @@ export class SqliteDataService implements DataService {
             case 'bookmarks': return await this.sqlite.upsertBookmark(item as any);
             case 'bookmark_folders': return await this.sqlite.upsertBookmarkFolder(item as any);
             case 'people': return await this.sqlite.upsertPerson(item as any);
+            case 'goals': {
+                const raw = localStorage.getItem(this.getFallbackKey('goals'));
+                const items: any[] = raw ? JSON.parse(raw) : [];
+                const idx = items.findIndex((i: any) => i.id === (item as any).id);
+                if (idx >= 0) items[idx] = item; else items.push(item);
+                localStorage.setItem(this.getFallbackKey('goals'), JSON.stringify(items));
+                return;
+            }
             case 'note_history': return await this.sqlite.upsertNoteHistory(item as any);
             case 'chapter_history': return await this.sqlite.upsertChapterHistory(item as any);
             default: console.warn(`[SqliteDataService] Unknown collection ${collection} for upsert`);
@@ -145,6 +158,12 @@ export class SqliteDataService implements DataService {
             case 'bookmarks': return await this.sqlite.removeBookmark(id);
             case 'bookmark_folders': return await this.sqlite.removeBookmarkFolder(id);
             case 'people': return await this.sqlite.removePerson(id);
+            case 'goals': {
+                const raw = localStorage.getItem(this.getFallbackKey('goals'));
+                const items: any[] = raw ? JSON.parse(raw) : [];
+                localStorage.setItem(this.getFallbackKey('goals'), JSON.stringify(items.filter((i: any) => i.id !== id)));
+                return;
+            }
             case 'note_history': return await this.sqlite.removeNoteHistory(id);
             case 'chapter_history': return await this.sqlite.removeChapterHistory(id);
             default: console.warn(`[SqliteDataService] Unknown collection ${collection} for remove`);

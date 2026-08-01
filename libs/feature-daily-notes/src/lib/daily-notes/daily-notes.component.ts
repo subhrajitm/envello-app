@@ -189,7 +189,35 @@ export class DailyNotesComponent implements OnInit, OnDestroy {
 
   // Right sidebar panel
   rightPanelCollapsed = signal(true);
-  rightPanelTab = signal<'ai' | 'format'>('ai');
+  rightPanelTab = signal<'ai' | 'format' | 'backlinks'>('ai');
+
+  // ── Note-link autocomplete ────────────────────────────────────────────────
+  showNoteLinkMenu = signal(false);
+  noteLinkQuery = signal('');
+  /** True while the user is actively building a [[…]] token in the editor. */
+  private _inNoteLinkMode = false;
+  /** Accumulated chars typed after [[ so we can replace them on insert. */
+  private _noteLinkBuffer = '';
+
+  noteLinkSuggestions = computed(() => {
+    const q = this.noteLinkQuery().toLowerCase();
+    return this.notes()
+      .filter(n => n.title.toLowerCase().includes(q) && n.id !== this.selectedEntryId())
+      .slice(0, 8);
+  });
+
+  /** Computed list of notes that link to the currently selected note. */
+  backlinks = computed(() => {
+    const current = this.selectedNote();
+    if (!current) return [];
+    const title = current.title.toLowerCase();
+    const id = current.id;
+    return this.notes().filter(n => {
+      if (n.id === id) return false;
+      const haystack = ((n.content ?? '') + ' ' + (n.preview ?? '')).toLowerCase();
+      return haystack.includes(`[[${title}]]`) || haystack.includes(`data-note-id="${id}"`);
+    });
+  });
 
   pinnedCount = computed(() => this.notes().filter(n => this.isPinned(n)).length);
   taggedCount = computed(() => this.notes().filter(n => n.tags?.some(t => t !== 'pinned')).length);
@@ -1269,12 +1297,122 @@ export class DailyNotesComponent implements OnInit, OnDestroy {
     this.showDropdown.update(show => !show);
   }
 
-  setRightTab(tab: 'ai' | 'format') {
+  setRightTab(tab: 'ai' | 'format' | 'backlinks') {
     if (this.rightPanelCollapsed() || this.rightPanelTab() !== tab) {
       this.rightPanelTab.set(tab);
       this.rightPanelCollapsed.set(false);
     } else {
       this.rightPanelCollapsed.set(true);
+    }
+  }
+
+  // ── Note-link insert helpers ──────────────────────────────────────────────
+  /**
+   * Called when the user selects a note from the autocomplete dropdown.
+   * Replaces the partial `[[query` text the user typed with a styled span.
+   */
+  insertNoteLink(note: Note) {
+    if (!this.editor) return;
+    const linkText = `[[${note.title}]]`;
+    // Delete the [[ prefix + whatever the user typed so far, then insert the span
+    const bufferLen = 2 + this._noteLinkBuffer.length; // '[[' + typed chars
+    const { from } = this.editor.state.selection;
+    const deleteFrom = Math.max(0, from - bufferLen);
+    this.editor.chain()
+      .focus()
+      .deleteRange({ from: deleteFrom, to: from })
+      .insertContent(
+        `<span class="note-link" data-note-id="${note.id}" data-note-title="${note.title}">${linkText}</span>&nbsp;`
+      )
+      .run();
+    this._inNoteLinkMode = false;
+    this._noteLinkBuffer = '';
+    this.showNoteLinkMenu.set(false);
+    this.noteLinkQuery.set('');
+  }
+
+  /**
+   * Dismiss the autocomplete without inserting anything.
+   */
+  dismissNoteLinkMenu() {
+    this._inNoteLinkMode = false;
+    this._noteLinkBuffer = '';
+    this.showNoteLinkMenu.set(false);
+    this.noteLinkQuery.set('');
+  }
+
+  /**
+   * Listens for keydown events on the tiptap-editor wrapper div.
+   * Detects [[ trigger, tracks the autocomplete query, and handles
+   * Escape / ArrowUp / ArrowDown within the dropdown.
+   */
+  onEditorKeydown(event: KeyboardEvent) {
+    if (this.showNoteLinkMenu()) {
+      if (event.key === 'Escape') {
+        event.preventDefault();
+        this.dismissNoteLinkMenu();
+        return;
+      }
+      if (event.key === 'Backspace' && this._noteLinkBuffer.length === 0) {
+        // User deleted past the [[  — close menu but don't prevent default
+        this.dismissNoteLinkMode();
+        return;
+      }
+      if (event.key === 'Backspace') {
+        this._noteLinkBuffer = this._noteLinkBuffer.slice(0, -1);
+        this.noteLinkQuery.set(this._noteLinkBuffer);
+        return;
+      }
+      // Any printable character updates the query
+      if (event.key.length === 1 && !event.metaKey && !event.ctrlKey) {
+        this._noteLinkBuffer += event.key;
+        this.noteLinkQuery.set(this._noteLinkBuffer);
+      }
+      return;
+    }
+
+    // Detect [[ sequence: look for two consecutive '[' characters
+    if (event.key === '[' && !event.metaKey && !event.ctrlKey) {
+      // Check if the character just before cursor is already '['
+      const { from } = this.editor.state.selection;
+      const textBefore = from > 1
+        ? this.editor.state.doc.textBetween(from - 1, from)
+        : '';
+      if (textBefore === '[') {
+        this._inNoteLinkMode = true;
+        this._noteLinkBuffer = '';
+        this.noteLinkQuery.set('');
+        this.showNoteLinkMenu.set(true);
+      }
+    }
+  }
+
+  /** Called by the search input in the autocomplete dropdown. */
+  setNoteLinkQuery(value: string) {
+    this._noteLinkBuffer = value;
+    this.noteLinkQuery.set(value);
+  }
+
+  private dismissNoteLinkMode() {
+    this._inNoteLinkMode = false;
+    this._noteLinkBuffer = '';
+    this.showNoteLinkMenu.set(false);
+    this.noteLinkQuery.set('');
+  }
+
+  /**
+   * Open a linked note (called when clicking a note-link chip in the editor).
+   * Angular event delegation from the tiptap editor div.
+   */
+  onEditorClick(event: MouseEvent) {
+    const target = event.target as HTMLElement;
+    const chip = target.closest<HTMLElement>('.note-link[data-note-id]');
+    if (chip) {
+      const noteId = chip.getAttribute('data-note-id');
+      if (noteId) {
+        event.preventDefault();
+        this.selectNote(noteId);
+      }
     }
   }
 
@@ -1412,6 +1550,9 @@ export class DailyNotesComponent implements OnInit, OnDestroy {
     }
     if (!target.closest('.dn-sort-wrap')) {
       if (this.showSortMenu()) this.showSortMenu.set(false);
+    }
+    if (!target.closest('.dn-note-link-menu') && !target.closest('tiptap-editor')) {
+      if (this.showNoteLinkMenu()) this.dismissNoteLinkMode();
     }
   }
 

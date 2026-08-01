@@ -1,8 +1,8 @@
-import { Component, computed, inject, signal, ChangeDetectionStrategy } from '@angular/core';
+import { Component, computed, inject, signal, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import {
   StoreService, RelationshipService, PersonInteraction,
-  ContactsImportService, ImportPreview, ImportedContact,
+  ContactsImportService, ImportPreview, ImportedContact, NotificationService,
 } from '@envello/core';
 import { Person, RelationshipType } from '@envello/domain';
 import {
@@ -27,10 +27,12 @@ type ViewMode = 'table' | 'grid';
   styleUrl: './people.component.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class PeopleComponent {
+export class PeopleComponent implements OnInit {
   private store         = inject(StoreService);
   readonly relService   = inject(RelationshipService);
   private importService = inject(ContactsImportService);
+  private notify        = inject(NotificationService);
+  private _reminderTimeouts: ReturnType<typeof setTimeout>[] = [];
 
   // ── View state ──────────────────────────────────────────────────────────────
   activeFilter  = signal<PeopleFilter>('all');
@@ -418,6 +420,46 @@ export class PeopleComponent {
 
   isKnown(contact: ImportedContact): boolean {
     return this.store.people().some(p => p.name.toLowerCase() === contact.name.toLowerCase());
+  }
+
+  // ── Lifecycle ───────────────────────────────────────────────────────────────
+
+  ngOnInit() {
+    this._scheduleAllPeopleReminders();
+  }
+
+  private _scheduleAllPeopleReminders() {
+    const now = Date.now();
+    for (const person of this.store.people()) {
+      // Follow-up reminder
+      if (person.reminderDate) {
+        const ms = new Date(person.reminderDate).getTime() - now;
+        if (ms > 0) {
+          this._reminderTimeouts.push(setTimeout(() => {
+            this.notify.info('Follow-up reminder', `Time to follow up with ${person.name}.`);
+          }, ms));
+        }
+      }
+      // Birthday reminder (this year or next)
+      if (person.birthday) {
+        const bday = this._nextBirthdayMs(person.birthday);
+        if (bday > 0) {
+          this._reminderTimeouts.push(setTimeout(() => {
+            this.notify.info("Birthday today! 🎂", `${person.name}'s birthday is today.`);
+          }, bday));
+        }
+      }
+    }
+  }
+
+  private _nextBirthdayMs(birthday: string): number {
+    const today = new Date();
+    const parts = birthday.split('-');
+    const month = parseInt(parts[1] ?? '1', 10) - 1;
+    const day   = parseInt(parts[2] ?? '1', 10);
+    let next = new Date(today.getFullYear(), month, day, 9, 0, 0);
+    if (next.getTime() <= Date.now()) next.setFullYear(next.getFullYear() + 1);
+    return next.getTime() - Date.now();
   }
 
   // ── Helpers ─────────────────────────────────────────────────────────────────

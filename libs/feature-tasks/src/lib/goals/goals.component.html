@@ -1,0 +1,358 @@
+<div class="goals-view">
+
+  <!-- ═══════════ SIDEBAR ═══════════ -->
+  <env-feature-sidebar
+    title="Goals"
+    [navItems]="sidebarNavItems()"
+    [activeNavId]="statusFilter()"
+    (navItemClick)="setFilter($any($event))">
+  </env-feature-sidebar>
+
+  <!-- ═══════════ MAIN ═══════════ -->
+  <main class="goals-main">
+
+    <!-- Toolbar — matches ppl-toolbar height/border/bg pattern -->
+    <div class="goals-toolbar">
+      <div class="goals-toolbar-search">
+        <span class="material-symbols-outlined goals-toolbar-search-icon">search</span>
+        <input class="goals-toolbar-search-input" type="text" placeholder="Search goals…"
+          [value]="searchQuery()"
+          (input)="searchQuery.set($any($event.target).value)" />
+      </div>
+
+      <div class="goals-toolbar-right">
+        <span class="goals-count-label">{{ filteredGoals().length }} goals</span>
+        <div class="goals-tb-divider"></div>
+        <button class="goals-create-btn" (click)="openCreateForm()">
+          <span class="material-symbols-outlined">add</span>
+          New Goal
+        </button>
+      </div>
+    </div>
+
+    <!-- Scrollable content -->
+    <div class="goals-content">
+
+    <!-- Empty state -->
+    @if (filteredGoals().length === 0) {
+      <env-empty-state
+        icon="flag"
+        title="No goals yet"
+        description="Set a goal and track your progress milestone by milestone."
+        ctaLabel="Create your first goal"
+        ctaIcon="add"
+        (ctaClicked)="openCreateForm()">
+      </env-empty-state>
+    } @else {
+
+      <!-- Goal card grid -->
+      <div class="goals-grid">
+        @for (goal of filteredGoals(); track goal.id) {
+          <button
+            class="goal-card"
+            [class.goal-card--selected]="selectedGoalId() === goal.id"
+            (click)="openDetail(goal)"
+            [attr.aria-pressed]="selectedGoalId() === goal.id">
+
+            <!-- Header: category icon + status badge -->
+            <div class="goal-card-header">
+              <div class="goal-cat-badge"
+                [style.background]="categoryColor(goal.category) + '22'"
+                [style.color]="categoryColor(goal.category)">
+                <span class="material-symbols-outlined">{{ categoryIcon(goal.category) }}</span>
+              </div>
+              <span class="goal-status-chip {{ statusClass(goal.status) }}">{{ statusLabel(goal.status) }}</span>
+            </div>
+
+            <!-- Title -->
+            <h3 class="goal-card-title">{{ goal.title }}</h3>
+
+            <!-- Progress bar -->
+            <div class="goal-progress-wrap">
+              <div class="goal-progress-bar"
+                role="progressbar"
+                [attr.aria-valuenow]="goal.progress"
+                aria-valuemin="0" aria-valuemax="100">
+                <div class="goal-progress-fill"
+                  [style.width.%]="goal.progress"
+                  [style.background]="categoryColor(goal.category)">
+                </div>
+              </div>
+              <span class="goal-progress-pct">{{ goal.progress }}%</span>
+            </div>
+
+            <!-- Meta -->
+            <div class="goal-card-meta">
+              @if (goal.milestones.length > 0) {
+                <span class="goal-meta-item">
+                  <span class="material-symbols-outlined">checklist</span>
+                  {{ milestoneDoneCount(goal) }}/{{ goal.milestones.length }}
+                </span>
+              }
+              @if (goal.targetDate) {
+                <span class="goal-meta-item" [class.goal-meta-overdue]="isOverdue(goal)">
+                  <span class="material-symbols-outlined">schedule</span>
+                  {{ formatDate(goal.targetDate) }}
+                </span>
+              }
+            </div>
+          </button>
+        }
+      </div>
+    }
+
+    </div><!-- /goals-content -->
+  </main>
+
+  <!-- ═══════════ DETAIL PANEL ═══════════ -->
+  <env-slider-panel [isOpen]="!!selectedGoalId() && !showCreateForm()" (closed)="closeDetail()" width="480px">
+    @if (selectedGoal(); as goal) {
+
+      <!-- Panel header -->
+      <div class="gdp-header">
+        <div class="gdp-cat-icon"
+          [style.color]="categoryColor(goal.category)"
+          [style.background]="categoryColor(goal.category) + '22'">
+          <span class="material-symbols-outlined">{{ categoryIcon(goal.category) }}</span>
+        </div>
+        <div class="gdp-header-info">
+          @if (editMode()) {
+            <input class="gdp-title-input"
+              [ngModel]="editTitle()"
+              (ngModelChange)="editTitle.set($event)"
+              placeholder="Goal title" />
+          } @else {
+            <h2 class="gdp-title">{{ goal.title }}</h2>
+          }
+          <span class="goal-status-chip {{ statusClass(goal.status) }}">{{ statusLabel(goal.status) }}</span>
+        </div>
+        <div class="gdp-header-actions">
+          @if (!editMode()) {
+            <button class="gdp-icon-btn" (click)="startEdit(goal)" title="Edit">
+              <span class="material-symbols-outlined">edit</span>
+            </button>
+            <button class="gdp-icon-btn gdp-icon-btn--danger" (click)="requestDelete()" title="Delete">
+              <span class="material-symbols-outlined">delete</span>
+            </button>
+          }
+        </div>
+      </div>
+
+      <!-- Edit fields -->
+      @if (editMode()) {
+        <div class="gdp-edit-fields">
+          <textarea class="gdp-desc-input"
+            [ngModel]="editDescription()"
+            (ngModelChange)="editDescription.set($event)"
+            placeholder="Description (optional)" rows="3">
+          </textarea>
+          <div class="gdp-edit-row">
+            <label class="gdp-field-label" for="gdp-cat-edit">Category</label>
+            <select id="gdp-cat-edit" class="gdp-select"
+              [ngModel]="editCategory()"
+              (ngModelChange)="editCategory.set($event)">
+              @for (cat of categories; track cat) {
+                <option [value]="cat">{{ cat }}</option>
+              }
+            </select>
+          </div>
+          <div class="gdp-edit-row">
+            <label class="gdp-field-label" for="gdp-date-edit">Target date</label>
+            <input id="gdp-date-edit" type="date" class="gdp-input"
+              [ngModel]="editTargetDate()"
+              (ngModelChange)="editTargetDate.set($event)" />
+          </div>
+          <div class="gdp-edit-actions">
+            <button class="gdp-save-btn" (click)="saveEdit(goal)">Save</button>
+            <button class="gdp-cancel-btn" (click)="cancelEdit()">Cancel</button>
+          </div>
+        </div>
+      } @else {
+
+        <!-- Progress -->
+        <div class="gdp-section">
+          <div class="gdp-progress-row">
+            <div class="gdp-progress-bar"
+              role="progressbar"
+              [attr.aria-valuenow]="goal.progress"
+              aria-valuemin="0" aria-valuemax="100">
+              <div class="gdp-progress-fill"
+                [style.width.%]="goal.progress"
+                [style.background]="categoryColor(goal.category)">
+              </div>
+            </div>
+            <span class="gdp-progress-pct">{{ goal.progress }}%</span>
+          </div>
+          @if (goal.targetDate) {
+            <p class="gdp-meta" [class.gdp-meta--overdue]="isOverdue(goal)">
+              <span class="material-symbols-outlined">schedule</span>
+              Target: {{ formatDate(goal.targetDate) }}
+              @if (isOverdue(goal)) {
+                <span class="gdp-overdue-chip">Overdue</span>
+              }
+            </p>
+          }
+          @if (goal.description) {
+            <p class="gdp-description">{{ goal.description }}</p>
+          }
+        </div>
+
+        <!-- Milestones -->
+        <div class="gdp-section">
+          <div class="gdp-section-hdr">
+            <span class="material-symbols-outlined gdp-section-icon">checklist</span>
+            <span class="gdp-section-title">Milestones</span>
+            <span class="gdp-section-count">{{ milestoneDoneCount(goal) }}/{{ goal.milestones.length }}</span>
+          </div>
+          @if (goal.milestones.length === 0) {
+            <p class="gdp-empty-milestones">No milestones added yet.</p>
+          } @else {
+            <ul class="gdp-milestone-list">
+              @for (m of goal.milestones; track m.id) {
+                <li class="gdp-milestone-item" [class.gdp-milestone-item--done]="m.done">
+                  <label class="gdp-milestone-label" [for]="'ms-' + m.id">
+                    <input [id]="'ms-' + m.id" type="checkbox"
+                      class="gdp-milestone-check"
+                      [checked]="m.done"
+                      (change)="toggleMilestone(goal, m)" />
+                    <span class="gdp-milestone-title">{{ m.title }}</span>
+                  </label>
+                  @if (m.dueDate) {
+                    <span class="gdp-milestone-date">{{ formatDate(m.dueDate) }}</span>
+                  }
+                </li>
+              }
+            </ul>
+          }
+        </div>
+
+        <!-- Linked tasks -->
+        @if (goal.linkedTaskIds && goal.linkedTaskIds.length > 0) {
+          <div class="gdp-section">
+            <div class="gdp-section-hdr">
+              <span class="material-symbols-outlined gdp-section-icon">task_alt</span>
+              <span class="gdp-section-title">Linked Tasks</span>
+            </div>
+            <ul class="gdp-linked-tasks">
+              @for (taskId of goal.linkedTaskIds; track taskId) {
+                @let linkedTask = getLinkedTask(taskId);
+                @if (linkedTask) {
+                  <li class="gdp-linked-task">
+                    <span class="material-symbols-outlined gdp-task-icon">
+                      {{ linkedTask.status === 'COMPLETED' ? 'check_circle' : 'radio_button_unchecked' }}
+                    </span>
+                    <span [class.gdp-task--done]="linkedTask.status === 'COMPLETED'">{{ linkedTask.title }}</span>
+                  </li>
+                }
+              }
+            </ul>
+          </div>
+        }
+
+        <!-- Status control -->
+        <div class="gdp-section gdp-status-section">
+          <span class="gdp-field-label">Status</span>
+          <div class="gdp-status-btns">
+            @for (s of ['active', 'paused', 'completed']; track s) {
+              <button class="gdp-status-cycle-btn"
+                [class.gdp-status-cycle-btn--active]="goal.status === s"
+                (click)="store.updateGoal(goal.id, { status: $any(s) })">
+                {{ s | titlecase }}
+              </button>
+            }
+          </div>
+        </div>
+      }
+    }
+  </env-slider-panel>
+
+  <!-- ═══════════ CREATE PANEL ═══════════ -->
+  <env-slider-panel [isOpen]="showCreateForm()" (closed)="closeCreateForm()" width="480px">
+    <div class="gdp-header">
+      <span class="material-symbols-outlined gdp-create-icon">flag</span>
+      <h2 class="gdp-create-title">New Goal</h2>
+    </div>
+
+    <div class="gdp-form">
+      <div class="gdp-form-field">
+        <label class="gdp-field-label" for="form-title">Title <span class="gdp-required">*</span></label>
+        <input id="form-title" class="gdp-input"
+          [ngModel]="formTitle()"
+          (ngModelChange)="formTitle.set($event)"
+          placeholder="What do you want to achieve?" />
+      </div>
+
+      <div class="gdp-form-field">
+        <label class="gdp-field-label" for="form-desc">Description</label>
+        <textarea id="form-desc" class="gdp-desc-input"
+          [ngModel]="formDescription()"
+          (ngModelChange)="formDescription.set($event)"
+          placeholder="Why does this goal matter to you?"
+          rows="3">
+        </textarea>
+      </div>
+
+      <div class="gdp-form-row">
+        <div class="gdp-form-field">
+          <label class="gdp-field-label" for="form-cat">Category</label>
+          <select id="form-cat" class="gdp-select"
+            [ngModel]="formCategory()"
+            (ngModelChange)="formCategory.set($event)">
+            @for (cat of categories; track cat) {
+              <option [value]="cat">{{ cat }}</option>
+            }
+          </select>
+        </div>
+        <div class="gdp-form-field">
+          <label class="gdp-field-label" for="form-date">Target Date</label>
+          <input id="form-date" type="date" class="gdp-input"
+            [ngModel]="formTargetDate()"
+            (ngModelChange)="formTargetDate.set($event)" />
+        </div>
+      </div>
+
+      <!-- Milestones -->
+      <div class="gdp-form-field">
+        <span class="gdp-field-label">Milestones</span>
+        @for (ms of formMilestoneInputs(); track $index) {
+          <div class="gdp-ms-row">
+            <label [for]="'ms-new-' + $index" class="sr-only">Milestone {{ $index + 1 }}</label>
+            <input [id]="'ms-new-' + $index" class="gdp-input gdp-ms-input"
+              [value]="ms"
+              (input)="updateMilestoneInput($index, $any($event.target).value)"
+              [placeholder]="'Milestone ' + ($index + 1)" />
+            @if (formMilestoneInputs().length > 1) {
+              <button class="gdp-ms-remove" (click)="removeMilestoneInput($index)" title="Remove">
+                <span class="material-symbols-outlined">close</span>
+              </button>
+            }
+          </div>
+        }
+        <button class="gdp-add-ms-btn" (click)="addMilestoneInput()">
+          <span class="material-symbols-outlined">add</span>
+          Add milestone
+        </button>
+      </div>
+
+      <div class="gdp-form-actions">
+        <button class="gdp-save-btn" [disabled]="!formTitle().trim()" (click)="submitCreate()">
+          Create Goal
+        </button>
+        <button class="gdp-cancel-btn" (click)="closeCreateForm()">Cancel</button>
+      </div>
+    </div>
+  </env-slider-panel>
+
+  <!-- ═══════════ DELETE CONFIRM ═══════════ -->
+  <env-confirm-dialog
+    [isOpen]="showDeleteConfirm()"
+    title="Delete Goal"
+    icon="delete"
+    variant="danger"
+    confirmLabel="Delete"
+    (confirmed)="selectedGoal() && confirmDelete(selectedGoal()!)"
+    (cancelled)="cancelDelete()">
+    This goal and all its milestones will be permanently deleted.
+  </env-confirm-dialog>
+
+</div>

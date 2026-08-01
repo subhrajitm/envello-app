@@ -492,10 +492,42 @@
                     <button class="env-float-btn" (click)="addYoutube()" title="Video">
                         <span class="material-symbols-outlined">smart_display</span>
                     </button>
+                    <button class="env-float-btn" (click)="showNoteLinkMenu.set(true); noteLinkQuery.set('')" title="Insert note link [[…]]">
+                        <span class="material-symbols-outlined">link</span>
+                        <span class="env-float-label">[[</span>
+                    </button>
                 </env-editor-floating-menu>
                 }
 
-                <tiptap-editor [editor]="editor" class="dn-editor-text"></tiptap-editor>
+                <!-- Note-link autocomplete dropdown -->
+                @if (showNoteLinkMenu()) {
+                <div class="dn-note-link-menu">
+                    <div class="dn-note-link-header">
+                        <span class="material-symbols-outlined dn-note-link-icon">link</span>
+                        <span class="dn-note-link-title">Link to note</span>
+                        <input class="dn-note-link-input" type="text" placeholder="Search notes…" autofocus
+                            [ngModel]="noteLinkQuery()"
+                            (ngModelChange)="setNoteLinkQuery($event)"
+                            (keydown.escape)="dismissNoteLinkMenu()" />
+                    </div>
+                    @if (noteLinkSuggestions().length > 0) {
+                    <ul class="dn-note-link-list">
+                        @for (n of noteLinkSuggestions(); track n.id) {
+                        <li class="dn-note-link-item" (click)="insertNoteLink(n)">
+                            <span class="material-symbols-outlined dn-note-link-item-icon">description</span>
+                            <span class="dn-note-link-item-title">{{ n.title || 'Untitled' }}</span>
+                        </li>
+                        }
+                    </ul>
+                    } @else {
+                    <div class="dn-note-link-empty">No matching notes</div>
+                    }
+                </div>
+                }
+
+                <tiptap-editor [editor]="editor" class="dn-editor-text"
+                    (keydown)="onEditorKeydown($event)"
+                    (click)="onEditorClick($event)"></tiptap-editor>
             </div>
         </div>
 
@@ -519,6 +551,39 @@
                     (cancel)="cancelAiStream()"
                     (applyClicked)="applyAiChanges()"
                 ></env-ai-panel>
+                } @else if (rightPanelTab() === 'backlinks') {
+                <div class="dn-backlinks-panel">
+                    <div class="dn-panel-header">
+                        <span class="material-symbols-outlined">account_tree</span>
+                        BACKLINKS
+                        <span class="dn-backlinks-count">{{ backlinks().length }}</span>
+                        <button class="dn-panel-close" (click)="rightPanelCollapsed.set(true)" title="Close">
+                            <span class="material-symbols-outlined">close</span>
+                        </button>
+                    </div>
+                    @if (backlinks().length === 0) {
+                    <div class="dn-backlinks-empty">
+                        <span class="material-symbols-outlined dn-backlinks-empty-icon">link_off</span>
+                        <span class="dn-backlinks-empty-text">No notes link here yet.</span>
+                        <span class="dn-backlinks-empty-hint">Type <code class="dn-backlinks-code">[[note title]]</code> in any note to create a link.</span>
+                    </div>
+                    } @else {
+                    <ul class="dn-backlinks-list">
+                        @for (bl of backlinks(); track bl.id) {
+                        <li class="dn-backlinks-item" (click)="selectNote(bl.id)" [title]="bl.title">
+                            <span class="material-symbols-outlined dn-backlinks-item-icon">description</span>
+                            <div class="dn-backlinks-item-body">
+                                <span class="dn-backlinks-item-title">{{ bl.title || 'Untitled' }}</span>
+                                @if (getPreviewText(bl.preview)) {
+                                <span class="dn-backlinks-item-preview">{{ getPreviewText(bl.preview) }}</span>
+                                }
+                            </div>
+                            <span class="material-symbols-outlined dn-backlinks-item-arrow">arrow_forward</span>
+                        </li>
+                        }
+                    </ul>
+                    }
+                </div>
                 } @else if (rightPanelTab() === 'format') {
                 @if (editor) {
                 <div class="dn-format-panel">
@@ -651,6 +716,10 @@
                 <button class="ne-strip-btn" [class.active]="!rightPanelCollapsed() && rightPanelTab() === 'format'"
                     (click)="setRightTab('format')" title="Format">
                     <span class="material-symbols-outlined">format_paragraph</span>
+                </button>
+                <button class="ne-strip-btn" [class.active]="!rightPanelCollapsed() && rightPanelTab() === 'backlinks'"
+                    (click)="setRightTab('backlinks')" [title]="'Backlinks (' + backlinks().length + ')'">
+                    <span class="material-symbols-outlined">account_tree</span>
                 </button>
 
                 <div class="ne-strip-divider"></div>

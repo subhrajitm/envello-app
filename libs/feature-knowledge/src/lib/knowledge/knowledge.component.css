@@ -1696,6 +1696,70 @@
 .rsa-batch-col-opt input[type="radio"] { accent-color: var(--accent-primary); cursor: pointer; }
 .rsa-batch-col-select { margin-top: 2px; }
 
+/* ── Audio transcription ── */
+.rsd-audio-section { gap: 8px; }
+
+.rsd-audio-header {
+  display: flex; align-items: center; justify-content: space-between;
+}
+
+.rsd-transcribe-btn {
+  display: inline-flex; align-items: center; gap: 5px;
+  padding: 5px 12px;
+  background: color-mix(in srgb, #10b981 10%, transparent);
+  color: #10b981;
+  border: 1px solid color-mix(in srgb, #10b981 35%, transparent);
+  border-radius: 6px; font-size: 12px; font-weight: 600;
+  cursor: pointer; font-family: var(--font-sans);
+  transition: background 0.15s, color 0.15s, border-color 0.15s, opacity 0.15s;
+}
+.rsd-transcribe-btn:hover:not(:disabled) {
+  background: color-mix(in srgb, #10b981 18%, transparent);
+}
+.rsd-transcribe-btn:disabled { opacity: 0.55; cursor: not-allowed; }
+.rsd-transcribe-btn .material-symbols-outlined { font-size: 14px; }
+
+.rsd-transcript-panel {
+  background: var(--bg-app); border: 1px solid var(--border-subtle);
+  border-radius: 7px; overflow: hidden;
+}
+
+.rsd-transcript-toolbar {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 6px 10px;
+  background: var(--bg-hover); border-bottom: 1px solid var(--border-subtle);
+}
+
+.rsd-transcript-label {
+  font-size: 10px; font-weight: 700; text-transform: uppercase;
+  letter-spacing: 0.05em; color: var(--text-tertiary);
+}
+
+.rsd-transcript-actions { display: flex; align-items: center; gap: 4px; }
+
+.rsd-transcript-action-btn {
+  display: inline-flex; align-items: center; gap: 4px;
+  padding: 3px 8px; background: transparent;
+  border: 1px solid var(--border-subtle); border-radius: 4px;
+  font-size: 11px; font-weight: 500; color: var(--text-secondary);
+  cursor: pointer; font-family: var(--font-sans);
+  transition: background 0.12s, color 0.12s, border-color 0.12s;
+}
+.rsd-transcript-action-btn:hover { background: var(--bg-panel); color: var(--text-primary); border-color: var(--border-highlight); }
+.rsd-transcript-action-btn .material-symbols-outlined { font-size: 13px; }
+
+.rsd-transcript-action-btn--clear {
+  padding: 3px 5px;
+  border-color: transparent;
+}
+.rsd-transcript-action-btn--clear:hover { border-color: var(--accent-red); color: var(--accent-red); background: color-mix(in srgb, var(--accent-red) 8%, transparent); }
+
+.rsd-transcript-text {
+  padding: 10px; font-size: 13px; color: var(--text-secondary);
+  line-height: 1.6; white-space: pre-wrap; max-height: 200px; overflow-y: auto;
+  scrollbar-width: thin;
+}
+
 /* ── Change 8: Bulk move to collection overlay ── */
 .bulk-move-overlay {
   position: fixed; inset: 0; background: rgba(0,0,0,0.3); z-index: 200;

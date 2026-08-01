@@ -345,6 +345,48 @@
               placeholder="Take notes on this source…"></textarea>
           </div>
 
+          <!-- Audio player + transcription — visible only for audio/interview sources with a file -->
+          @if (source.sourceType === 'INTERVIEW' && source.fileId) {
+            <div class="rsd-section rsd-audio-section">
+              <div class="rsd-audio-header">
+                <label class="rsd-label">
+                  <span class="material-symbols-outlined" style="font-size:14px">mic</span>
+                  Audio
+                </label>
+                <button class="rsd-transcribe-btn"
+                  [disabled]="transcribingId() === source.id"
+                  (click)="transcribeAudio(source)"
+                  title="Transcribe audio using Web Speech API">
+                  @if (transcribingId() === source.id) {
+                    <span class="rs-spinner"></span>
+                    Transcribing…
+                  } @else {
+                    <span class="material-symbols-outlined">transcribe</span>
+                    Transcribe
+                  }
+                </button>
+              </div>
+
+              @if (transcriptMap()[source.id]) {
+                <div class="rsd-transcript-panel">
+                  <div class="rsd-transcript-toolbar">
+                    <span class="rsd-transcript-label">Transcript</span>
+                    <div class="rsd-transcript-actions">
+                      <button class="rsd-transcript-action-btn" (click)="copyTranscript(source.id)" title="Copy transcript">
+                        <span class="material-symbols-outlined">content_copy</span>
+                        Copy
+                      </button>
+                      <button class="rsd-transcript-action-btn rsd-transcript-action-btn--clear"
+                        (click)="clearTranscript(source.id)" title="Clear transcript">
+                        <span class="material-symbols-outlined">close</span>
+                      </button>
+                    </div>
+                  </div>
+                  <div class="rsd-transcript-text">{{ transcriptMap()[source.id] }}</div>
+                </div>
+              }
+            </div>
+          }
 
         </div>
 

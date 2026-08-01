@@ -53,8 +53,10 @@ export class WorkspaceProfileService {
     const activeId = localStorage.getItem(this.ACTIVE_PROFILE_KEY);
     if (activeId && profiles.some(p => p.id === activeId)) {
       this.activeProfileIdSignal.set(activeId);
+      window.dispatchEvent(new CustomEvent('envello:space-changed', { detail: { spaceId: activeId === 'default' ? null : activeId } }));
     } else {
       this.activeProfileIdSignal.set(profiles[0].id);
+      window.dispatchEvent(new CustomEvent('envello:space-changed', { detail: { spaceId: profiles[0].id === 'default' ? null : profiles[0].id } }));
       // Only write the default fallback if no activeId was saved.
       // If there IS a saved activeId that doesn't match any profile yet,
       // preserve it so addProfileWithId() can restore it once profiles are re-synced.
@@ -116,6 +118,7 @@ export class WorkspaceProfileService {
 
     this._switching.set(true);
     this.activeProfileIdSignal.set(id);
+    window.dispatchEvent(new CustomEvent('envello:space-changed', { detail: { spaceId: id === 'default' ? null : id } }));
 
     try {
       localStorage.setItem(this.ACTIVE_PROFILE_KEY, id);

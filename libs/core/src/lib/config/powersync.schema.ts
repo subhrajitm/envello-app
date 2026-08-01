@@ -366,6 +366,24 @@ const people = new Table(
   { localOnly: true, indexes: { by_profile: ['profile_id'] } }
 );
 
+const goals = new Table(
+  {
+    profile_id:   column.text,
+    title:        column.text,
+    description:  column.text,
+    category:     column.text,
+    targetDate:   column.text,
+    progress:     column.real,
+    status:       column.text,
+    milestones:   column.text,  // JSON GoalMilestone[]
+    linkedTaskIds: column.text, // JSON string[]
+    createdAt:    column.text,
+    deleted_at:   column.text,
+    spaceId:      column.text,
+  },
+  { localOnly: true, indexes: { by_profile: ['profile_id'] } }
+);
+
 const note_history = new Table(
   {
     profile_id: column.text,
@@ -476,6 +494,7 @@ export const AppSchema = new Schema({
   bookmark_folders,
   transactions,
   people,
+  goals,
   user_preferences,
   library_files,
   // CRDT state store — local only, never synced directly
@@ -491,7 +510,7 @@ export const TYPED_TABLES = new Set([
   'tasks', 'notes', 'planning_items', 'activities', 'books', 'book_content',
   'meetings', 'articles', 'research_collections', 'research_sources',
   'research_summaries', 'projects', 'note_folders', 'note_history', 'chapter_history', 'bookmarks',
-  'bookmark_folders', 'transactions', 'people', 'user_preferences', 'library_files',
+  'bookmark_folders', 'transactions', 'people', 'goals', 'user_preferences', 'library_files',
 ]);
 
 /** Fields that are stored as JSON strings in SQLite. */
@@ -507,6 +526,7 @@ export const JSON_FIELDS: Record<string, string[]> = {
   bookmarks:            ['tags'],
   transactions:         ['history'],
   people:               ['tags'],
+  goals:                ['milestones', 'linkedTaskIds'],
   user_preferences:     ['hiddenNavItems'],
   library_files:        ['tags'],
 };
