@@ -15,7 +15,82 @@ export const TYPE_META: Record<TransactionType, { label: string; icon: string; c
     'refund':    { label: 'Refunds',    icon: 'currency_exchange',  color: '#34d399' },
 };
 
-export const CURRENCIES = ['USD', 'EUR', 'GBP', 'CAD', 'AUD', 'INR', 'JPY'];
+export interface CurrencyMeta { code: string; name: string; symbol: string; }
+
+export const ALL_CURRENCIES: CurrencyMeta[] = [
+    { code: 'USD', name: 'US Dollar',               symbol: '$'    },
+    { code: 'EUR', name: 'Euro',                    symbol: '€'    },
+    { code: 'GBP', name: 'British Pound',           symbol: '£'    },
+    { code: 'JPY', name: 'Japanese Yen',            symbol: '¥'    },
+    { code: 'CAD', name: 'Canadian Dollar',         symbol: 'CA$'  },
+    { code: 'AUD', name: 'Australian Dollar',       symbol: 'A$'   },
+    { code: 'CHF', name: 'Swiss Franc',             symbol: 'CHF'  },
+    { code: 'CNY', name: 'Chinese Yuan',            symbol: '¥'    },
+    { code: 'INR', name: 'Indian Rupee',            symbol: '₹'    },
+    { code: 'BRL', name: 'Brazilian Real',          symbol: 'R$'   },
+    { code: 'MXN', name: 'Mexican Peso',            symbol: 'MX$'  },
+    { code: 'SGD', name: 'Singapore Dollar',        symbol: 'S$'   },
+    { code: 'HKD', name: 'Hong Kong Dollar',        symbol: 'HK$'  },
+    { code: 'NOK', name: 'Norwegian Krone',         symbol: 'kr'   },
+    { code: 'SEK', name: 'Swedish Krona',           symbol: 'kr'   },
+    { code: 'DKK', name: 'Danish Krone',            symbol: 'kr'   },
+    { code: 'NZD', name: 'New Zealand Dollar',      symbol: 'NZ$'  },
+    { code: 'KRW', name: 'South Korean Won',        symbol: '₩'    },
+    { code: 'TRY', name: 'Turkish Lira',            symbol: '₺'    },
+    { code: 'ZAR', name: 'South African Rand',      symbol: 'R'    },
+    { code: 'RUB', name: 'Russian Ruble',           symbol: '₽'    },
+    { code: 'PLN', name: 'Polish Złoty',            symbol: 'zł'   },
+    { code: 'THB', name: 'Thai Baht',               symbol: '฿'    },
+    { code: 'IDR', name: 'Indonesian Rupiah',       symbol: 'Rp'   },
+    { code: 'MYR', name: 'Malaysian Ringgit',       symbol: 'RM'   },
+    { code: 'PHP', name: 'Philippine Peso',         symbol: '₱'    },
+    { code: 'VND', name: 'Vietnamese Đồng',         symbol: '₫'    },
+    { code: 'PKR', name: 'Pakistani Rupee',         symbol: '₨'    },
+    { code: 'BDT', name: 'Bangladeshi Taka',        symbol: '৳'    },
+    { code: 'EGP', name: 'Egyptian Pound',          symbol: 'E£'   },
+    { code: 'ARS', name: 'Argentine Peso',          symbol: '$'    },
+    { code: 'CLP', name: 'Chilean Peso',            symbol: 'CL$'  },
+    { code: 'COP', name: 'Colombian Peso',          symbol: 'CO$'  },
+    { code: 'PEN', name: 'Peruvian Sol',            symbol: 'S/'   },
+    { code: 'UAH', name: 'Ukrainian Hryvnia',       symbol: '₴'    },
+    { code: 'CZK', name: 'Czech Koruna',            symbol: 'Kč'   },
+    { code: 'HUF', name: 'Hungarian Forint',        symbol: 'Ft'   },
+    { code: 'RON', name: 'Romanian Leu',            symbol: 'lei'  },
+    { code: 'ILS', name: 'Israeli Shekel',          symbol: '₪'    },
+    { code: 'AED', name: 'UAE Dirham',              symbol: 'د.إ'  },
+    { code: 'SAR', name: 'Saudi Riyal',             symbol: '﷼'    },
+    { code: 'QAR', name: 'Qatari Riyal',            symbol: '﷼'    },
+    { code: 'KWD', name: 'Kuwaiti Dinar',           symbol: 'د.ك'  },
+    { code: 'BHD', name: 'Bahraini Dinar',          symbol: '.د.ب' },
+    { code: 'OMR', name: 'Omani Rial',              symbol: '﷼'    },
+    { code: 'NGN', name: 'Nigerian Naira',          symbol: '₦'    },
+    { code: 'KES', name: 'Kenyan Shilling',         symbol: 'KSh'  },
+    { code: 'GHS', name: 'Ghanaian Cedi',           symbol: '₵'    },
+    { code: 'MAD', name: 'Moroccan Dirham',         symbol: 'MAD'  },
+    { code: 'TZS', name: 'Tanzanian Shilling',      symbol: 'TSh'  },
+    { code: 'TWD', name: 'Taiwan Dollar',           symbol: 'NT$'  },
+    { code: 'HRK', name: 'Croatian Kuna',           symbol: 'kn'   },
+    { code: 'BGN', name: 'Bulgarian Lev',           symbol: 'лв'   },
+    { code: 'ISK', name: 'Icelandic Króna',         symbol: 'kr'   },
+    { code: 'LKR', name: 'Sri Lankan Rupee',        symbol: '₨'    },
+    { code: 'NPR', name: 'Nepalese Rupee',          symbol: '₨'    },
+    { code: 'MMK', name: 'Myanmar Kyat',            symbol: 'K'    },
+    { code: 'KHR', name: 'Cambodian Riel',          symbol: '៛'    },
+    { code: 'UZS', name: 'Uzbekistani Som',         symbol: 'soʻm' },
+    { code: 'KZT', name: 'Kazakhstani Tenge',       symbol: '₸'    },
+    { code: 'GEL', name: 'Georgian Lari',           symbol: '₾'    },
+    { code: 'AMD', name: 'Armenian Dram',           symbol: '֏'    },
+    { code: 'AZN', name: 'Azerbaijani Manat',       symbol: '₼'    },
+    { code: 'JOD', name: 'Jordanian Dinar',         symbol: 'JD'   },
+    { code: 'LBP', name: 'Lebanese Pound',          symbol: 'L£'   },
+    { code: 'IQD', name: 'Iraqi Dinar',             symbol: 'ع.د'  },
+    { code: 'IRR', name: 'Iranian Rial',            symbol: '﷼'    },
+];
+
+/** Flat list of currency codes — kept for backward compatibility. */
+export const CURRENCIES = ALL_CURRENCIES.map(c => c.code);
+
+const _symbolMap = Object.fromEntries(ALL_CURRENCIES.map(c => [c.code, c.symbol]));
 
 export const CATEGORY_OPTIONS = [
     'software', 'infrastructure', 'design', 'marketing', 'security',
@@ -117,8 +192,7 @@ export function avatarBg(name: string): string {
 }
 
 export function currencySymbol(currency: string | undefined): string {
-    const map: Record<string, string> = { USD: '$', EUR: '€', GBP: '£', CAD: 'CA$', AUD: 'A$', INR: '₹', JPY: '¥' };
-    return map[currency ?? 'USD'] ?? (currency ?? '$');
+    return _symbolMap[currency ?? 'USD'] ?? currency ?? '$';
 }
 
 export function categoryIcon(cat: string): string {

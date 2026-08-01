@@ -1,78 +1,77 @@
 <div class="sp-page" (click)="closeMenu()">
 
-  <!-- ── Header ── -->
-  <div class="sp-hdr">
-    <h1 class="sp-title">Your Spaces</h1>
-    <p class="sp-subtitle">Each space keeps its own notes, meetings, and tasks — switch anytime</p>
+  <!-- ── Toolbar ── -->
+  <div class="sp-toolbar">
+    <div class="sp-toolbar-left">
+      <h1 class="sp-title">Workspaces</h1>
+      <span class="sp-count">{{ profiles().length }} workspace{{ profiles().length !== 1 ? 's' : '' }}</span>
+    </div>
+    <button class="sp-new-btn" type="button" (click)="openNewModal(); $event.stopPropagation()">
+      <span class="material-symbols-outlined">add</span>
+      New Workspace
+    </button>
   </div>
 
-  <!-- ── Cards ── -->
-  <div class="sp-cards">
+  <!-- ── Grid ── -->
+  <div class="sp-grid">
 
     @for (profile of profiles(); track profile.id) {
-      <div class="sp-card" [class.active]="isActive(profile.id)"
-        [title]="isActive(profile.id) ? '' : 'Switch to ' + profile.name"
+      <div class="sp-card" [class.sp-card--active]="isActive(profile.id)"
+        [title]="isActive(profile.id) ? 'Active workspace' : 'Switch to ' + profile.name"
         (click)="switchTo(profile)">
 
-        <!-- 3-dot trigger -->
-        @if (isDeletable(profile.id)) {
-          <div class="sp-menu-trigger" (click)="$event.stopPropagation()">
-            <env-icon-button icon="more_vert" variant="borderless" [size]="20"
-              title="Options" (clicked)="toggleMenu(profile.id)" />
-          </div>
-          @if (menuOpenId() === profile.id) {
-            <div class="sp-menu" (click)="$event.stopPropagation()">
-              <button class="sp-menu-item" (click)="openEditModal(profile); closeMenu()">
-                <span class="material-symbols-outlined">edit</span> Edit space
-              </button>
-              <button class="sp-menu-item" (click)="openDetailsModal(profile); closeMenu()">
-                <span class="material-symbols-outlined">info</span> Details
-              </button>
-              <button class="sp-menu-item sp-menu-item-danger"
-                (click)="openDeleteConfirm(profile); closeMenu()">
-                <span class="material-symbols-outlined">delete</span> Delete space
-              </button>
-            </div>
-          }
-        }
-
-        <!-- Avatar with active ring -->
-        <div class="sp-avatar-wrap">
-          <div class="sp-avatar" [style.background]="profile.color || '#3b82f6'">
-            <span class="sp-avatar-initials">{{ getInitials(profile.name) }}</span>
-          </div>
+        <!-- Colour header band -->
+        <div class="sp-card-band" [style.background]="profile.color || '#3b82f6'">
+          <span class="sp-card-icon">
+            @if (profile.icon) {
+              <span class="material-symbols-outlined">{{ profile.icon }}</span>
+            } @else {
+              {{ getInitials(profile.name) }}
+            }
+          </span>
           @if (isActive(profile.id)) {
-            <span class="material-symbols-outlined sp-active-check">check_circle</span>
+            <env-badge [pill]="true" style="background: rgba(255,255,255,0.25); color: #fff; align-self: flex-start; margin-top: 4px;">Active</env-badge>
           }
         </div>
 
-        <!-- Name -->
-        <span class="sp-card-name">{{ profile.name }}</span>
+        <!-- Body -->
+        <div class="sp-card-body">
+          <span class="sp-card-name">{{ profile.name }}</span>
+          <span class="sp-card-meta">
+            <span class="material-symbols-outlined sp-meta-icon">schedule</span>
+            {{ profile.lastAccessed | date:'MMM d, y' }}
+          </span>
+        </div>
 
-        <!-- Last accessed -->
-        <span class="sp-card-meta">{{ profile.lastAccessed | date:'MMM d' }}</span>
-
-        <!-- Direct action buttons (for non-deletable / active profiles, still show info/edit) -->
-        @if (!isDeletable(profile.id)) {
-          <div class="sp-card-actions" (click)="$event.stopPropagation()">
-            <env-icon-button icon="info" variant="ghost" [size]="28"
-              title="Details" (clicked)="openDetailsModal(profile)" />
-          </div>
-        }
+        <!-- Hover action bar -->
+        <div class="sp-card-actions" (click)="$event.stopPropagation()">
+          <button class="sp-action-btn" type="button" title="Details"
+            (click)="openDetailsModal(profile)">
+            <span class="material-symbols-outlined">info</span>
+          </button>
+          <button class="sp-action-btn" type="button" title="Edit"
+            (click)="openEditModal(profile)">
+            <span class="material-symbols-outlined">edit</span>
+          </button>
+          @if (isDeletable(profile.id)) {
+            <button class="sp-action-btn sp-action-btn--danger" type="button" title="Delete"
+              (click)="openDeleteConfirm(profile)">
+              <span class="material-symbols-outlined">delete</span>
+            </button>
+          }
+        </div>
 
       </div>
     }
 
-    <!-- Add new card -->
-    <div class="sp-card sp-card-add" title="Create a new space" (click)="openNewModal()">
-      <div class="sp-avatar sp-avatar-add">
-        <span class="material-symbols-outlined sp-avatar-icon">add</span>
-      </div>
-      <span class="sp-card-name">New Space</span>
-    </div>
+    <!-- Add card -->
+    <button class="sp-card sp-card--add" type="button" title="Create a new workspace"
+      (click)="openNewModal(); $event.stopPropagation()">
+      <span class="material-symbols-outlined sp-add-icon">add</span>
+      <span class="sp-card-name">New Workspace</span>
+    </button>
 
   </div>
-
 </div>
 
 <!-- ── SWITCHING OVERLAY ── -->
@@ -80,19 +79,18 @@
   <div class="sp-switching-overlay">
     <div class="sp-switching-box">
       <div class="sp-spinner"></div>
-      <span class="sp-switching-label">Switching space…</span>
+      <span class="sp-switching-label">Switching workspace…</span>
     </div>
   </div>
 }
 
 <!-- ── NEW / EDIT MODAL ── -->
 <env-modal [isOpen]="showModal()"
-  [title]="editMode() ? 'Edit Space' : (modalStep() === 1 ? 'New Space' : 'Customize Space')"
+  [title]="editMode() ? 'Edit Workspace' : (modalStep() === 1 ? 'New Workspace' : 'Customize Workspace')"
   size="sm" (closed)="closeModal()">
 
   <div body class="sp-modal-form">
 
-    <!-- Step 1: Template selection -->
     @if (!editMode() && modalStep() === 1) {
       <p class="sp-step-desc">Choose a template to get started quickly.</p>
       <div class="sp-type-list">
@@ -114,20 +112,17 @@
       </div>
     }
 
-    <!-- Step 2: Customization form -->
     @if (editMode() || modalStep() === 2) {
-      <!-- Live preview banner -->
       <div class="sp-edit-preview">
         <div class="sp-edit-avatar" [style.background]="formColor()">
           <span class="material-symbols-outlined">{{ formIcon() }}</span>
         </div>
         <div class="sp-edit-preview-text">
-          <span class="sp-edit-preview-name">{{ formName() || 'Space name' }}</span>
+          <span class="sp-edit-preview-name">{{ formName() || 'Workspace name' }}</span>
           <span class="sp-edit-preview-hint">Live preview</span>
         </div>
       </div>
 
-      <!-- Name -->
       <div class="sp-form-field">
         <label class="sp-label">Name <span class="sp-required">*</span></label>
         <input class="sp-input" type="text" placeholder="e.g. Personal, Work, Side Project"
@@ -135,7 +130,6 @@
           (keyup.enter)="saveProfile()" autofocus>
       </div>
 
-      <!-- Color -->
       <div class="sp-form-field">
         <label class="sp-label">Color</label>
         <div class="sp-color-picker">
@@ -148,7 +142,6 @@
         </div>
       </div>
 
-      <!-- Icon -->
       <div class="sp-form-field">
         <label class="sp-label">Icon</label>
         <div class="sp-icon-picker">
@@ -164,14 +157,14 @@
 
   </div>
 
-  <div footer>
+  <ng-container footer>
     @if (!editMode() && modalStep() === 1) {
       <env-button variant="secondary" (clicked)="closeModal()">Cancel</env-button>
       <env-button variant="primary" (clicked)="nextStep()">Next</env-button>
     } @else if (!editMode() && modalStep() === 2) {
       <env-button variant="secondary" (clicked)="modalStep.set(1)">Back</env-button>
       <env-button variant="primary" [disabled]="!formName().trim()" (clicked)="saveProfile()">
-        Create Space
+        Create Workspace
       </env-button>
     } @else {
       <env-button variant="secondary" (clicked)="closeModal()">Cancel</env-button>
@@ -179,16 +172,15 @@
         Save Changes
       </env-button>
     }
-  </div>
+  </ng-container>
 
 </env-modal>
 
 <!-- ── DETAILS MODAL ── -->
-<env-modal [isOpen]="showDetails()" title="Space Details" size="md" (closed)="closeDetails()">
+<env-modal [isOpen]="showDetails()" title="Workspace Details" size="md" (closed)="closeDetails()">
 
   <div body class="sp-detail-modal">
 
-    <!-- Hero -->
     <div class="sp-detail-hero" [style.--sp-color]="detailsProfile()?.color || '#3b82f6'">
       <div class="sp-detail-hero-avatar">
         <span class="sp-avatar-initials">{{ getInitials(detailsProfile()?.name || '') }}</span>
@@ -200,15 +192,14 @@
             <env-badge variant="accent" [pill]="true">Active</env-badge>
           }
           @if (linkedSpace()?.status) {
-            <span class="sp-status-chip sp-status-{{ linkedSpace()?.status?.toLowerCase() }}">
+            <env-badge [variant]="getStatusVariant(linkedSpace()!.status!)" [pill]="true">
               {{ linkedSpace()?.status | titlecase }}
-            </span>
+            </env-badge>
           }
         </div>
       </div>
     </div>
 
-    <!-- Timestamps -->
     <div class="sp-detail-grid">
       <div class="sp-detail-cell">
         <span class="sp-detail-cell-label">
@@ -222,37 +213,8 @@
         </span>
         <span class="sp-detail-cell-value">{{ detailsProfile()?.lastAccessed | date:'MMM d, y · h:mm a' }}</span>
       </div>
-      @if (linkedSpace()?.priority) {
-        <div class="sp-detail-cell">
-          <span class="sp-detail-cell-label">
-            <span class="material-symbols-outlined">flag</span> Priority
-          </span>
-          <span class="sp-detail-cell-value sp-detail-cap">{{ linkedSpace()?.priority }}</span>
-        </div>
-      }
-      @if (linkedSpace()?.dueDate) {
-        <div class="sp-detail-cell">
-          <span class="sp-detail-cell-label">
-            <span class="material-symbols-outlined">event</span> Due Date
-          </span>
-          <span class="sp-detail-cell-value">{{ linkedSpace()?.dueDate | date:'MMM d, yyyy' }}</span>
-        </div>
-      }
     </div>
 
-    @if (linkedSpace()?.progress != null) {
-      <div class="sp-detail-section">
-        <div class="sp-detail-section-hdr">
-          <span class="sp-detail-section-label">Progress</span>
-          <span class="sp-detail-section-val">{{ linkedSpace()?.progress }}%</span>
-        </div>
-        <div class="sp-progress-bar">
-          <div class="sp-progress-fill" [style.width.%]="linkedSpace()?.progress"></div>
-        </div>
-      </div>
-    }
-
-    <!-- Linked Resources -->
     <div class="sp-detail-section">
       <span class="sp-detail-section-label">Linked Resources</span>
       <div class="sp-resource-grid">
@@ -291,17 +253,17 @@
 
   </div>
 
-  <div footer>
+  <ng-container footer>
     <env-button variant="secondary" (clicked)="closeDetails()">Close</env-button>
-    <env-button variant="primary" (clicked)="openEditModal(detailsProfile()!); closeDetails()">Edit Space</env-button>
-  </div>
+    <env-button variant="primary" (clicked)="openEditModal(detailsProfile()!); closeDetails()">Edit Workspace</env-button>
+  </ng-container>
 
 </env-modal>
 
 <!-- ── DELETE CONFIRM ── -->
 <env-confirm-dialog
   [isOpen]="showDeleteConfirm()"
-  title="Delete Space"
+  title="Delete Workspace"
   icon="delete"
   variant="danger"
   confirmLabel="Delete"

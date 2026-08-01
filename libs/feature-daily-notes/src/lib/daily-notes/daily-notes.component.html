@@ -47,7 +47,7 @@
             </div>
             }
         </div>
-        <div footer>
+        <ng-container footer>
             @if (activeModal() === 'export') {
             <env-button variant="primary" (clicked)="closeModal()">Done</env-button>
             } @else {
@@ -68,7 +68,7 @@
             <env-button variant="primary" (clicked)="confirmAddYoutube()">Insert Video</env-button>
             }
             }
-        </div>
+        </ng-container>
     </env-modal>
 
     <env-confirm-dialog
@@ -124,25 +124,27 @@
 
         <!-- Quick Access — horizontal filter chips -->
         <div class="dn-quick-access">
-            <button class="dn-quick-chip" [class.active]="selectedFilter() === 'all' && !selectedTag()" (click)="setFilter('all')">
-                All
-                <span class="dn-chip-count">{{ notes().length }}</span>
+            <button (click)="setFilter('all')">
+                <env-chip size="md" icon="format_list_bulleted" [active]="selectedFilter() === 'all' && !selectedTag()">
+                    All
+                    <env-badge size="xs">{{ notes().length }}</env-badge>
+                </env-chip>
             </button>
-            <button class="dn-quick-chip" [class.active]="selectedFilter() === 'tagged' && !selectedTag()"
-                [class.chip-empty]="taggedCount() === 0" (click)="setFilter('tagged')">
-                <span class="material-symbols-outlined">label</span>
-                Tagged
-                @if (taggedCount()) {
-                <span class="dn-chip-count">{{ taggedCount() }}</span>
-                }
+            <button [class.chip-empty]="taggedCount() === 0" (click)="setFilter('tagged')">
+                <env-chip size="md" icon="label" [active]="selectedFilter() === 'tagged' && !selectedTag()">
+                    Tagged
+                    @if (taggedCount()) {
+                    <env-badge size="xs">{{ taggedCount() }}</env-badge>
+                    }
+                </env-chip>
             </button>
-            <button class="dn-quick-chip" [class.active]="selectedFilter() === 'pinned' && !selectedTag()"
-                [class.chip-empty]="pinnedCount() === 0" (click)="setFilter('pinned')">
-                <span class="material-symbols-outlined">push_pin</span>
-                Pinned
-                @if (pinnedCount()) {
-                <span class="dn-chip-count">{{ pinnedCount() }}</span>
-                }
+            <button [class.chip-empty]="pinnedCount() === 0" (click)="setFilter('pinned')">
+                <env-chip size="md" icon="push_pin" [active]="selectedFilter() === 'pinned' && !selectedTag()">
+                    Pinned
+                    @if (pinnedCount()) {
+                    <env-badge size="xs">{{ pinnedCount() }}</env-badge>
+                    }
+                </env-chip>
             </button>
         </div>
 
@@ -351,6 +353,40 @@
             <div class="editor-container" [ngClass]="noteBgClass()" [class.full-width]="isFullWidth()">
                 <div class="editor-actions-top">
                     <env-icon-button [icon]="isFullWidth() ? 'view_column' : 'view_stream'" variant="ghost" [size]="28" [title]="isFullWidth() ? 'Boxed width' : 'Full width'" (clicked)="isFullWidth.set(!isFullWidth())" />
+                    <div class="reminder-picker-wrapper">
+                        <env-icon-button
+                            [icon]="selectedNoteRemindAt() ? 'notifications_active' : 'notifications'"
+                            variant="ghost"
+                            [size]="28"
+                            [active]="!!selectedNoteRemindAt()"
+                            [title]="selectedNoteRemindAt() ? 'Reminder: ' + formatRemindAt(selectedNoteRemindAt()!) : 'Set reminder'"
+                            (clicked)="openReminderPicker()" />
+                        @if (showReminderPicker()) {
+                        <div class="reminder-picker-dropdown">
+                            <div class="rpd-header">
+                                <span class="material-symbols-outlined rpd-icon">alarm</span>
+                                <span class="rpd-title">Remind me</span>
+                            </div>
+                            @if (selectedNoteRemindAt()) {
+                            <div class="rpd-current">
+                                <span class="material-symbols-outlined rpd-current-icon">schedule</span>
+                                {{ formatRemindAt(selectedNoteRemindAt()!) }}
+                            </div>
+                            }
+                            <input
+                                class="rpd-input"
+                                type="datetime-local"
+                                [ngModel]="reminderPickerValue()"
+                                (ngModelChange)="reminderPickerValue.set($event)" />
+                            <div class="rpd-actions">
+                                <button class="rpd-btn rpd-btn--primary" (click)="saveReminder()">Set reminder</button>
+                                @if (selectedNoteRemindAt()) {
+                                <button class="rpd-btn rpd-btn--danger" (click)="clearReminder()">Clear</button>
+                                }
+                            </div>
+                        </div>
+                        }
+                    </div>
                     <div class="color-picker-wrapper">
                         <env-icon-button icon="format_color_fill" variant="ghost" [size]="28" title="Background color" [active]="showColorPicker()" (clicked)="showColorPicker.set(!showColorPicker())" />
                         @if (showColorPicker()) {
@@ -407,13 +443,9 @@
                 <!-- Tags section -->
                 <div class="editor-tags-section">
                     @for (tag of getNoteTags(note); track tag) {
-                    <span class="editor-tag-chip">
-                        <span class="material-symbols-outlined tag-icon">label</span>
+                    <env-chip variant="accent" icon="label" [removable]="true" (removed)="removeTag(tag)">
                         {{ tag }}
-                        <button class="tag-remove" (click)="removeTag(tag)">
-                            <span class="material-symbols-outlined">close</span>
-                        </button>
-                    </span>
+                    </env-chip>
                     }
                     @if (showTagInput()) {
                     <div class="tag-input-wrapper">

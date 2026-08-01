@@ -9,7 +9,7 @@ import {
   HostListener,
   DestroyRef,
 } from '@angular/core';
-import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
+import { DomSanitizer, SafeResourceUrl, SafeUrl } from '@angular/platform-browser';
 import { WebPreviewService, TauriService } from '@envello/core';
 
 type LoadState = 'loading' | 'loaded' | 'blocked';
@@ -27,9 +27,15 @@ export class WebPreviewComponent {
   private destroyRef = inject(DestroyRef);
 
   protected loadState = signal<LoadState>('loading');
-  protected safeUrl = computed<SafeResourceUrl>(() =>
-    this.sanitizer.bypassSecurityTrustResourceUrl(this.preview.url())
-  );
+  protected safeUrl = computed<SafeResourceUrl | null>(() => {
+    const url = this.preview.url();
+    if (!url) return null;
+    try {
+      const { protocol } = new URL(url);
+      if (protocol !== 'http:' && protocol !== 'https:') return null;
+    } catch { return null; }
+    return this.sanitizer.bypassSecurityTrustResourceUrl(url);
+  });
 
   protected displayUrl = computed(() => {
     try {

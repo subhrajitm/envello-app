@@ -133,13 +133,13 @@
                   }
                   <div class="ppl-card-meta">
                     @if (profile.totalInteractions > 0) {
-                      <span class="ppl-chip">{{ profile.totalInteractions }} interactions</span>
+                      <env-chip variant="default">{{ profile.totalInteractions }} interactions</env-chip>
                     }
                     @if (profile.openTasks > 0) {
-                      <span class="ppl-chip ppl-chip--warn">{{ profile.openTasks }} open tasks</span>
+                      <env-chip variant="danger">{{ profile.openTasks }} open tasks</env-chip>
                     }
                     @if (profile.upcomingMeetings > 0) {
-                      <span class="ppl-chip ppl-chip--info">{{ profile.upcomingMeetings }} upcoming</span>
+                      <env-chip variant="success">{{ profile.upcomingMeetings }} upcoming</env-chip>
                     }
                   </div>
                 </div>
@@ -165,19 +165,15 @@
             <span class="material-symbols-outlined">person_add</span>
           </div>
           <div class="ppl-edit-name-wrap">
+            <span class="ppl-edit-name-label">Full name</span>
             <input class="ppl-edit-name-input" [value]="editName()"
               (input)="editName.set($any($event.target).value)"
-              placeholder="Full name" autofocus />
+              placeholder="e.g. Jane Smith" autofocus />
           </div>
-        </div>
-        <div class="ppl-slider-actions">
-          <button class="ppl-btn-ghost ppl-btn-sm" (click)="closeSlider()">Cancel</button>
-          <button class="ppl-btn-primary ppl-btn-sm"
-            [class.ppl-btn-primary--disabled]="!editName().trim()"
-            (click)="addPerson()">Add Person</button>
         </div>
       </div>
 
+      <div class="ppl-slider-body">
       <div class="ppl-edit-form">
         <div class="ppl-edit-row">
           <label class="ppl-edit-label">Email</label>
@@ -222,6 +218,60 @@
               placeholder="Add tag…" />
           </div>
         </div>
+        <div class="ppl-edit-crm-section">
+          <div class="ppl-edit-crm-label">RELATIONSHIP</div>
+          <div class="ppl-rel-chips">
+            @for (rt of relTypeOptions; track rt) {
+              <button type="button" class="ppl-rel-chip"
+                [class.ppl-rel-chip--active]="editRelType() === rt"
+                (click)="editRelType.set(editRelType() === rt ? '' : rt)">
+                <span class="material-symbols-outlined">{{ relTypeIcon(rt) }}</span>
+                {{ relTypeLabel(rt) }}
+              </button>
+            }
+          </div>
+        </div>
+        <div class="ppl-edit-row">
+          <label class="ppl-edit-label">Birthday</label>
+          <input class="ppl-edit-input" type="date" [value]="editBirthday()"
+            (input)="editBirthday.set($any($event.target).value)" />
+        </div>
+        <div class="ppl-edit-row">
+          <label class="ppl-edit-label">Location</label>
+          <input class="ppl-edit-input" [value]="editLocation()"
+            (input)="editLocation.set($any($event.target).value)" placeholder="City, Country" />
+        </div>
+        <div class="ppl-edit-row">
+          <label class="ppl-edit-label">Next follow-up</label>
+          <input class="ppl-edit-input" type="date" [value]="editReminderDate()"
+            (input)="editReminderDate.set($any($event.target).value)" />
+        </div>
+        <div class="ppl-edit-crm-section">
+          <div class="ppl-edit-crm-label">SOCIAL LINKS</div>
+          <div class="ppl-edit-row" style="margin-top:0">
+            <label class="ppl-edit-label">LinkedIn</label>
+            <input class="ppl-edit-input" [value]="editLinkedin()"
+              (input)="editLinkedin.set($any($event.target).value)" placeholder="https://linkedin.com/in/…" />
+          </div>
+          <div class="ppl-edit-row">
+            <label class="ppl-edit-label">Twitter / X</label>
+            <input class="ppl-edit-input" [value]="editTwitter()"
+              (input)="editTwitter.set($any($event.target).value)" placeholder="https://x.com/…" />
+          </div>
+          <div class="ppl-edit-row">
+            <label class="ppl-edit-label">Website</label>
+            <input class="ppl-edit-input" [value]="editWebsite()"
+              (input)="editWebsite.set($any($event.target).value)" placeholder="https://…" />
+          </div>
+        </div>
+      </div>
+      </div><!-- /ppl-slider-body -->
+
+      <div class="ppl-slider-foot">
+        <button class="ppl-btn-ghost" (click)="closeSlider()">Cancel</button>
+        <button class="ppl-btn-primary"
+          [class.ppl-btn-primary--disabled]="!editName().trim()"
+          (click)="addPerson()">Add Person</button>
       </div>
     </div>
   }
@@ -239,11 +289,10 @@
           @if (!editMode()) {
             <div>
               <div class="ppl-hero-name">{{ selectedProfile()!.person.name }}</div>
-              @if (selectedProfile()!.person.role) {
-                <div class="ppl-hero-role">{{ selectedProfile()!.person.role }}</div>
-              }
-              @if (selectedProfile()!.person.company) {
-                <div class="ppl-hero-company">{{ selectedProfile()!.person.company }}</div>
+              @if (selectedProfile()!.person.role || selectedProfile()!.person.company) {
+                <div class="ppl-hero-role">
+                  {{ selectedProfile()!.person.role }}{{ selectedProfile()!.person.role && selectedProfile()!.person.company ? ' · ' : '' }}{{ selectedProfile()!.person.company }}
+                </div>
               }
               @if (selectedProfile()!.person.email) {
                 <a class="ppl-hero-email" [href]="'mailto:' + selectedProfile()!.person.email">
@@ -255,31 +304,42 @@
                   {{ selectedProfile()!.person.phone }}
                 </a>
               }
+              <div class="ppl-hero-badges">
+                @if (selectedProfile()!.person.relationshipType) {
+                  <span class="ppl-rel-badge">
+                    <span class="material-symbols-outlined">{{ relTypeIcon(selectedProfile()!.person.relationshipType) }}</span>
+                    {{ relTypeLabel(selectedProfile()!.person.relationshipType) }}
+                  </span>
+                }
+                @if (selectedProfile()!.person.location) {
+                  <span class="ppl-location-badge">
+                    <span class="material-symbols-outlined">location_on</span>
+                    {{ selectedProfile()!.person.location }}
+                  </span>
+                }
+              </div>
             </div>
           } @else {
             <div class="ppl-edit-name-wrap">
+              <span class="ppl-edit-name-label">Full name</span>
               <input class="ppl-edit-name-input" [value]="editName()"
-                (input)="editName.set($any($event.target).value)" placeholder="Full name" />
+                (input)="editName.set($any($event.target).value)" placeholder="e.g. Jane Smith" />
             </div>
           }
         </div>
-        <div class="ppl-slider-actions">
-          @if (!editMode()) {
+        @if (!editMode()) {
+          <div class="ppl-slider-actions">
             <button class="ppl-icon-btn" (click)="openEdit()" title="Edit person">
               <span class="material-symbols-outlined">edit</span>
             </button>
             <button class="ppl-icon-btn ppl-icon-btn--danger" (click)="confirmDelete(selectedProfile()!.person)" title="Remove person">
               <span class="material-symbols-outlined">delete</span>
             </button>
-          } @else {
-            <button class="ppl-btn-ghost ppl-btn-sm" (click)="cancelEdit()">Cancel</button>
-            <button class="ppl-btn-primary ppl-btn-sm"
-              [class.ppl-btn-primary--disabled]="!editName().trim()"
-              (click)="saveEdit()">Save</button>
-          }
-        </div>
+          </div>
+        }
       </div>
 
+      <div class="ppl-slider-body">
       <!-- ── Edit Form ── -->
       @if (editMode()) {
         <div class="ppl-edit-form">
@@ -326,6 +386,52 @@
                 placeholder="Add tag…" />
             </div>
           </div>
+          <div class="ppl-edit-crm-section">
+            <div class="ppl-edit-crm-label">RELATIONSHIP</div>
+            <div class="ppl-rel-chips">
+              @for (rt of relTypeOptions; track rt) {
+                <button type="button" class="ppl-rel-chip"
+                  [class.ppl-rel-chip--active]="editRelType() === rt"
+                  (click)="editRelType.set(editRelType() === rt ? '' : rt)">
+                  <span class="material-symbols-outlined">{{ relTypeIcon(rt) }}</span>
+                  {{ relTypeLabel(rt) }}
+                </button>
+              }
+            </div>
+          </div>
+          <div class="ppl-edit-row">
+            <label class="ppl-edit-label">Birthday</label>
+            <input class="ppl-edit-input" type="date" [value]="editBirthday()"
+              (input)="editBirthday.set($any($event.target).value)" />
+          </div>
+          <div class="ppl-edit-row">
+            <label class="ppl-edit-label">Location</label>
+            <input class="ppl-edit-input" [value]="editLocation()"
+              (input)="editLocation.set($any($event.target).value)" placeholder="City, Country" />
+          </div>
+          <div class="ppl-edit-row">
+            <label class="ppl-edit-label">Next follow-up</label>
+            <input class="ppl-edit-input" type="date" [value]="editReminderDate()"
+              (input)="editReminderDate.set($any($event.target).value)" />
+          </div>
+          <div class="ppl-edit-crm-section">
+            <div class="ppl-edit-crm-label">SOCIAL LINKS</div>
+            <div class="ppl-edit-row" style="margin-top:0">
+              <label class="ppl-edit-label">LinkedIn</label>
+              <input class="ppl-edit-input" [value]="editLinkedin()"
+                (input)="editLinkedin.set($any($event.target).value)" placeholder="https://linkedin.com/in/…" />
+            </div>
+            <div class="ppl-edit-row">
+              <label class="ppl-edit-label">Twitter / X</label>
+              <input class="ppl-edit-input" [value]="editTwitter()"
+                (input)="editTwitter.set($any($event.target).value)" placeholder="https://x.com/…" />
+            </div>
+            <div class="ppl-edit-row">
+              <label class="ppl-edit-label">Website</label>
+              <input class="ppl-edit-input" [value]="editWebsite()"
+                (input)="editWebsite.set($any($event.target).value)" placeholder="https://…" />
+            </div>
+          </div>
         </div>
       }
 
@@ -351,6 +457,59 @@
             }
           </div>
         }
+
+        <!-- ── Keep in Touch ── -->
+        <div class="ppl-crm-section">
+          <div class="ppl-crm-row">
+            <div class="ppl-crm-cell">
+              <span class="ppl-crm-label">Last talked</span>
+              <span class="ppl-crm-val">{{ lastContactedDisplay(selectedProfile()!.person, selectedProfile()!.lastSeen) }}</span>
+            </div>
+            @if (selectedProfile()!.person.reminderDate) {
+              @let ri = reminderInfo(selectedProfile()!.person.reminderDate);
+              <div class="ppl-crm-cell">
+                <span class="ppl-crm-label">Follow up</span>
+                <span class="ppl-crm-val" [class.ppl-crm-val--overdue]="ri?.overdue">{{ ri?.label }}</span>
+              </div>
+            }
+            <button class="ppl-log-btn" [class.ppl-log-btn--done]="logContactDone()" (click)="logContact()">
+              @if (logContactDone()) {
+                <span class="material-symbols-outlined">check</span> Logged!
+              } @else {
+                <span class="material-symbols-outlined">chat</span> Log Contact
+              }
+            </button>
+          </div>
+          @if (selectedProfile()!.person.birthday) {
+            @let bi = birthdayInfo(selectedProfile()!.person.birthday);
+            <div class="ppl-birthday-row" [class.ppl-birthday-row--soon]="bi !== null && bi.days <= 7">
+              <span class="material-symbols-outlined">cake</span>
+              <span class="ppl-birthday-date">{{ birthdayDisplay(selectedProfile()!.person.birthday) }}</span>
+              @if (bi) {
+                <span class="ppl-birthday-badge" [class.ppl-birthday-badge--today]="bi.today">{{ bi.label }}</span>
+              }
+            </div>
+          }
+          @if (selectedProfile()!.person.socialLinks?.linkedin || selectedProfile()!.person.socialLinks?.twitter || selectedProfile()!.person.socialLinks?.website) {
+            <div class="ppl-social-row">
+              @if (selectedProfile()!.person.socialLinks?.linkedin) {
+                <a class="ppl-social-link" [href]="selectedProfile()!.person.socialLinks!.linkedin" target="_blank" rel="noopener">
+                  <span class="material-symbols-outlined">link</span> LinkedIn
+                </a>
+              }
+              @if (selectedProfile()!.person.socialLinks?.twitter) {
+                <a class="ppl-social-link" [href]="selectedProfile()!.person.socialLinks!.twitter" target="_blank" rel="noopener">
+                  <span class="material-symbols-outlined">link</span> Twitter / X
+                </a>
+              }
+              @if (selectedProfile()!.person.socialLinks?.website) {
+                <a class="ppl-social-link" [href]="selectedProfile()!.person.socialLinks!.website" target="_blank" rel="noopener">
+                  <span class="material-symbols-outlined">language</span> Website
+                </a>
+              }
+            </div>
+          }
+        </div>
 
         <!-- ── Stats ── -->
         <div class="ppl-stats-row">
@@ -402,13 +561,23 @@
                   @if (item.preview) { <div class="ppl-tl-preview">{{ item.preview }}</div> }
                   <div class="ppl-tl-date">{{ item.date }}</div>
                 </div>
-                <span class="ppl-tl-badge ppl-tl-badge--{{ item.type }}">{{ item.type }}</span>
+                <env-badge [variant]="interactionVariant(item.type)">{{ item.type }}</env-badge>
               </div>
             }
           }
         </div>
       }
 
+      </div><!-- /ppl-slider-body -->
+
+      @if (editMode()) {
+        <div class="ppl-slider-foot">
+          <button class="ppl-btn-ghost" (click)="cancelEdit()">Cancel</button>
+          <button class="ppl-btn-primary"
+            [class.ppl-btn-primary--disabled]="!editName().trim()"
+            (click)="saveEdit()">Save</button>
+        </div>
+      }
     </div>
   }
 </env-slider-panel>
@@ -421,7 +590,7 @@
       <div class="ppl-modal-header">
         <div style="display:flex;align-items:center;gap:8px">
           <span class="ppl-modal-title">Import Contacts</span>
-          <span class="ppl-import-badge">{{ importPreview()!.fileName }}</span>
+          <env-badge variant="default" [pill]="true">{{ importPreview()!.fileName }}</env-badge>
         </div>
         <button class="ppl-modal-close" (click)="closeImport()">
           <span class="material-symbols-outlined">close</span>

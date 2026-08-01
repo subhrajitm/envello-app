@@ -1,6 +1,6 @@
 import { Component, input, output, signal, computed, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { ModalComponent } from '@envello/ui';
+import { BadgeComponent, ModalComponent } from '@envello/ui';
 
 export type ExportFormat = 'pdf' | 'docx' | 'html' | 'md' | 'fountain';
 
@@ -14,7 +14,7 @@ export type ChapterStatus = 'DRAFT' | 'EDITING' | 'DONE' | 'EMPTY';
 @Component({
   selector: 'app-export-modal',
   standalone: true,
-  imports: [CommonModule, ModalComponent],
+  imports: [CommonModule, ModalComponent, BadgeComponent],
   templateUrl: './export-modal.component.html',
   styleUrl: './export-modal.component.css',
   changeDetection: ChangeDetectionStrategy.OnPush,

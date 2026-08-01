@@ -1,6 +1,7 @@
 import { logIfTauri } from '../utils/tauri-helpers';
 import { Injectable, signal, inject } from '@angular/core';
 import { DataService } from '@envello/data';
+import { NotificationService } from './notification.service';
 
 export interface ResearchCollection {
     id: string;
@@ -16,17 +17,18 @@ export interface ResearchSource {
     id: string;
     collectionId?: string;
     title: string;
-    sourceType: 'WEB' | 'PDF' | 'INTERVIEW' | 'PHYSICAL' | 'VIDEO' | 'ARTICLE';
+    sourceType: 'WEB' | 'PDF' | 'INTERVIEW' | 'PHYSICAL' | 'VIDEO' | 'ARTICLE' | 'NOTE';
     url?: string;
     description?: string;
     author?: string;
     publishDate?: string;
     tags: string[];
-    status: 'UNREAD' | 'READING' | 'PROCESSED';
+    status?: 'UNREAD' | 'READING' | 'PROCESSED';
     notes?: string;
     createdDate: string;
     lastAccessed?: string;
     linkedTaskIds?: string[];
+    fileId?: string;
 }
 
 export interface ResearchSummary {
@@ -45,7 +47,8 @@ export interface ResearchSummary {
     providedIn: 'root'
 })
 export class ResearchService {
-    private db = inject(DataService);
+    private db     = inject(DataService);
+    private notify = inject(NotificationService);
 
     collections = signal<ResearchCollection[]>([]);
     sources = signal<ResearchSource[]>([]);
@@ -74,15 +77,24 @@ export class ResearchService {
     }
 
     private persistCollection(col: ResearchCollection): void {
-        this.db.upsert('research_collections', col).catch(e => logIfTauri('[ResearchService] persist collection failed', e));
+        this.db.upsert('research_collections', col).catch(e => {
+            logIfTauri('[ResearchService] persist collection failed', e);
+            this.notify.error('Save failed', 'Could not save the collection. Check your connection and try again.');
+        });
     }
 
     private persistSource(s: ResearchSource): void {
-        this.db.upsert('research_sources', s).catch(e => logIfTauri('[ResearchService] persist source failed', e));
+        this.db.upsert('research_sources', s).catch(e => {
+            logIfTauri('[ResearchService] persist source failed', e);
+            this.notify.error('Save failed', 'Could not save the source. Check your connection and try again.');
+        });
     }
 
     private persistSummary(s: ResearchSummary): void {
-        this.db.upsert('research_summaries', s).catch(e => logIfTauri('[ResearchService] persist summary failed', e));
+        this.db.upsert('research_summaries', s).catch(e => {
+            logIfTauri('[ResearchService] persist summary failed', e);
+            this.notify.error('Save failed', 'Could not save the summary. Check your connection and try again.');
+        });
     }
 
     // Collection methods
@@ -111,12 +123,15 @@ export class ResearchService {
     async deleteCollection(id: string) {
         const srcs = this.sources().filter(s => s.collectionId === id);
         const sums = this.summaries().filter(s => s.collectionId === id);
-        for (const s of srcs) await this.db.remove('research_sources', s.id).catch(() => { });
-        for (const s of sums) await this.db.remove('research_summaries', s.id).catch(() => { });
+        for (const s of srcs) await this.db.remove('research_sources', s.id).catch(e => logIfTauri('[ResearchService] remove source failed', e));
+        for (const s of sums) await this.db.remove('research_summaries', s.id).catch(e => logIfTauri('[ResearchService] remove summary failed', e));
         this.sources.update(list => list.filter(s => s.collectionId !== id));
         this.summaries.update(list => list.filter(s => s.collectionId !== id));
         this.collections.update(list => list.filter(col => col.id !== id));
-        await this.db.remove('research_collections', id).catch(e => logIfTauri('[ResearchService] remove collection failed', e));
+        await this.db.remove('research_collections', id).catch(e => {
+            logIfTauri('[ResearchService] remove collection failed', e);
+            this.notify.error('Delete failed', 'Could not delete the collection. Check your connection and try again.');
+        });
     }
 
 

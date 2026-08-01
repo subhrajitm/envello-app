@@ -48,12 +48,7 @@
       </div>
       <div class="vt-toolbar-right">
         @if (hasActiveFilters()) {
-          <div class="vt-filter-chip filter-chip">
-            <span>Filtered</span>
-            <button (click)="clearFilters()">
-              <span class="material-symbols-outlined">close</span>
-            </button>
-          </div>
+          <env-chip variant="accent" [removable]="true" (removed)="clearFilters()">Filtered</env-chip>
         }
         <div class="vt-tb-divider"></div>
         @if (aiEnabled()) {
@@ -139,7 +134,7 @@
         <span class="material-symbols-outlined vta-header-icon">vpn_key</span>
         <h2 class="vta-header-title">{{ formMode() === 'edit' ? 'Edit Credential' : 'New Credential' }}</h2>
         @if (formMode() === 'edit') {
-          <span class="vta-editing-chip">{{ editName() }}</span>
+          <env-chip style="font-family: var(--font-mono);">{{ editName() }}</env-chip>
         }
       </div>
       <div class="vta-header-right">
@@ -153,12 +148,8 @@
     <!-- Type pills -->
     <div class="vta-type-pills">
       @for (opt of typeOptions; track opt.type) {
-        <button class="vta-type-pill"
-          [class.vta-type-pill--active]="activeType() === opt.type"
-          [style.--pc]="opt.color"
-          (click)="setFormType(opt.type)">
-          <span class="material-symbols-outlined">{{ opt.icon }}</span>
-          {{ opt.label }}
+        <button (click)="setFormType(opt.type)">
+          <env-chip [active]="activeType() === opt.type" size="md" [customColor]="opt.color || ''">{{ opt.label }}</env-chip>
         </button>
       }
     </div>

@@ -21,19 +21,25 @@
 
     <!-- Quick Stats — compact inline bar -->
     <div class="quick-stats">
-        <button class="stat-chip" (click)="openWords()" title="Go to Notes">
-            <span class="stat-chip-value">{{ formatNumber(user()?.stats?.totalWords || 0) }}</span>
-            <span class="stat-chip-label">words</span>
+        <button class="stat-nav-btn" (click)="openWords()" title="Go to Notes">
+            <env-chip size="sm">
+                <span class="stat-chip-value">{{ formatNumber(user()?.stats?.totalWords || 0) }}</span>
+                <span class="stat-chip-label">words</span>
+            </env-chip>
         </button>
         <span class="stat-chip-sep">·</span>
-        <button class="stat-chip" (click)="openDocuments()" title="Go to Write">
-            <span class="stat-chip-value">{{ user()?.stats?.totalDocuments || 0 }}</span>
-            <span class="stat-chip-label">docs</span>
+        <button class="stat-nav-btn" (click)="openDocuments()" title="Go to Write">
+            <env-chip size="sm">
+                <span class="stat-chip-value">{{ user()?.stats?.totalDocuments || 0 }}</span>
+                <span class="stat-chip-label">docs</span>
+            </env-chip>
         </button>
         <span class="stat-chip-sep">·</span>
-        <button class="stat-chip" (click)="openAnalytics()" title="Go to Analytics">
-            <span class="stat-chip-value">{{ user()?.stats?.daysActive || 0 }}</span>
-            <span class="stat-chip-label">days active</span>
+        <button class="stat-nav-btn" (click)="openAnalytics()" title="Go to Analytics">
+            <env-chip size="sm">
+                <span class="stat-chip-value">{{ user()?.stats?.daysActive || 0 }}</span>
+                <span class="stat-chip-label">days active</span>
+            </env-chip>
         </button>
     </div>
 
@@ -43,7 +49,7 @@
         <!-- Space Switcher -->
         <div class="menu-section workspace-section">
             <div class="section-label flex items-center gap-2">
-                Space
+                Workspace
                 @if (switching()) {
                 <span class="space-switching-spinner"></span>
                 }
@@ -61,15 +67,15 @@
             <div class="space-actions-row">
                 <button class="space-action-btn" (click)="manageProfiles()">
                     <span class="material-symbols-outlined">grid_view</span>
-                    All Spaces
+                    All Workspaces
                 </button>
                 <button class="space-action-btn space-action-btn--add"
                     (click)="canAddSpace() && addWorkspace()"
                     [disabled]="!canAddSpace()"
-                    [title]="canAddSpace() ? 'New space' : 'Limit reached (' + maxSpaces + ')'">
+                    [title]="canAddSpace() ? 'New workspace' : 'Limit reached (' + maxSpaces + ')'">
                     <span class="material-symbols-outlined">add</span>
                     @if (!canAddSpace()) {
-                    <span class="space-limit-badge">{{ workspaces().length }}/{{ maxSpaces }}</span>
+                    <env-badge variant="warning" size="xs">{{ workspaces().length }}/{{ maxSpaces }}</env-badge>
                     }
                 </button>
             </div>
@@ -185,16 +191,16 @@
 </env-confirm-dialog>
 }
 
-<!-- Add Space Modal -->
+<!-- Add Workspace Modal -->
 <env-modal
     [isOpen]="isAddProfileModalOpen()"
-    title="New Space"
+    title="New Workspace"
     size="sm"
     (closed)="cancelAddWorkspace()"
 >
     <div body class="modal-body-content">
         <div class="form-group">
-            <label class="form-label">Space Name</label>
+            <label class="form-label">Workspace Name</label>
             <input type="text"
                 class="form-input"
                 placeholder="e.g., Personal, Client A, Side Project"
@@ -202,13 +208,13 @@
                 (keyup.enter)="confirmAddWorkspace()"
                 autofocus
             >
-            <span class="form-hint">Data in this space (notes, tasks, transactions) will be isolated from other spaces.</span>
+            <span class="form-hint">Data in this workspace (notes, tasks, transactions) will be isolated from other workspaces.</span>
         </div>
     </div>
     <ng-container footer>
         <button class="modal-btn-cancel" (click)="cancelAddWorkspace()">Cancel</button>
         <button class="modal-btn-primary" (click)="confirmAddWorkspace()" [disabled]="!newProfileName().trim()">
-            Create Space
+            Create Workspace
         </button>
     </ng-container>
 </env-modal>

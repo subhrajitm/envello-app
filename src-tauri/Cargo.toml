@@ -34,6 +34,11 @@ tauri-plugin-autostart = "2"
 tauri-plugin-os = "2"
 tauri-plugin-stronghold = "2"
 argon2 = "0.5"
+# Force libsqlite3-sys (already in the tree via sqlx-sqlite) to use the bundled
+# SQLCipher backend with vendored OpenSSL. Cargo feature-unifies this with the
+# libsqlite3-sys that tauri-plugin-sql/sqlx already depends on, so the entire
+# SQLite stack uses SQLCipher without requiring a plugin fork or system libraries.
+libsqlite3-sys = { version = "0.30", features = ["bundled-sqlcipher-vendored-openssl"] }
 
 [features]
 # This feature is used for production builds or when `devPath` points to the filesystem

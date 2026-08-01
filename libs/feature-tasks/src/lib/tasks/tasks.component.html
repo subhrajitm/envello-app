@@ -26,7 +26,7 @@
                     <span class="material-symbols-outlined">{{ item.icon }}</span>
                     <span class="view-btn-label">{{ item.label }}</span>
                     @if (item.count) {
-                    <span class="nav-badge">{{ item.count }}</span>
+                    <env-badge size="xs">{{ item.count }}</env-badge>
                     }
                 </button>
                 }
@@ -41,6 +41,12 @@
                     <span class="material-symbols-outlined">done_all</span>
                     Complete
                 </button>
+                @if (hasCompletedSelected()) {
+                <button class="btn-secondary btn-sm bulk-reopen-btn" (click)="bulkReopenTasks()">
+                    <span class="material-symbols-outlined">restart_alt</span>
+                    Reopen
+                </button>
+                }
                 <button class="btn-secondary btn-sm" (click)="bulkChangePriority('HIGH')">
                     <span class="material-symbols-outlined">flag</span>
                     High Priority
@@ -181,16 +187,42 @@
                       </env-empty-state>
                     }
                 } @else {
-                    @for (item of flatListItems(); track $index) {
+                    @if (topSpacerHeight() > 0) {
+                      <div [style.height.px]="topSpacerHeight()" aria-hidden="true"></div>
+                    }
+                    @for (item of visibleFlatItems(); track $index) {
 
                         @if (item.kind === 'header') {
-                        <div class="task-group-header" [style.--group-accent]="item.accent"
-                             (click)="toggleGroupCollapse(item.label)">
-                            <button class="task-group-chevron" [class.collapsed]="isGroupCollapsed(item.label)">
+                        <div class="task-group-header" (click)="toggleGroupCollapse(item.label)">
+                            <button class="task-group-chevron" [class.collapsed]="isGroupCollapsed(item.label)" type="button">
                                 <span class="material-symbols-outlined">chevron_right</span>
                             </button>
-                            <span class="task-group-label">{{ item.label }}</span>
+                            <div class="task-group-chip" [style.background]="item.accent">
+                                <span class="material-symbols-outlined task-group-chip-icon" aria-hidden="true">
+                                    {{ groupIcon(item.label) }}
+                                </span>
+                                {{ item.label }}
+                            </div>
                             <span class="task-group-count">{{ item.count }}</span>
+                            <button class="task-group-select-all" type="button"
+                                    [class.task-group-select-all--active]="isGroupAllSelected(item.label)"
+                                    (click)="toggleGroupSelection(item.label, $event)"
+                                    [attr.aria-label]="isGroupAllSelected(item.label) ? 'Deselect all in ' + item.label : 'Select all in ' + item.label">
+                                <span class="material-symbols-outlined" aria-hidden="true">
+                                    {{ isGroupAllSelected(item.label) ? 'check_box' : 'check_box_outline_blank' }}
+                                </span>
+                                <span class="task-group-select-all-label">
+                                    {{ isGroupAllSelected(item.label) ? 'Deselect all' : 'Select all' }}
+                                </span>
+                            </button>
+                            @if (item.label === 'Completed') {
+                            <button class="task-group-clear-btn" type="button"
+                                    title="Move all completed tasks to bin"
+                                    (click)="$event.stopPropagation(); clearCompletedTasks()">
+                                <span class="material-symbols-outlined">delete_sweep</span>
+                                Clear
+                            </button>
+                            }
                         </div>
                         }
 
@@ -236,23 +268,36 @@
                              [class.completed]="item.task.status === 'COMPLETED'"
                              (click)="openTaskDetails(item.task)">
 
-                            <!-- Checkbox LEFT -->
+                            <!-- Checkbox / Selection overlay -->
                             <div class="task-check-column" (click)="$event.stopPropagation()">
-                                <button class="list-circular-checkbox"
-                                        [class.checked]="item.task.status === 'COMPLETED'"
-                                        [class.blocked]="item.task.status !== 'COMPLETED' && hasIncompleteSubtasks(item.task)"
-                                        (click)="toggleTaskStatus(item.task)"
-                                        [title]="item.task.status !== 'COMPLETED' && hasIncompleteSubtasks(item.task) ? 'Complete all sub-tasks first' : ''"
-                                        [attr.aria-label]="(item.task.status === 'COMPLETED' ? 'Mark incomplete: ' : 'Mark complete: ') + item.task.title">
-                                    @if (item.task.status === 'COMPLETED') {
-                                        <span class="material-symbols-outlined" style="color: var(--accent-green); font-size: 18px;">check_circle</span>
-                                    } @else if (hasIncompleteSubtasks(item.task)) {
-                                        <span class="material-symbols-outlined" style="font-size:14px;color:var(--text-tertiary)">lock</span>
-                                    }
-                                </button>
+                                <div class="task-check-wrap"
+                                     [class.task-check-wrap--selected]="selectedTasks().has(item.task.id)"
+                                     [class.task-check-wrap--bulk]="bulkActionMode()">
+                                    <!-- Status circle -->
+                                    <button class="list-circular-checkbox"
+                                            [class.checked]="item.task.status === 'COMPLETED'"
+                                            [class.blocked]="item.task.status !== 'COMPLETED' && hasIncompleteSubtasks(item.task)"
+                                            (click)="toggleTaskStatus(item.task)"
+                                            [title]="item.task.status !== 'COMPLETED' && hasIncompleteSubtasks(item.task) ? 'Complete all sub-tasks first' : ''"
+                                            [attr.aria-label]="(item.task.status === 'COMPLETED' ? 'Mark incomplete: ' : 'Mark complete: ') + item.task.title">
+                                        @if (item.task.status === 'COMPLETED') {
+                                            <span class="material-symbols-outlined" style="color: var(--accent-green); font-size: 18px;">check_circle</span>
+                                        } @else if (hasIncompleteSubtasks(item.task)) {
+                                            <span class="material-symbols-outlined" style="font-size:14px;color:var(--text-tertiary)">lock</span>
+                                        }
+                                    </button>
+                                    <!-- Selection checkbox overlay -->
+                                    <button class="task-select-cb" type="button"
+                                            (click)="toggleTaskSelection(item.task.id)"
+                                            [attr.aria-label]="selectedTasks().has(item.task.id) ? 'Deselect task' : 'Select task'">
+                                        <span class="material-symbols-outlined">
+                                            {{ selectedTasks().has(item.task.id) ? 'check_box' : 'check_box_outline_blank' }}
+                                        </span>
+                                    </button>
+                                </div>
                             </div>
 
-                            <!-- Main content -->
+                            <!-- Title (flex: 1) -->
                             <div class="task-main-column">
                                 <div class="task-title-row-inner">
                                     <div class="task-title-text">{{ item.task.title }}</div>
@@ -260,30 +305,74 @@
                                     <span class="task-subtask-count">{{ getCompletedSubtasks(item.task) }}/{{ item.task.subtasks.length }}</span>
                                     }
                                 </div>
+                            </div>
+
+                            <!-- Due date column (always visible) -->
+                            <div class="task-col-due" (click)="$event.stopPropagation()">
                                 @if (item.task.due) {
-                                <div class="task-metadata-row">
-                                    <span class="metadata-item due-date" [class.overdue]="item.task.due.includes('Overdue')">
+                                    <span class="task-col-due-text"
+                                          [class.overdue]="item.task.due.includes('Overdue')">
                                         {{ item.task.due }}
                                     </span>
-                                </div>
                                 }
                             </div>
 
-                            <!-- Hover actions -->
-                            <div class="task-actions-column" (click)="$event.stopPropagation()">
-                                <button class="icon-btn"
+                            <!-- Priority column (always visible, click to cycle) -->
+                            <div class="task-col-priority" (click)="$event.stopPropagation()">
+                                <button class="task-priority-btn"
+                                        [class.priority-high]="item.task.priority === 'HIGH'"
+                                        [class.priority-medium]="item.task.priority === 'MEDIUM'"
+                                        [class.priority-low]="item.task.priority === 'LOW'"
                                         (click)="cycleTaskPriority(item.task, $event)"
-                                        title="Priority: {{ item.task.priority | titlecase }}"
-                                        [class.icon-btn--high]="item.task.priority === 'HIGH'"
-                                        [class.icon-btn--medium]="item.task.priority === 'MEDIUM'">
+                                        [title]="'Priority: ' + (item.task.priority | titlecase)">
                                     <span class="material-symbols-outlined">flag</span>
+                                    <span class="task-priority-label">{{ item.task.priority | titlecase }}</span>
                                 </button>
-                                <button class="icon-btn" (click)="requestDeleteTask(item.task, $event)" title="Delete" [attr.aria-label]="'Delete: ' + item.task.title">
+                            </div>
+
+                            <!-- Delete (hover only) -->
+                            <div class="task-actions-column" (click)="$event.stopPropagation()">
+                                <button class="icon-btn" (click)="requestDeleteTask(item.task, $event)"
+                                        title="Delete" [attr.aria-label]="'Delete: ' + item.task.title">
                                     <span class="material-symbols-outlined">delete</span>
                                 </button>
                             </div>
                         </div>
                         }
+
+                        @if (item.kind === 'add-row') {
+                        <div class="task-inline-add" [class.task-inline-add--open]="inlineAddGroup() === item.group"
+                             (click)="$event.stopPropagation()">
+                            @if (inlineAddGroup() === item.group) {
+                                <div class="task-check-column">
+                                    <div class="task-inline-add-check"></div>
+                                </div>
+                                <input class="task-inline-input"
+                                       type="text"
+                                       placeholder="Task name…"
+                                       [value]="inlineAddTitle()"
+                                       (input)="inlineAddTitle.set($any($event.target).value)"
+                                       (keyup.enter)="submitInlineAdd(item.group, $event)"
+                                       (keyup.escape)="closeInlineAdd()"
+                                       (blur)="onInlineAddBlur()">
+                                <div class="task-inline-add-actions">
+                                    <button class="task-inline-save" type="button"
+                                            (click)="submitInlineAdd(item.group, $event)">Add</button>
+                                    <button class="task-inline-cancel" type="button"
+                                            (click)="closeInlineAdd()">Cancel</button>
+                                </div>
+                            } @else {
+                                <button class="task-add-inline-btn" type="button"
+                                        (click)="openInlineAdd(item.group, $event)">
+                                    <span class="material-symbols-outlined">add</span>
+                                    Add task
+                                </button>
+                            }
+                        </div>
+                        }
+                    }
+                    @if (bottomSpacerHeight() > 0) {
+                      <div [style.height.px]="bottomSpacerHeight()" aria-hidden="true"></div>
                     }
                 }
             </div>
@@ -307,7 +396,7 @@
             }
             } @else {
             <div class="thumbs-grid">
-                @for (task of filteredTasks(); track task.id) {
+                @for (task of visibleThumbnailTasks(); track task.id) {
                 <article class="thumb-card"
                          [class.thumb-card-completed]="task.status === 'COMPLETED'"
                          [class.thumb-high]="task.priority === 'HIGH'"
@@ -319,20 +408,12 @@
                         <div class="thumb-title-row">
                             <h3 class="thumb-title">{{ task.title }}</h3>
                             @if(task.project) {
-                            <span class="project-pill thumb-project-pill">{{ task.project }}</span>
+                            <env-badge size="sm">{{ task.project }}</env-badge>
                             }
                         </div>
                         <div class="thumb-meta-row">
-                            <span class="status-badge thumb-status" [ngClass]="task.status.toLowerCase()">
-                                {{ task.status }}
-                            </span>
-                            <span class="thumb-priority" [ngClass]="{
-                                'p1': task.priority === 'HIGH',
-                                'p2': task.priority === 'MEDIUM',
-                                'p3': task.priority === 'LOW'
-                            }">
-                                {{ task.priority }}
-                            </span>
+                            <env-badge [variant]="getStatusVariant(task.status)" [icon]="getStatusIcon(task.status)">{{ getStatusLabel(task.status) }}</env-badge>
+                            <env-badge [variant]="getPriorityVariant(task.priority)" [pill]="true" [icon]="getPriorityIcon(task.priority)">{{ task.priority }}</env-badge>
                             @if(task.hours) {
                             <span class="thumb-hours">{{ task.hours }}</span>
                             }
@@ -365,6 +446,13 @@
                 </article>
                 }
             </div>
+            @if (filteredTasks().length > thumbnailsLimit()) {
+              <div class="thumbs-load-more">
+                <button class="thumbs-load-more-btn" type="button" (click)="loadMoreThumbnails()">
+                  Show {{ filteredTasks().length - thumbnailsLimit() }} more tasks
+                </button>
+              </div>
+            }
             }
         </div>
 
@@ -458,13 +546,11 @@
 
                                 <div class="td-subtask-date-wrap">
                                     @if (subtask.due) {
-                                    <button class="td-subtask-date-chip"
-                                            [class.td-subtask-date-chip--overdue]="isOverdue(subtask)"
-                                            type="button"
+                                    <button type="button"
                                             (click)="toggleSubtaskDatePopover(subtask.id, $event)"
-                                            title="Change due date">
-                                        <span class="material-symbols-outlined">calendar_today</span>
-                                        <span>{{ formatSubtaskDue(subtask.due) }}</span>
+                                            title="Change due date"
+                                            style="background:none;border:none;padding:0;cursor:pointer">
+                                        <env-chip [variant]="isOverdue(subtask) ? 'danger' : 'accent'" icon="calendar_today" size="sm">{{ formatSubtaskDue(subtask.due) }}</env-chip>
                                     </button>
                                     } @else {
                                     <button class="td-subtask-date-btn" type="button"
@@ -530,9 +616,9 @@
                             <span class="material-symbols-outlined td-prop-icon">calendar_today</span>
                             <input type="date" class="td-prop-date-input"
                                    [value]="editedTaskDue() || ''"
-                                   (change)="editedTaskDue.set($any($event.target).value || '')">
+                                   (change)="editedTaskDue.set($any($event.target).value || ''); saveTaskDetails()">
                             @if (editedTaskDue()) {
-                            <button type="button" class="td-prop-date-clear" (click)="editedTaskDue.set('')" title="Clear date">
+                            <button type="button" class="td-prop-date-clear" (click)="editedTaskDue.set(''); saveTaskDetails()" title="Clear date">
                                 <span class="material-symbols-outlined">close</span>
                             </button>
                             }
@@ -558,12 +644,7 @@
                         </div>
                         <div class="td-labels-area">
                             @for (label of editedTaskLabels(); track label) {
-                            <span class="td-label-chip">
-                                {{ label }}
-                                <button type="button" class="td-label-chip-remove" (click)="removeLabelFromEdit(label)">
-                                    <span class="material-symbols-outlined">close</span>
-                                </button>
-                            </span>
+                            <env-chip [removable]="true" (removed)="removeLabelFromEdit(label)">{{ label }}</env-chip>
                             }
                             <input type="text"
                                    class="td-label-input"
@@ -603,13 +684,7 @@
                         @if (editedTaskReminders().length > 0) {
                         <div class="td-reminder-chips">
                             @for (r of editedTaskReminders(); track r) {
-                            <span class="td-reminder-chip">
-                                <span class="material-symbols-outlined">notifications</span>
-                                {{ r }}
-                                <button type="button" class="td-reminder-remove" (click)="removeDetailsReminder(r)">
-                                    <span class="material-symbols-outlined">close</span>
-                                </button>
-                            </span>
+                            <env-chip icon="alarm" [removable]="true" (removed)="removeDetailsReminder(r)">{{ r }}</env-chip>
                             }
                         </div>
                         }
@@ -698,6 +773,12 @@
                 <span class="material-symbols-outlined">delete</span>
                 Delete
             </button>
+            @if (task.status === 'COMPLETED') {
+            <button type="button" class="td-footer-reopen" (click)="completeTaskFromDetails()">
+                <span class="material-symbols-outlined">restart_alt</span>
+                Reopen
+            </button>
+            }
             <button type="button"
                     class="btn-minimal-save"
                     [disabled]="!editedTaskTitle().trim()"
@@ -738,12 +819,12 @@
                 <div class="td-main">
                     <div class="td-title-row">
                         <textarea class="td-title-input"
+                                  #newTaskTitleRef
                                   placeholder="Task title…"
                                   [value]="newTaskTitle()"
                                   (input)="newTaskTitle.set($any($event.target).value); $any($event.target).style.height='auto'; $any($event.target).style.height=$any($event.target).scrollHeight+'px'"
                                   (blur)="onNewTaskTitleBlur()"
-                                  rows="1"
-                                  autofocus></textarea>
+                                  rows="1"></textarea>
                     </div>
 
                     <textarea class="td-description-input"
@@ -769,15 +850,15 @@
                             <div class="td-subtask-item">
                                 <span class="material-symbols-outlined" style="font-size:14px;color:var(--text-tertiary)">subdirectory_arrow_right</span>
                                 <span class="td-subtask-title">{{ subtask.title }}</span>
-                                <span class="subtask-priority-badge" [class]="'priority-badge-' + subtask.priority.toLowerCase()">{{ subtask.priority | titlecase }}</span>
+                                <env-badge [variant]="getPriorityVariant(subtask.priority)" [icon]="getPriorityIcon(subtask.priority)">{{ subtask.priority | titlecase }}</env-badge>
 
                                 <div class="td-subtask-date-wrap">
                                     @if (subtask.due) {
-                                    <button class="td-subtask-date-chip" type="button"
+                                    <button type="button"
                                             (click)="toggleNewSubtaskDatePopover($index, $event)"
-                                            title="Change due date">
-                                        <span class="material-symbols-outlined">calendar_today</span>
-                                        <span>{{ formatSubtaskDue(subtask.due) }}</span>
+                                            title="Change due date"
+                                            style="background:none;border:none;padding:0;cursor:pointer">
+                                        <env-chip variant="accent" icon="calendar_today" size="sm">{{ formatSubtaskDue(subtask.due) }}</env-chip>
                                     </button>
                                     } @else {
                                     <button class="td-subtask-date-btn" type="button"
@@ -906,12 +987,7 @@
                         </div>
                         <div class="td-labels-area">
                             @for (label of newTaskLabels(); track label) {
-                            <span class="td-label-chip">
-                                #{{ label }}
-                                <button type="button" class="td-label-chip-remove" (click)="removeNewTaskLabel(label)">
-                                    <span class="material-symbols-outlined">close</span>
-                                </button>
-                            </span>
+                            <env-chip [removable]="true" (removed)="removeNewTaskLabel(label)">#{{ label }}</env-chip>
                             }
                             <div style="position:relative;flex:1;min-width:80px">
                                 <input type="text"
@@ -1019,7 +1095,7 @@
                         <div class="td-prop-row-header"><span class="td-prop-label">Next occurrences</span></div>
                         <div class="td-labels-area">
                             @for (occ of nextOccurrences(); track occ) {
-                            <span class="td-label-chip" style="background:transparent">{{ occ }}</span>
+                            <env-chip>{{ occ }}</env-chip>
                             }
                         </div>
                     </div>
@@ -1053,13 +1129,7 @@
                         @if (newTaskHasReminder() && newTaskReminderTimes().length > 0) {
                         <div class="td-reminder-chips">
                             @for (r of newTaskReminderTimes(); track r) {
-                            <span class="td-reminder-chip">
-                                <span class="material-symbols-outlined">notifications</span>
-                                {{ r }}
-                                <button type="button" class="td-reminder-remove" (click)="removeNewTaskReminderPreset(r)">
-                                    <span class="material-symbols-outlined">close</span>
-                                </button>
-                            </span>
+                            <env-chip icon="alarm" [removable]="true" (removed)="removeNewTaskReminderPreset(r)">{{ r }}</env-chip>
                             }
                         </div>
                         }

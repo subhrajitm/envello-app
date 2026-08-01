@@ -1,16 +1,31 @@
 import { Component, Input } from '@angular/core';
-import { CommonModule } from '@angular/common';
 
-export type BadgeVariant = 'default' | 'success' | 'warning' | 'error' | 'accent';
+export type BadgeVariant =
+  | 'default'
+  | 'success'
+  | 'warning'
+  | 'error'
+  | 'accent'
+  | 'info'
+  | 'purple';
+
+export type BadgeSize = 'xs' | 'sm' | 'md';
 
 @Component({
   selector: 'env-badge',
   standalone: true,
-  imports: [CommonModule],
   templateUrl: './badge.component.html',
   styleUrl: './badge.component.css',
 })
 export class BadgeComponent {
   @Input() variant: BadgeVariant = 'default';
+  @Input() size: BadgeSize = 'sm';
+  /** Material Symbols icon name shown before content */
+  @Input() icon = '';
+  /** Fully-rounded pill shape */
   @Input() pill = false;
+  /** Adds a subtle tinted border (border-color derived from currentColor) */
+  @Input() bordered = false;
+  /** Custom CSS color — applied via color-mix tinting (overrides variant colors) */
+  @Input() customColor = '';
 }

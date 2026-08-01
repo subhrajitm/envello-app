@@ -1,5 +1,5 @@
 import { Injectable, inject } from '@angular/core';
-import { DataService } from '@envello/data';
+import { DataService, GetAllOptions } from '@envello/data';
 import { SqliteService } from './sqlite.service';
 import { Task, Note, PlanningItem, Activity, Book, BinItem, Project } from '@envello/domain';
 
@@ -19,11 +19,13 @@ export class SqliteDataService implements DataService {
         return `envello_local_${collection}`;
     }
 
-    async getAll<T>(collection: string): Promise<T[]> {
+    async getAll<T>(collection: string, options?: GetAllOptions): Promise<T[]> {
+        const cap = (arr: T[]) => options?.limit ? arr.slice(0, options.limit) : arr;
+
         if (!this.isTauri()) {
             try {
                 const data = localStorage.getItem(this.getFallbackKey(collection));
-                return data ? JSON.parse(data) : [];
+                return cap(data ? JSON.parse(data) : []);
             } catch (e) {
                 console.warn(`[SqliteDataService fallback] Error parsing ${collection}`, e);
                 return [];
@@ -36,33 +38,34 @@ export class SqliteDataService implements DataService {
             console.warn('[SqliteDataService] getDb failed, skipping local load', e);
         }
 
+        let rows: T[];
         switch (collection) {
-            case 'tasks': return await this.sqlite.getAllTasks() as unknown as T[];
-            case 'notes': return await this.sqlite.getAllNotes() as unknown as T[];
-            case 'planning_items': return await this.sqlite.getAllPlanningItems() as unknown as T[];
-            case 'activities': return await this.sqlite.getAllActivities() as unknown as T[];
-            case 'books': return await this.sqlite.getAllBooks() as unknown as T[];
-            case 'bin_items': return await this.sqlite.getAllBinItems() as unknown as T[];
-
-            case 'meetings': return await this.sqlite.getAllMeetings() as unknown as T[];
-            case 'articles': return await this.sqlite.getAllArticles() as unknown as T[];
-            case 'research_collections': return await this.sqlite.getAllResearchCollections() as unknown as T[];
-            case 'research_sources': return await this.sqlite.getAllResearchSources() as unknown as T[];
-            case 'research_summaries': return await this.sqlite.getAllResearchSummaries() as unknown as T[];
-            case 'projects': return await this.sqlite.getAllProjects() as unknown as T[];
-            case 'credentials': return await this.sqlite.getAllCredentials() as unknown as T[];
-            case 'transactions': return await this.sqlite.getAllTransactions() as unknown as T[];
-            case 'credential_transaction_links': return await this.sqlite.getAllLinks() as unknown as T[];
-            case 'note_folders': return await this.sqlite.getAllNoteFolders() as unknown as T[];
-            case 'bookmarks': return await this.sqlite.getAllBookmarks() as unknown as T[];
-            case 'bookmark_folders': return await this.sqlite.getAllBookmarkFolders() as unknown as T[];
-            case 'people': return await this.sqlite.getAllPeople() as unknown as T[];
-            case 'note_history': return await this.sqlite.getAllNoteHistory() as unknown as T[];
-            case 'chapter_history': return await this.sqlite.getAllChapterHistory() as unknown as T[];
+            case 'tasks':                        rows = await this.sqlite.getAllTasks()                 as unknown as T[]; break;
+            case 'notes':                        rows = await this.sqlite.getAllNotes()                 as unknown as T[]; break;
+            case 'planning_items':               rows = await this.sqlite.getAllPlanningItems()         as unknown as T[]; break;
+            case 'activities':                   rows = await this.sqlite.getAllActivities()            as unknown as T[]; break;
+            case 'books':                        rows = await this.sqlite.getAllBooks()                 as unknown as T[]; break;
+            case 'bin_items':                    rows = await this.sqlite.getAllBinItems()              as unknown as T[]; break;
+            case 'meetings':                     rows = await this.sqlite.getAllMeetings()              as unknown as T[]; break;
+            case 'articles':                     rows = await this.sqlite.getAllArticles()              as unknown as T[]; break;
+            case 'research_collections':         rows = await this.sqlite.getAllResearchCollections()  as unknown as T[]; break;
+            case 'research_sources':             rows = await this.sqlite.getAllResearchSources()      as unknown as T[]; break;
+            case 'research_summaries':           rows = await this.sqlite.getAllResearchSummaries()    as unknown as T[]; break;
+            case 'projects':                     rows = await this.sqlite.getAllProjects()              as unknown as T[]; break;
+            case 'credentials':                  rows = await this.sqlite.getAllCredentials()           as unknown as T[]; break;
+            case 'transactions':                 rows = await this.sqlite.getAllTransactions()          as unknown as T[]; break;
+            case 'credential_transaction_links': rows = await this.sqlite.getAllLinks()                as unknown as T[]; break;
+            case 'note_folders':                 rows = await this.sqlite.getAllNoteFolders()           as unknown as T[]; break;
+            case 'bookmarks':                    rows = await this.sqlite.getAllBookmarks()             as unknown as T[]; break;
+            case 'bookmark_folders':             rows = await this.sqlite.getAllBookmarkFolders()      as unknown as T[]; break;
+            case 'people':                       rows = await this.sqlite.getAllPeople()               as unknown as T[]; break;
+            case 'note_history':                 rows = await this.sqlite.getAllNoteHistory()           as unknown as T[]; break;
+            case 'chapter_history':              rows = await this.sqlite.getAllChapterHistory()        as unknown as T[]; break;
             default:
                 console.warn(`[SqliteDataService] Unknown collection ${collection}`);
                 return [];
         }
+        return cap(rows);
     }
 
     async upsert<T>(collection: string, item: T): Promise<void> {

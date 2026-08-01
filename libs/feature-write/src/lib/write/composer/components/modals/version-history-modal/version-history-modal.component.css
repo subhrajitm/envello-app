@@ -86,11 +86,6 @@
 
 .vh-entry-top { display: flex; align-items: center; gap: 6px; }
 .vh-entry-time { font-size: 12px; font-weight: 600; color: var(--text-primary); }
-.vh-badge-current {
-  font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: .05em;
-  padding: 1px 6px; border-radius: 8px;
-  background: var(--bg-active); color: var(--accent-primary);
-}
 .vh-entry-date { font-size: 10px; color: var(--text-tertiary); }
 .vh-entry-words { font-size: 10px; color: var(--text-tertiary); }
 .vh-entry-preview { font-size: 11px; color: var(--text-tertiary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-top: 2px; }

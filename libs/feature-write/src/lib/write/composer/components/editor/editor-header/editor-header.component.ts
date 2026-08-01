@@ -1,5 +1,6 @@
 import { Component, input, output, computed, signal, ChangeDetectionStrategy, ViewEncapsulation } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { BadgeComponent } from '@envello/ui';
 
 export interface EditorTabItem {
   id: string;
@@ -18,7 +19,7 @@ export interface SearchResult {
 @Component({
   selector: 'app-editor-header',
   standalone: true,
-  imports: [FormsModule],
+  imports: [FormsModule, BadgeComponent],
   templateUrl: './editor-header.component.html',
   styleUrls: [
     './editor-header.component.css',

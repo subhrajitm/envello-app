@@ -1,3 +1,32 @@
+/* Offline banner — floating pill, doesn't obstruct content */
+.offline-banner {
+    position: fixed;
+    bottom: 24px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: var(--z-system);
+    background: rgba(30, 15, 5, 0.85);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    color: #fde68a;
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    padding: 7px 16px 7px 12px;
+    font-size: 12.5px;
+    font-weight: 500;
+    border-radius: 100px;
+    border: 1px solid rgba(251, 191, 36, 0.2);
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+    white-space: nowrap;
+    animation: offline-pill-in 0.2s ease;
+}
+
+@keyframes offline-pill-in {
+    from { opacity: 0; transform: translateX(-50%) translateY(8px); }
+    to   { opacity: 1; transform: translateX(-50%) translateY(0); }
+}
+
 /* Service worker update banner */
 .sw-update-banner {
     position: fixed;
@@ -151,4 +180,25 @@
     .dashboard-content.with-sidebar:not(.immersive-view).sidebar-collapsed {
         margin-left: 0 !important;
     }
+}
+/* ─── Skip link (accessibility) ─────────────────────────────────────────── */
+.skip-link {
+  position: absolute;
+  top: -100%;
+  left: 8px;
+  z-index: 9999;
+  padding: 8px 16px;
+  background: var(--bg-panel, #1e1e2e);
+  color: var(--text-primary, #fff);
+  border: 2px solid var(--accent-primary, #7c3aed);
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 600;
+  text-decoration: none;
+  transition: top 0.1s;
+}
+.skip-link:focus {
+  top: 8px;
+  outline: 3px solid var(--accent-primary, #7c3aed);
+  outline-offset: 2px;
 }

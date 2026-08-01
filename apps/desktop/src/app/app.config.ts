@@ -9,7 +9,7 @@ import { authInterceptor } from './core/interceptors/auth.interceptor';
 import { errorRetryInterceptor } from './core/interceptors/error-retry.interceptor';
 import { DataService } from '@envello/data';
 import { FILE_SYSTEM } from '@envello/state';
-import { DesktopDataService, FileSystemService, APP_VERSION } from '@envello/core';
+import { PowerSyncDataService, FileSystemService, APP_VERSION, POWERSYNC_FLAGS } from '@envello/core';
 import { environment } from '../environments/environment';
 
 export const appConfig: ApplicationConfig = {
@@ -24,7 +24,9 @@ export const appConfig: ApplicationConfig = {
     provideHttpClient(withInterceptors([authInterceptor, errorRetryInterceptor])),
     provideAnimationsAsync(),
     { provide: ErrorHandler, useClass: GlobalErrorHandler },
-    { provide: DataService, useClass: DesktopDataService },
+    // PowerSync in single-tab mode: avoids SharedWorker (not supported in WKWebView on macOS).
+    { provide: POWERSYNC_FLAGS, useValue: { enableMultiTabs: false } },
+    { provide: DataService, useExisting: PowerSyncDataService },
     { provide: FILE_SYSTEM, useClass: FileSystemService },
     { provide: APP_VERSION, useValue: environment.version }
   ],

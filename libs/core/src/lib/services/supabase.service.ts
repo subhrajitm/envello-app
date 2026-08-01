@@ -43,14 +43,19 @@ export class SupabaseService {
 
     constructor() {
         const isBrowser = isPlatformBrowser(this.platformId);
+        // Tauri runs in a webview that isPlatformBrowser considers a browser, but it
+        // has local SQLite and must work offline. Disabling autoRefreshToken prevents
+        // getSession() from making a network call on startup, which would hang
+        // indefinitely when the device is offline.
+        const isTauri   = typeof window !== 'undefined' && ('__TAURI_INTERNALS__' in window || '__TAURI__' in window);
         const storageKey = inject(SUPABASE_STORAGE_KEY, { optional: true }) ?? undefined;
         const silentLock = inject(SUPABASE_SILENT_LOCK, { optional: true }) ?? false;
 
         this.supabase = createClient(environment.supabase.url, environment.supabase.key, {
             auth: {
-                persistSession: isBrowser,
-                autoRefreshToken: isBrowser,
-                detectSessionInUrl: isBrowser,
+                persistSession:      isBrowser,
+                autoRefreshToken:    isBrowser && !isTauri,
+                detectSessionInUrl:  isBrowser && !isTauri,
                 ...(storageKey ? { storageKey } : {}),
                 ...(silentLock && isBrowser ? { lock: silentNavigatorLock } : {}),
             }
@@ -59,6 +64,11 @@ export class SupabaseService {
 
     get client(): SupabaseClient {
         return this.supabase;
+    }
+
+    /** Base URL of the Supabase project — used to build storage REST endpoints for XHR uploads. */
+    get projectUrl(): string {
+        return environment.supabase.url;
     }
 
     get auth(): any {

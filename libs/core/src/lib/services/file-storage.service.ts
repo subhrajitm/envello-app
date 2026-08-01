@@ -1,8 +1,9 @@
-import { Injectable, inject, signal } from '@angular/core';
+import { Injectable, inject, signal, computed } from '@angular/core';
 import { DataService } from '@envello/data';
 import { StorageFile } from '@envello/domain';
 import { SupabaseService } from './supabase.service';
 import { NotificationService } from './notification.service';
+import { AppError, AppErrorCode } from '../errors/error-codes';
 
 export type { StorageFile };
 
@@ -17,7 +18,14 @@ export class FileStorageService {
     private notify = inject(NotificationService);
 
     files = signal<StorageFile[]>([]);
+    /** True when any upload is in flight. */
     uploading = signal(false);
+    /** Names of files currently being uploaded, in insertion order. */
+    uploadingFileNames = signal<string[]>([]);
+    /** Per-file upload progress 0–100. Key is the original file name. */
+    uploadProgress = signal<Record<string, number>>({});
+    /** Derived: the file name currently at the front of the upload queue (or null). */
+    currentUploadName = computed(() => this.uploadingFileNames()[0] ?? null);
 
     private signedUrlCache = signal<Record<string, string>>({});
 
@@ -68,28 +76,22 @@ export class FileStorageService {
         collectionId?: string,
     ): Promise<StorageFile> {
         if (file.size > MAX_SIZE_BYTES) {
-            throw new Error(`"${file.name}" exceeds the 50 MB limit.`);
+            const msg = `"${file.name}" exceeds the 50 MB upload limit (${this.formatSize(file.size)}).`;
+            this.notify.error('File too large', msg);
+            throw new AppError(AppErrorCode.FILE_TOO_LARGE, msg, { fileName: file.name, sizeBytes: file.size });
         }
 
-        const { data: { user } } = await this.sb.client.auth.getUser();
+        const [{ data: { user } }, { data: { session } }] = await Promise.all([
+            this.sb.client.auth.getUser(),
+            this.sb.client.auth.getSession(),
+        ]);
         const userId = user?.id ?? 'anonymous';
+        const token  = session?.access_token ?? '';
         const fileId = crypto.randomUUID();
         const dotExt = file.name.includes('.') ? '.' + file.name.split('.').pop() : '';
         const storagePath = `${userId}/${fileId}${dotExt}`;
 
-        const { error: uploadError } = await this.sb.client.storage
-            .from(BUCKET)
-            .upload(storagePath, file, { contentType: file.type, upsert: false });
-
-        if (uploadError) {
-            const lower = uploadError.message.toLowerCase();
-            const msg = lower.includes('not found') || lower.includes('404')
-                ? `Storage bucket not configured. Create a private bucket named "${BUCKET}" in your Supabase dashboard.`
-                : lower.includes('row-level security') || lower.includes('violates')
-                    ? `Storage permissions not configured. Run the storage policy SQL from supabase_schema.sql in your Supabase dashboard.`
-                    : uploadError.message;
-            throw new Error(msg);
-        }
+        await this.uploadViaXhr(file, storagePath, token);
 
         const entry: StorageFile = {
             id: fileId,
@@ -122,11 +124,17 @@ export class FileStorageService {
         const errors: string[] = [];
 
         for (const file of files) {
+            this.uploadingFileNames.update(names => [...names, file.name]);
             try {
                 const sf = await this.upload(file, source, collectionId);
                 results.push(sf);
             } catch (e) {
-                errors.push(`${file.name}: ${(e as Error).message}`);
+                // Quota errors already show a notification inside upload() — avoid double-toasting.
+                if (!(e instanceof AppError && e.code === AppErrorCode.FILE_TOO_LARGE)) {
+                    errors.push(`${file.name}: ${(e as Error).message}`);
+                }
+            } finally {
+                this.uploadingFileNames.update(names => names.filter(n => n !== file.name));
             }
         }
 
@@ -160,6 +168,62 @@ export class FileStorageService {
 
         await this.db.remove('library_files', fileId);
         this.files.update(list => list.filter(f => f.id !== fileId));
+    }
+
+    /**
+     * Upload a file to Supabase Storage via XMLHttpRequest so we can report
+     * real upload progress. The Supabase JS client uses fetch(), which has no
+     * progress events in the browser.
+     */
+    private uploadViaXhr(file: File, storagePath: string, token: string): Promise<void> {
+        return new Promise<void>((resolve, reject) => {
+            const url = `${this.sb.projectUrl}/storage/v1/object/${BUCKET}/${storagePath}`;
+            const xhr = new XMLHttpRequest();
+            xhr.open('POST', url, true);
+            xhr.setRequestHeader('Authorization', `Bearer ${token}`);
+            xhr.setRequestHeader('Content-Type', file.type || 'application/octet-stream');
+            xhr.setRequestHeader('x-upsert', 'false');
+
+            xhr.upload.addEventListener('progress', (e: ProgressEvent) => {
+                if (e.lengthComputable) {
+                    const pct = Math.round((e.loaded / e.total) * 100);
+                    this.uploadProgress.update(p => ({ ...p, [file.name]: pct }));
+                }
+            });
+
+            xhr.addEventListener('load', () => {
+                this.uploadProgress.update(p => { const n = { ...p }; delete n[file.name]; return n; });
+                if (xhr.status >= 200 && xhr.status < 300) {
+                    resolve();
+                } else {
+                    let msg = `Upload failed (${xhr.status})`;
+                    try {
+                        const body = JSON.parse(xhr.responseText);
+                        const raw: string = body?.message ?? '';
+                        const lower = raw.toLowerCase();
+                        msg = lower.includes('not found') || lower.includes('404')
+                            ? `Storage bucket not configured. Create a private bucket named "${BUCKET}" in your Supabase dashboard.`
+                            : lower.includes('row-level security') || lower.includes('violates')
+                                ? 'Storage permissions not configured. Run the storage policy SQL from supabase_schema.sql in your Supabase dashboard.'
+                                : raw || msg;
+                    } catch { /* non-JSON response */ }
+                    reject(new Error(msg));
+                }
+            });
+
+            xhr.addEventListener('error', () => {
+                this.uploadProgress.update(p => { const n = { ...p }; delete n[file.name]; return n; });
+                reject(new Error('Network error during upload'));
+            });
+
+            xhr.addEventListener('abort', () => {
+                this.uploadProgress.update(p => { const n = { ...p }; delete n[file.name]; return n; });
+                reject(new Error('Upload aborted'));
+            });
+
+            this.uploadProgress.update(p => ({ ...p, [file.name]: 0 }));
+            xhr.send(file);
+        });
     }
 
     isImage(file: StorageFile): boolean {

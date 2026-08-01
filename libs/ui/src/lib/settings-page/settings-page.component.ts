@@ -8,11 +8,13 @@ import { EnvLogoComponent } from '../logo/logo.component';
 import { ThemeService, Theme, StoreService, UserPreferencesService, APP_VERSION } from '@envello/core';
 import { AiService, AiProvider, AiFeature } from '@envello/core';
 import { SmartMonitorService, MONITOR_RULES, MonitorRuleId } from '@envello/core';
-import { GoogleAuthService, GoogleCalendarService, GoogleContactsService, GoogleGmailService } from '@envello/core';
+import { GoogleAuthService, GoogleCalendarService, GoogleContactsService, GoogleGmailService, BackupService, GoogleDriveService } from '@envello/core';
 import { Task } from '@envello/domain';
-import { DesktopSyncSettingsService, DesktopDataService, BACKUP_ELIGIBLE_COLLECTIONS, BookContentService, TauriService, SyncService } from '@envello/core';
+import { DesktopSyncSettingsService, DesktopDataService, BACKUP_ELIGIBLE_COLLECTIONS, BookContentService, TauriService, SyncService, DataExportService, EXPORT_COLLECTIONS, ExportFormat, ContentImportService, ImportSource, ImportTarget, ImportResult, CrashReportingService, CrashReport } from '@envello/core';
 import { DataService } from '@envello/data';
 import { ConfirmDialogComponent } from '../confirm-dialog/confirm-dialog.component';
+import { BadgeComponent } from '../badge/badge.component';
+import { AuthService, UserActivityLogService, ActivityEntry, ActivityAction } from '@envello/core';
 
 interface SettingsSection {
   id: string;
@@ -36,7 +38,7 @@ interface AiProviderOption {
 @Component({
   selector: 'app-settings-page',
   standalone: true,
-  imports: [CommonModule, FormsModule, ButtonComponent, EnvLogoComponent, ConfirmDialogComponent],
+  imports: [CommonModule, FormsModule, ButtonComponent, EnvLogoComponent, ConfirmDialogComponent, BadgeComponent],
   templateUrl: './settings-page.component.html',
   styleUrl: './settings-page.component.css'
 })
@@ -79,6 +81,9 @@ export class SettingsPageComponent implements OnInit {
   lastSectionError = signal<'web' | 'desktop' | null>(null);
   saveStatus = signal<'idle' | 'saving' | 'saved'>('idle');
   exportDone = signal(false);
+  dataTab     = signal<'backup' | 'export' | 'import' | 'sync'>('backup');
+  aiTab       = signal<'provider' | 'features'>('provider');
+  securityTab = signal<'sessions' | 'activity'>('sessions');
 
   // Settings signals
   currentTheme = signal<Theme>('dark');
@@ -97,6 +102,32 @@ export class SettingsPageComponent implements OnInit {
   dailySummary = signal(false);
   analytics = signal(true);
   versionHistoryLimit = signal(50);
+  defaultCurrency = signal('USD');
+
+  /** Common world currencies for the settings picker. */
+  readonly currencyOptions: { code: string; name: string }[] = [
+    { code: 'USD', name: 'US Dollar' }, { code: 'EUR', name: 'Euro' },
+    { code: 'GBP', name: 'British Pound' }, { code: 'JPY', name: 'Japanese Yen' },
+    { code: 'CAD', name: 'Canadian Dollar' }, { code: 'AUD', name: 'Australian Dollar' },
+    { code: 'CHF', name: 'Swiss Franc' }, { code: 'CNY', name: 'Chinese Yuan' },
+    { code: 'INR', name: 'Indian Rupee' }, { code: 'BRL', name: 'Brazilian Real' },
+    { code: 'MXN', name: 'Mexican Peso' }, { code: 'SGD', name: 'Singapore Dollar' },
+    { code: 'HKD', name: 'Hong Kong Dollar' }, { code: 'KRW', name: 'South Korean Won' },
+    { code: 'NOK', name: 'Norwegian Krone' }, { code: 'SEK', name: 'Swedish Krona' },
+    { code: 'DKK', name: 'Danish Krone' }, { code: 'NZD', name: 'New Zealand Dollar' },
+    { code: 'TRY', name: 'Turkish Lira' }, { code: 'ZAR', name: 'South African Rand' },
+    { code: 'PLN', name: 'Polish Złoty' }, { code: 'THB', name: 'Thai Baht' },
+    { code: 'IDR', name: 'Indonesian Rupiah' }, { code: 'MYR', name: 'Malaysian Ringgit' },
+    { code: 'PHP', name: 'Philippine Peso' }, { code: 'AED', name: 'UAE Dirham' },
+    { code: 'SAR', name: 'Saudi Riyal' }, { code: 'ILS', name: 'Israeli Shekel' },
+    { code: 'NGN', name: 'Nigerian Naira' }, { code: 'KES', name: 'Kenyan Shilling' },
+    { code: 'PKR', name: 'Pakistani Rupee' }, { code: 'EGP', name: 'Egyptian Pound' },
+    { code: 'CZK', name: 'Czech Koruna' }, { code: 'HUF', name: 'Hungarian Forint' },
+    { code: 'RON', name: 'Romanian Leu' }, { code: 'UAH', name: 'Ukrainian Hryvnia' },
+    { code: 'TWD', name: 'Taiwan Dollar' }, { code: 'VND', name: 'Vietnamese Đồng' },
+    { code: 'RUB', name: 'Russian Ruble' }, { code: 'ARS', name: 'Argentine Peso' },
+  ];
+
   // Desktop-only window settings
   launchAtLogin = signal(false);
   alwaysOnTop = signal(false);
@@ -112,7 +143,120 @@ export class SettingsPageComponent implements OnInit {
   readonly syncService = inject(SyncService);
   readonly backupCollections = BACKUP_ELIGIBLE_COLLECTIONS;
   readonly isDesktop = typeof window !== 'undefined' && ('__TAURI_INTERNALS__' in window || '__TAURI__' in window);
-  restoreStatus = signal<Record<string, 'idle' | 'restoring' | 'done' | 'error'>>({});
+
+  private readonly authService    = inject(AuthService);
+  private readonly activityLogger = inject(UserActivityLogService);
+
+  readonly currentUserEmail = computed(() => this.authService.currentUser()?.email ?? '');
+  readonly currentDevice    = this.resolveCurrentDevice();
+  activityEntries           = signal<ActivityEntry[]>([]);
+  revokeOtherConfirm        = signal(false);
+  revokeAllConfirm          = signal(false);
+
+  // ── Backup ────────────────────────────────────────────────────────────────
+  readonly backupService  = inject(BackupService);
+  readonly driveService   = inject(GoogleDriveService);
+  hasDriveScope = signal(false);
+  readonly DRIVE_SCOPE = 'https://www.googleapis.com/auth/drive.file';
+
+  async runLocalBackup(): Promise<void> {
+    await this.backupService.backupToFile();
+  }
+
+  async runDriveBackup(): Promise<void> {
+    await this.driveService.backupNow();
+  }
+
+  async connectDrive(): Promise<void> {
+    await this.googleAuth.connect();
+    this.hasDriveScope.set(await this.googleAuth.hasScope(this.DRIVE_SCOPE));
+    await this.driveService.loadRecentFiles();
+  }
+
+  async checkDriveScope(): Promise<void> {
+    if (this.googleAuth.connected()) {
+      this.hasDriveScope.set(await this.googleAuth.hasScope(this.DRIVE_SCOPE));
+      if (this.hasDriveScope()) await this.driveService.loadRecentFiles();
+    }
+  }
+
+  // ── Data export (#13) ─────────────────────────────────────────────────────
+  private readonly dataExport = inject(DataExportService);
+  readonly exportCollections = EXPORT_COLLECTIONS;
+  exportFormat = signal<ExportFormat>('json');
+  exportSelectedIds = signal<string[]>(EXPORT_COLLECTIONS.map(c => c.id));
+  isExporting = signal(false);
+
+  isExportCollectionSelected(id: string): boolean {
+    return this.exportSelectedIds().includes(id);
+  }
+
+  toggleExportCollection(id: string) {
+    const curr = this.exportSelectedIds();
+    this.exportSelectedIds.set(
+      curr.includes(id) ? curr.filter(x => x !== id) : [...curr, id]
+    );
+  }
+
+  selectAllExport()  { this.exportSelectedIds.set(EXPORT_COLLECTIONS.map(c => c.id)); }
+  selectNoneExport() { this.exportSelectedIds.set([]); }
+
+  async exportData() {
+    if (this.isExporting()) return;
+    this.isExporting.set(true);
+    this.exportDone.set(false);
+    try {
+      await this.dataExport.export(this.exportFormat(), this.exportSelectedIds());
+      this.exportDone.set(true);
+      setTimeout(() => this.exportDone.set(false), 3000);
+    } finally {
+      this.isExporting.set(false);
+    }
+  }
+
+  // ── Import from Notion/Obsidian (#14) ────────────────────────────────────
+  private readonly contentImport = inject(ContentImportService);
+  importSource = signal<ImportSource>('obsidian');
+  importTarget = signal<ImportTarget>('notes');
+  isImporting  = signal(false);
+  importResult = signal<ImportResult | null>(null);
+
+  async onImportFilesSelected(event: Event): Promise<void> {
+    const input = event.target as HTMLInputElement;
+    const files = Array.from(input.files ?? []);
+    input.value = '';
+    if (!files.length) return;
+
+    this.isImporting.set(true);
+    this.importResult.set(null);
+    try {
+      const result = await this.contentImport.importFiles(
+        files,
+        this.importSource(),
+        this.importTarget(),
+      );
+      this.importResult.set(result);
+    } finally {
+      this.isImporting.set(false);
+    }
+  }
+
+  // ── Crash reports (#16) ──────────────────────────────────────────────────
+  private readonly crashReporting = inject(CrashReportingService);
+  crashReports = signal<CrashReport[]>([]);
+
+  loadCrashReports(): void {
+    this.crashReports.set(this.crashReporting.getRecent());
+  }
+
+  clearCrashReports(): void {
+    this.crashReporting.clear();
+    this.crashReports.set([]);
+  }
+
+  formatCrashTime(iso: string): string {
+    return this.formatActivityTime(iso);
+  }
 
   formatSyncTime(iso: string | null): string {
     if (!iso) return 'Never';
@@ -127,19 +271,6 @@ export class SettingsPageComponent implements OnInit {
     return d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
   }
 
-  async restoreCollection(id: string): Promise<void> {
-    this.restoreStatus.update(s => ({ ...s, [id]: 'restoring' }));
-    try {
-      if (id === 'book_content') {
-        await this.bookContent.restoreFromBackup();
-      } else if (this.dataService instanceof DesktopDataService) {
-        await this.dataService.restoreCollection(id);
-      }
-      this.restoreStatus.update(s => ({ ...s, [id]: 'done' }));
-    } catch {
-      this.restoreStatus.update(s => ({ ...s, [id]: 'error' }));
-    }
-  }
 
   // AI signals
   aiProvider = signal<AiProvider>('mock');
@@ -178,6 +309,7 @@ export class SettingsPageComponent implements OnInit {
     { id: 'monitor',       label: 'Smart Monitor',     description: 'Auto-create tasks from your data 24/7', icon: 'bolt' },
     { id: 'notifications', label: 'Notifications',     description: 'Alerts and reminders',                  icon: 'notifications' },
     { id: 'data',          label: 'Data & Sync',       description: 'Backup, storage and sync options',      icon: 'sync' },
+    { id: 'security',      label: 'Security',          description: 'Sessions and account activity',         icon: 'security' },
     { id: 'about',         label: 'About',             description: 'Version and system information',        icon: 'info' }
   ];
 
@@ -226,7 +358,6 @@ export class SettingsPageComponent implements OnInit {
   ];
 
   aiProviders: AiProviderOption[] = [
-    { value: 'mock',      label: 'Demo Mode',           icon: 'science' },
     { value: 'local',     label: 'On-Device AI',        icon: 'memory' },
     { value: 'openai',    label: 'OpenAI (GPT)',         icon: 'psychology' },
     { value: 'anthropic', label: 'Anthropic (Claude)',  icon: 'smart_toy' },
@@ -235,6 +366,14 @@ export class SettingsPageComponent implements OnInit {
     { value: 'deepseek',  label: 'DeepSeek',             icon: 'water' },
     { value: 'ollama',    label: 'Ollama (Local)',        icon: 'terminal' },
   ];
+
+  /** True when a real provider is selected and (if needed) an API key is present. */
+  isAiConfigured = computed(() => {
+    const p = this.aiProvider();
+    if (p === 'mock') return false;
+    if (p === 'local' || p === 'ollama') return true;
+    return !!this.aiKey().trim();
+  });
 
   readonly aiFeatureDefs: { id: AiFeature; label: string; icon: string; hint: string }[] = [
     { id: 'writing',   label: 'Writing',   icon: 'edit',           hint: 'Editor assist, improve, expand' },
@@ -373,6 +512,7 @@ export class SettingsPageComponent implements OnInit {
       this.tauri.getOsType().then(v => this.osType.set(v));
       this.tauri.getOsArch().then(v => this.osArch.set(v));
     }
+    this.checkDriveScope();
   }
 
   @HostListener('document:keydown.escape')
@@ -392,6 +532,12 @@ export class SettingsPageComponent implements OnInit {
 
   setActiveSection(sectionId: string) {
     this.activeSection.set(sectionId);
+    if (sectionId === 'security') {
+      this.activityEntries.set(this.activityLogger.loadRecent());
+    }
+    if (sectionId === 'about') {
+      this.loadCrashReports();
+    }
     this.router.navigate([], { queryParams: { section: sectionId }, replaceUrl: true });
   }
 
@@ -553,6 +699,7 @@ export class SettingsPageComponent implements OnInit {
       hiddenNavItems: this.hiddenNavItems(),
       alwaysOnTop: this.alwaysOnTop(),
       minimizeToTray: this.minimizeToTray(),
+      defaultCurrency: this.defaultCurrency(),
     };
     await this.userPrefsService.save(settings);
     this.aiService.updateConfig(this.aiProvider(), this.aiModel(), this.aiKey());
@@ -562,27 +709,6 @@ export class SettingsPageComponent implements OnInit {
     setTimeout(() => { this.saveStatus.set('idle'); this.location.back(); }, 800);
   }
 
-  exportAllData() {
-    const data = {
-      exportedAt: new Date().toISOString(),
-      tasks: this.storeService.tasks(),
-      notes: this.storeService.notes(),
-      books: this.storeService.books(),
-      bookmarks: this.storeService.bookmarks(),
-      bookmarkFolders: this.storeService.bookmarkFolders(),
-      planningItems: this.storeService.planningItems(),
-      spaces: this.storeService.spaces(),
-    };
-    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `envello-export-${new Date().toISOString().slice(0, 10)}.json`;
-    a.click();
-    URL.revokeObjectURL(url);
-    this.exportDone.set(true);
-    setTimeout(() => this.exportDone.set(false), 2500);
-  }
 
   clearAllData() { this.clearDataConfirm.set(true); }
 
@@ -622,13 +748,14 @@ export class SettingsPageComponent implements OnInit {
     this.analytics.set(true);
     this.alwaysOnTop.set(false);
     this.minimizeToTray.set(false);
-    this.aiProvider.set('mock');
+    this.defaultCurrency.set('USD');
+    this.aiProvider.set('openai');
     this.aiModel.set('');
     this.aiKey.set('');
     const emptyVisibility = { web: [], desktop: [] };
     this.hiddenNavItems.set(emptyVisibility);
     window.dispatchEvent(new CustomEvent('navVisibilityChanged', { detail: emptyVisibility }));
-    this.aiService.updateConfig('mock', '', '');
+    this.aiService.updateConfig('openai', '', '');
     this.themeService.setTheme('light');
     this.tauri.setAlwaysOnTop(false).catch(() => {});
     localStorage.removeItem('envello-settings');
@@ -653,6 +780,61 @@ export class SettingsPageComponent implements OnInit {
   checkUpdates() { this.tauri.openUrl('https://github.com/subhrajitm/envello-app/releases'); }
   openDocs()     { this.tauri.openUrl('https://github.com/subhrajitm/envello-app/wiki'); }
   reportIssue()  { this.tauri.openUrl('https://github.com/subhrajitm/envello-app/issues/new'); }
+
+  // ── Security section ────────────────────────────────────────────────────
+
+  private resolveCurrentDevice(): string {
+    if (typeof navigator === 'undefined') return 'Unknown device';
+    const ua = navigator.userAgent;
+    const isTauri = typeof window !== 'undefined' && '__TAURI_INTERNALS__' in window;
+    if (isTauri) return 'Desktop app';
+    if (ua.includes('Macintosh')) return 'Mac browser';
+    if (ua.includes('iPhone')) return 'iPhone';
+    if (ua.includes('iPad')) return 'iPad';
+    if (ua.includes('Android')) return 'Android';
+    if (ua.includes('Windows')) return 'Windows browser';
+    if (ua.includes('Linux')) return 'Linux browser';
+    return 'Browser';
+  }
+
+  async revokeOtherSessions(): Promise<void> {
+    this.revokeOtherConfirm.set(false);
+    await this.authService.signOutOtherDevices();
+    this.activityEntries.set(this.activityLogger.loadRecent());
+  }
+
+  async revokeAllSessions(): Promise<void> {
+    this.revokeAllConfirm.set(false);
+    await this.authService.signOutAllDevices();
+  }
+
+  readonly ACTION_META: Record<ActivityAction, { label: string; icon: string; cls: string }> = {
+    login:                 { label: 'Signed in',                   icon: 'login',          cls: 'sec-icon-login'   },
+    logout:                { label: 'Signed out',                  icon: 'logout',         cls: 'sec-icon-logout'  },
+    session_revoke_others: { label: 'Signed out other devices',    icon: 'devices_off',    cls: 'sec-icon-session' },
+    session_revoke_all:    { label: 'Signed out everywhere',       icon: 'no_accounts',    cls: 'sec-icon-logout'  },
+    key_saved:             { label: 'API key saved',               icon: 'key',            cls: 'sec-icon-key'     },
+    key_removed:           { label: 'API key removed',             icon: 'key_off',        cls: 'sec-icon-key'     },
+  };
+
+  actionMeta(action: ActivityAction) {
+    return this.ACTION_META[action] ?? { label: action, icon: 'info', cls: '' };
+  }
+
+  formatActivityTime(iso: string): string {
+    const d = new Date(iso);
+    const now = new Date();
+    const diffMs = now.getTime() - d.getTime();
+    const diffMin = Math.floor(diffMs / 60000);
+    if (diffMin < 1) return 'Just now';
+    if (diffMin < 60) return `${diffMin}m ago`;
+    const diffH = Math.floor(diffMin / 60);
+    if (diffH < 24) return `${diffH}h ago`;
+    const diffD = Math.floor(diffH / 24);
+    if (diffD === 1) return 'Yesterday';
+    if (diffD < 7) return `${diffD}d ago`;
+    return d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+  }
 
   private loadSettings() {
     const saved = localStorage.getItem('envello-settings');
@@ -680,6 +862,7 @@ export class SettingsPageComponent implements OnInit {
     if (s['versionHistoryLimit'])          this.versionHistoryLimit.set(s['versionHistoryLimit']);
     if (s['alwaysOnTop'] !== undefined)    this.alwaysOnTop.set(!!s['alwaysOnTop']);
     if (s['minimizeToTray'] !== undefined) this.minimizeToTray.set(!!s['minimizeToTray']);
+    if (s['defaultCurrency'])              this.defaultCurrency.set(s['defaultCurrency']);
     const hn = s['hiddenNavItems'];
     if (hn && !Array.isArray(hn)) {
       this.hiddenNavItems.set({ web: hn.web ?? [], desktop: hn.desktop ?? [] });

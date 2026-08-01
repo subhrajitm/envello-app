@@ -3,14 +3,16 @@ import { Router } from '@angular/router';
 import { LoggingService } from './logging.service';
 import { SupabaseService } from './supabase.service';
 import { TauriService } from './tauri.service';
+import { UserActivityLogService } from './user-activity-log.service';
 import { User, Session } from '@supabase/supabase-js';
 
 @Injectable({ providedIn: 'root' })
 export class AuthService {
-  private readonly router   = inject(Router);
-  private readonly logging  = inject(LoggingService);
-  private readonly supabase = inject(SupabaseService);
-  private readonly tauri    = inject(TauriService);
+  private readonly router      = inject(Router);
+  private readonly logging     = inject(LoggingService);
+  private readonly supabase    = inject(SupabaseService);
+  private readonly tauri       = inject(TauriService);
+  private readonly activityLog = inject(UserActivityLogService);
 
   private readonly _session = signal<Session | null>(null);
   private readonly _user = signal<User | null>(null);
@@ -24,12 +26,13 @@ export class AuthService {
   private readonly _isGuest = signal(false);
 
   constructor() {
-    // Initial session load
+    // getSession() is safe to call here: on desktop (Tauri) autoRefreshToken is
+    // disabled in SupabaseService so it returns immediately from localStorage
+    // with no network call, even when offline.
     this.supabase.getSession().then(({ data: { session } }) => {
       this._session.set(session);
       this._user.set(session?.user ?? null);
 
-      // If no session, check for Guest Mode
       if (!session) {
         const isGuest = localStorage.getItem('envello-guest-mode') === 'true';
         if (isGuest) {
@@ -43,6 +46,8 @@ export class AuthService {
       }
 
       this._initialized.set(true);
+    }).catch(() => {
+      this._initialized.set(true);
     });
 
     // Listen for changes
@@ -51,11 +56,10 @@ export class AuthService {
       this._session.set(session);
       this._user.set(session?.user ?? null);
 
-      if (event === 'SIGNED_OUT') {
-        // Only clear guest mode if explicit logout happens (which clears both)
-        // But SIGNED_OUT comes from Supabase. 
-        // If we are guest, we are not interacting with Supabase auth changes usually.
-        // However, if we were signed in and signed out, we go to login.
+      if (event === 'SIGNED_IN') {
+        this.activityLog.log('login', session?.user?.email ?? undefined);
+      } else if (event === 'SIGNED_OUT') {
+        this.activityLog.log('logout');
         this._isGuest.set(false);
         localStorage.removeItem('envello-guest-mode');
         this.router.navigate(['/login']);
@@ -188,5 +192,40 @@ export class AuthService {
     if (error || !data.session) return false;
     this._session.set(data.session);
     return true;
+  }
+
+  /** Signs out all sessions except the current one. */
+  async signOutOtherDevices(): Promise<void> {
+    this.logging.info('AuthService.signOutOtherDevices');
+    const { error } = await this.supabase.client.auth.signOut({ scope: 'others' });
+    if (error) {
+      this.logging.error('signOutOtherDevices failed', error.message);
+      return;
+    }
+    this.activityLog.log('session_revoke_others');
+  }
+
+  /** Signs out all sessions including the current one. */
+  async signOutAllDevices(): Promise<void> {
+    this.logging.info('AuthService.signOutAllDevices');
+    const { error } = await this.supabase.client.auth.signOut({ scope: 'global' });
+    if (error) {
+      this.logging.error('signOutAllDevices failed', error.message);
+    }
+    // The SIGNED_OUT event listener handles navigation and cleanup.
+  }
+
+  /** Updates the authenticated user's email address. Supabase sends a confirmation to the new address. */
+  async updateEmail(newEmail: string): Promise<void> {
+    const { error } = await this.supabase.client.auth.updateUser({ email: newEmail });
+    if (error) throw new Error(error.message);
+    this.activityLog.log('key_saved', 'Email change requested');
+  }
+
+  /** Updates the authenticated user's password. */
+  async updatePassword(newPassword: string): Promise<void> {
+    const { error } = await this.supabase.client.auth.updateUser({ password: newPassword });
+    if (error) throw new Error(error.message);
+    this.activityLog.log('key_saved', 'Password changed');
   }
 }

@@ -3,12 +3,12 @@ import { CommonModule, NgClass } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Editor } from '@tiptap/core';
 import { TiptapEditorDirective } from 'ngx-tiptap';
-import { EditorFloatingMenuComponent } from '@envello/ui';
+import { BadgeComponent, EditorFloatingMenuComponent } from '@envello/ui';
 
 @Component({
   selector: 'app-manuscript-editor',
   standalone: true,
-  imports: [CommonModule, NgClass, FormsModule, TiptapEditorDirective, EditorFloatingMenuComponent],
+  imports: [CommonModule, NgClass, FormsModule, TiptapEditorDirective, BadgeComponent, EditorFloatingMenuComponent],
   templateUrl: './manuscript-editor.component.html',
   styleUrls: [
     './manuscript-editor.component.css',

@@ -1,20 +1,21 @@
-import { Component, OnInit, AfterViewInit, OnDestroy, inject, signal, ViewChild } from '@angular/core';
+import { Component, OnInit, AfterViewInit, OnDestroy, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterOutlet, Router, NavigationEnd, ActivatedRoute } from '@angular/router';
 import { SwUpdate, VersionReadyEvent } from '@angular/service-worker';
-import { HeaderComponent, FooterComponent, KeyboardShortcutsComponent, ToastComponent, WebPreviewComponent, MorningBriefingComponent } from '@envello/ui';
-import { TauriService, SessionService, UserPreferencesService, SmartMonitorService, MorningBriefingService } from '@envello/core';
+import { HeaderComponent, FooterComponent, KeyboardShortcutsComponent, OnboardingComponent, WhatsNewComponent, ToastComponent, WebPreviewComponent } from '@envello/ui';
+import { TauriService, SessionService, UserPreferencesService, SmartMonitorService } from '@envello/core';
 import { filter, map, mergeMap } from 'rxjs/operators';
 
 @Component({
   selector: 'app-root',
   standalone: true,
-  imports: [RouterOutlet, HeaderComponent, FooterComponent, KeyboardShortcutsComponent, ToastComponent, WebPreviewComponent, MorningBriefingComponent],
+  imports: [RouterOutlet, HeaderComponent, FooterComponent, KeyboardShortcutsComponent, OnboardingComponent, WhatsNewComponent, ToastComponent, WebPreviewComponent],
   templateUrl: './app.component.html',
   styleUrl: './app.component.css'
 })
 export class AppComponent implements OnInit, AfterViewInit, OnDestroy {
   title = 'envello';
+  isOffline = signal(typeof navigator !== 'undefined' && !navigator.onLine);
   private router = inject(Router);
   private activatedRoute = inject(ActivatedRoute);
   private tauriService = inject(TauriService);
@@ -22,12 +23,9 @@ export class AppComponent implements OnInit, AfterViewInit, OnDestroy {
   private userPrefsService = inject(UserPreferencesService);
   private swUpdate  = inject(SwUpdate, { optional: true });
   private monitor          = inject(SmartMonitorService);
-  private briefingService  = inject(MorningBriefingService);
-  @ViewChild('briefing') briefingRef?: MorningBriefingComponent;
   private unlistenFileDrop?: () => void;
 
   updateAvailable = signal(false);
-  showBriefing    = signal(false);
 
   currentTab = signal('Workspace');
   hasSidebar = signal(true);
@@ -55,19 +53,11 @@ export class AppComponent implements OnInit, AfterViewInit, OnDestroy {
   ngOnInit() {
     this.setupSwUpdate();
     this.loadNavigationLayout();
+    window.addEventListener('online',  () => this.isOffline.set(false));
+    window.addEventListener('offline', () => this.isOffline.set(true));
     // Smart Monitor — run after sync completes or after 6s fallback
     window.addEventListener('envello:sync-complete', () => setTimeout(() => this.monitor.run(), 1500), { once: true });
     setTimeout(() => this.monitor.run(), 6000);
-
-    // Morning Briefing — show once per day after data is ready
-    const tryShowBriefing = () => {
-      if (this.briefingService.shouldShow()) {
-        this.showBriefing.set(true);
-        setTimeout(() => this.briefingRef?.open(), 50);
-      }
-    };
-    window.addEventListener('envello:sync-complete', () => setTimeout(tryShowBriefing, 2000), { once: true });
-    setTimeout(tryShowBriefing, 7000);
 
     // Listen for navigation layout changes from settings
     this.navigationLayoutListener = (event: CustomEvent) => {
@@ -146,7 +136,7 @@ export class AppComponent implements OnInit, AfterViewInit, OnDestroy {
       'tasks': 'Tasks',
       'meetings': 'Meetings',
       'bookmarks': 'Bookmarks',
-      'spaces':  'Spaces',
+      'spaces':  'Workspaces',
       // vault is desktop-only
       'transactions': 'Transactions',
       'people': 'People',

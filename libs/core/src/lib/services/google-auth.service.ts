@@ -29,6 +29,7 @@ export class GoogleAuthService {
     'https://www.googleapis.com/auth/calendar.readonly',
     'https://www.googleapis.com/auth/gmail.readonly',
     'https://www.googleapis.com/auth/contacts.readonly',
+    'https://www.googleapis.com/auth/drive.file',
   ].join(' ');
 
   constructor() {
@@ -115,6 +116,34 @@ export class GoogleAuthService {
   /** Returns the current Google access token, or null if not connected. */
   getToken(): string | null {
     return this._token();
+  }
+
+  /**
+   * Checks whether the current token includes a specific OAuth scope.
+   * Uses Google's tokeninfo endpoint — do not call on every render; cache the result.
+   */
+  async hasScope(scope: string): Promise<boolean> {
+    const token = this._token();
+    if (!token) return false;
+    const url = `https://www.googleapis.com/oauth2/v3/tokeninfo?access_token=${encodeURIComponent(token)}`;
+    try {
+      const isTauri = typeof window !== 'undefined' && '__TAURI_INTERNALS__' in window;
+      let res: Response;
+      if (isTauri) {
+        const { fetch: tauriFetch } = await import('@tauri-apps/plugin-http');
+        res = await tauriFetch(url, { method: 'GET' }) as unknown as Response;
+      } else {
+        res = await fetch(url);
+      }
+      if (!res.ok) return false;
+      const info: { scope?: string } = await res.json();
+      return !!info.scope?.split(' ').includes(scope);
+    } catch { return false; }
+  }
+
+  /** Clears the token and connected state. Exposed for use by sibling Drive service on 401. */
+  forceDisconnect(): void {
+    this.clearToken();
   }
 
   // ── HTTP helper ─────────────────────────────────────────────────────────────

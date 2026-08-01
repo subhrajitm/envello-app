@@ -14,7 +14,10 @@
     "build:web": "nx build web",
     "test:web": "nx test web",
     "generate:context": "npx ts-node -O '{\"module\":\"commonjs\"}' tools/scripts/generate-ai-context.ts",
-    "dev:mac": "bash scripts/dev-mac.sh"
+    "dev:mac": "bash scripts/dev-mac.sh",
+    "e2e": "playwright test --config e2e/playwright.config.ts",
+    "e2e:ui": "playwright test --config e2e/playwright.config.ts --ui",
+    "e2e:headed": "playwright test --config e2e/playwright.config.ts --headed"
   },
   "private": true,
   "dependencies": {
@@ -32,10 +35,12 @@
     "@angular/platform-browser-dynamic": "^20.0.0",
     "@angular/router": "^20.0.0",
     "@angular/service-worker": "^20.0.0",
+    "@automerge/automerge": "^3.2.6",
     "@fontsource/plus-jakarta-sans": "^5.2.8",
     "@huggingface/transformers": "^3.8.1",
     "@journeyapps/wa-sqlite": "^1.7.0",
     "@powersync/web": "^1.38.2",
+    "@sentry/angular": "^10.65.0",
     "@supabase/supabase-js": "^2.105.4",
     "@tauri-apps/api": "^2.11.0",
     "@tauri-apps/plugin-autostart": "^2.5.1",
@@ -107,6 +112,7 @@
     "@nx/js": "22.7.2",
     "@nx/web": "22.7.2",
     "@nx/workspace": "22.7.2",
+    "@playwright/test": "^1.61.1",
     "@schematics/angular": "^20.0.0",
     "@swc-node/register": "~1.11.1",
     "@swc/core": "~1.15.33",

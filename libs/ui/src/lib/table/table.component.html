@@ -14,7 +14,7 @@
               (click)="tabChange.emit(tab.key)">
               {{ tab.label }}
               @if (tab.count !== undefined) {
-                <span class="env-ttab-count">{{ tab.count }}</span>
+                <env-badge size="xs">{{ tab.count }}</env-badge>
               }
             </button>
           }
@@ -25,21 +25,23 @@
       <div class="env-table-toolbar-right">
         @if (showSearch) {
           <div class="env-table-search">
-            <span class="material-symbols-outlined env-table-search-icon">search</span>
+            <span class="material-symbols-outlined env-table-search-icon" aria-hidden="true">search</span>
             <input
               class="env-table-search-input"
               [placeholder]="searchPlaceholder"
               [value]="searchValue"
+              aria-label="Search table"
+              role="searchbox"
               (input)="searchChange.emit($any($event.target).value)" />
           </div>
         }
         @if (showSortFilter) {
-          <button class="env-table-ctrl-btn" (click)="sortByClick.emit()">
-            <span class="material-symbols-outlined">sort</span>
+          <button class="env-table-ctrl-btn" (click)="sortByClick.emit()" aria-label="Sort rows">
+            <span class="material-symbols-outlined" aria-hidden="true">sort</span>
             Sort by
           </button>
-          <button class="env-table-ctrl-btn" (click)="filterClick.emit()">
-            <span class="material-symbols-outlined">filter_list</span>
+          <button class="env-table-ctrl-btn" (click)="filterClick.emit()" aria-label="Filter rows">
+            <span class="material-symbols-outlined" aria-hidden="true">filter_list</span>
             Filter
           </button>
         }
@@ -49,13 +51,13 @@
   }
 
   <!-- ── Table ── -->
-  <div class="env-table-scroll">
-    <table class="env-table">
+  <div class="env-table-scroll" role="region" aria-label="Table data" tabindex="0">
+    <table class="env-table" role="table">
 
       <!-- Header -->
-      <thead>
-        <tr>
-          <th class="env-table-th env-table-th--check">
+      <thead role="rowgroup">
+        <tr role="row">
+          <th class="env-table-th env-table-th--check" role="columnheader" scope="col" aria-label="Select all rows">
             <label class="env-table-check-label" (click)="$event.stopPropagation()">
               <input
                 type="checkbox"
@@ -69,13 +71,17 @@
             <th
               class="env-table-th"
               [class.env-table-th--sortable]="col.sortable"
+              role="columnheader"
+              scope="col"
+              [attr.aria-sort]="col.sortable ? (sortKey() === col.key ? (sortDir() === 'asc' ? 'ascending' : 'descending') : 'none') : null"
               (click)="onSort(col)">
               <div class="env-table-th-inner">
                 {{ col.header }}
                 @if (col.sortable) {
                   <span
                     class="material-symbols-outlined env-table-sort-icon"
-                    [class.active]="sortKey() === col.key">
+                    [class.active]="sortKey() === col.key"
+                    aria-hidden="true">
                     {{ sortKey() === col.key && sortDir() === 'desc' ? 'arrow_downward' : 'arrow_upward' }}
                   </span>
                 }
@@ -84,18 +90,18 @@
           }
 
           @if (actions.length) {
-            <th class="env-table-th env-table-th--action">Action</th>
+            <th class="env-table-th env-table-th--action" role="columnheader" scope="col">Actions</th>
           }
         </tr>
       </thead>
 
       <!-- Body -->
-      <tbody>
+      <tbody role="rowgroup">
 
         <!-- Loading skeleton -->
         @if (loading) {
           @for (i of skeletonRows; track i) {
-            <tr class="env-table-row">
+            <tr class="env-table-row" role="row" aria-busy="true">
               <td class="env-table-td env-table-td--check">
                 <div class="env-table-skel env-table-skel--circle"></div>
               </td>
@@ -121,8 +127,8 @@
 
         <!-- Empty state -->
         } @else if (!rows.length) {
-          <tr>
-            <td [attr.colspan]="columns.length + 1 + (actions.length ? 1 : 0)" class="env-table-td-empty">
+          <tr role="row">
+            <td role="cell" [attr.colspan]="columns.length + 1 + (actions.length ? 1 : 0)" class="env-table-td-empty">
               <div class="env-table-empty">
                 <span class="material-symbols-outlined">table_rows</span>
                 <p>No data found</p>
@@ -135,7 +141,9 @@
           @for (row of displayRows; track row[rowIdKey]) {
             <tr
               class="env-table-row"
+              role="row"
               [class.env-table-row--selected]="isSelected(row)"
+              [attr.aria-selected]="isSelected(row)"
               [class.env-table-row--draggable]="rowsDraggable"
               cdkDrag
               [cdkDragData]="row"
@@ -156,18 +164,19 @@
               </ng-template>
 
               <!-- Checkbox -->
-              <td class="env-table-td env-table-td--check" (click)="$event.stopPropagation()">
+              <td class="env-table-td env-table-td--check" role="cell" (click)="$event.stopPropagation()">
                 <label class="env-table-check-label">
                   <input
                     type="checkbox"
                     [checked]="isSelected(row)"
+                    [attr.aria-label]="'Select row ' + row[rowIdKey]"
                     (change)="toggleSelect(row)" />
                 </label>
               </td>
 
               <!-- Data cells -->
               @for (col of columns; track col.key) {
-                <td class="env-table-td">
+                <td class="env-table-td" role="cell">
 
                   <!-- avatar-text -->
                   @if (col.type === 'avatar-text') {
@@ -189,16 +198,16 @@
 
                   <!-- badge -->
                   } @else if (col.type === 'badge') {
-                    <span
-                      class="env-table-badge"
-                      [style.background]="getBadge(row, col).bgColor"
-                      [style.color]="getBadge(row, col).textColor">
-                      <span
-                        class="env-table-badge-dot"
-                        [style.background]="getBadge(row, col).dotColor">
-                      </span>
+                    <env-badge
+                      [variant]="getBadge(row, col).variant"
+                      [customColor]="getBadge(row, col).dotColor"
+                      [icon]="getBadge(row, col).icon"
+                      size="sm">
+                      @if (getBadge(row, col).dotColor) {
+                        <span class="env-tbadge-dot"></span>
+                      }
                       {{ getBadge(row, col).label }}
-                    </span>
+                    </env-badge>
 
                   <!-- text (default) -->
                   } @else {

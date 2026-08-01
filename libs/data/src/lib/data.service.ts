@@ -1,7 +1,12 @@
 import { Credential, Transaction, CredentialTransactionLink } from '@envello/domain';
 
+export interface GetAllOptions {
+    /** Cap the number of documents returned at the DB layer to prevent unbounded memory loads. */
+    limit?: number;
+}
+
 export abstract class DataService {
-    abstract getAll<T>(collection: string): Promise<T[]>;
+    abstract getAll<T>(collection: string, options?: GetAllOptions): Promise<T[]>;
     abstract upsert<T>(collection: string, item: T): Promise<void>;
     abstract remove(collection: string, id: string): Promise<void>;
 

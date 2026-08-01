@@ -217,21 +217,6 @@
 .mt-sync-btn:hover { background: var(--bg-hover); color: var(--text-primary); }
 .mt-sync-btn--active { border-color: var(--accent-primary); color: var(--accent-primary); }
 .mt-sync-btn .material-symbols-outlined { font-size: 16px; }
-.mt-sync-badge {
-  position: absolute;
-  top: -4px;
-  right: -4px;
-  background: var(--accent-primary);
-  color: var(--accent-primary-text);
-  font-size: 10px;
-  min-width: 16px;
-  height: 16px;
-  border-radius: 8px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 0 3px;
-}
 
 .mt-icon-btn {
   display: flex;
@@ -313,15 +298,6 @@
   overflow: hidden;
   text-overflow: ellipsis;
 }
-.mt-item-badge {
-  font-size: 10px;
-  font-weight: 600;
-  padding: 1px 6px;
-  border-radius: 5px;
-  flex-shrink: 0;
-}
-.mt-item-badge--done { background: color-mix(in srgb, var(--accent-green) 15%, transparent); color: var(--accent-green); }
-.mt-item-badge--cancelled { background: color-mix(in srgb, var(--accent-red) 15%, transparent); color: var(--accent-red); }
 .mt-item-priority-dot {
   width: 6px;
   height: 6px;
@@ -378,17 +354,6 @@
   position: relative;
 }
 
-.mt-items-badge {
-  display: flex;
-  align-items: center;
-  gap: 3px;
-  font-size: 11px;
-  color: var(--text-tertiary);
-  background: var(--bg-app);
-  padding: 2px 6px;
-  border-radius: 5px;
-}
-.mt-items-badge .material-symbols-outlined { font-size: 13px; }
 
 .mt-quick-menu {
   position: absolute;
@@ -808,15 +773,6 @@
   font-weight: 700;
 }
 
-.mt-cal-day-badge {
-  font-size: 11px;
-  font-weight: 700;
-  color: var(--accent-primary);
-  background: var(--accent-primary-dim);
-  border-radius: 8px;
-  padding: 1px 6px;
-  line-height: 1.5;
-}
 
 .mt-cal-day-events { display: flex; flex-direction: column; gap: 3px; overflow: hidden; }
 
@@ -1181,29 +1137,6 @@
 
 /* ── Chips ───────────────────────────────────────────────────────────────── */
 .mta-chips { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 6px; }
-.mta-chip {
-  display: flex;
-  align-items: center;
-  gap: 5px;
-  background: var(--bg-app);
-  border: 1px solid var(--border-subtle);
-  border-radius: 6px;
-  padding: 3px 8px;
-  font-size: 12px;
-  color: var(--text-primary);
-}
-.mta-chip-num { font-size: 10px; color: var(--text-tertiary); }
-.mta-chip-rm {
-  display: flex;
-  align-items: center;
-  background: transparent;
-  border: none;
-  cursor: pointer;
-  color: var(--text-tertiary);
-  padding: 0;
-}
-.mta-chip-rm:hover { color: var(--text-primary); }
-.mta-chip-rm .material-symbols-outlined { font-size: 13px; }
 
 /* ── Buttons ─────────────────────────────────────────────────────────────── */
 .mta-btn {

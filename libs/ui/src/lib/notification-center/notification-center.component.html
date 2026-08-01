@@ -8,7 +8,7 @@
             <span class="material-symbols-outlined">notifications</span>
             <h3>Notifications</h3>
             @if (unreadCount() > 0) {
-            <span class="unread-badge">{{ unreadCount() }}</span>
+            <env-badge size="xs" variant="accent" [pill]="true">{{ unreadCount() }}</env-badge>
             }
         </div>
         <div class="header-actions flex items-center gap-1">
@@ -37,57 +37,66 @@
     </div>
 
     <!-- Notifications List -->
-    <div class="notifications-list">
+    <div class="notifications-list" role="feed" aria-label="Notifications">
         @if (filteredNotifications().length === 0) {
-        <div class="empty-state">
-            <span class="material-symbols-outlined">notifications_off</span>
+        <div class="empty-state" role="status">
+            <span class="material-symbols-outlined" aria-hidden="true">notifications_off</span>
             <p>{{ activeTab() === 'unread' ? 'No unread notifications' : 'No notifications yet' }}</p>
         </div>
         } @else {
-        @for (notification of filteredNotifications(); track notification.id) {
-        <div class="notification-item" [class.unread]="!notification.read"
-            [class.notification-item--linked]="hasLink(notification)"
-            [class.type-info]="notification.type === 'info'" [class.type-success]="notification.type === 'success'"
-            [class.type-warning]="notification.type === 'warning'" [class.type-error]="notification.type === 'error'">
+        @for (group of groupedNotifications(); track group.label) {
+          <div class="notif-group">
+            <div class="notif-group-label" role="heading" aria-level="4">{{ group.label }}</div>
+            @for (notification of group.items; track notification.id) {
+            <div class="notification-item" [class.unread]="!notification.read"
+                [class.notification-item--linked]="hasLink(notification)"
+                [class.type-info]="notification.type === 'info'"
+                [class.type-success]="notification.type === 'success'"
+                [class.type-warning]="notification.type === 'warning'"
+                [class.type-error]="notification.type === 'error'"
+                role="article"
+                [attr.aria-label]="notification.title">
 
-            <div class="notification-icon">
-                <span class="material-symbols-outlined">
-                    {{ notification.icon || getDefaultIcon(notification.type) }}
-                </span>
-            </div>
-
-            <div class="notification-content" (click)="handleNotificationClick(notification)">
-                <div class="notification-header">
-                    <h4>{{ notification.title }}</h4>
-                    @if (!notification.read) {
-                    <span class="unread-dot"></span>
-                    }
+                <div class="notification-icon" aria-hidden="true">
+                    <span class="material-symbols-outlined">
+                        {{ notification.icon || getDefaultIcon(notification.type) }}
+                    </span>
                 </div>
-                <p class="notification-message">{{ notification.message }}</p>
-                <div class="notification-footer">
-                    <span class="notification-time">{{ getRelativeTime(notification.timestamp) }}</span>
-                    @if (notification.actionLabel) {
-                    <button class="action-link" (click)="handleAction(notification, $event)">
-                        {{ notification.actionLabel }}
+
+                <div class="notification-content" (click)="handleNotificationClick(notification)">
+                    <div class="notification-header">
+                        <h4>{{ notification.title }}</h4>
+                        @if (!notification.read) {
+                        <span class="unread-dot" aria-label="Unread"></span>
+                        }
+                    </div>
+                    <p class="notification-message">{{ notification.message }}</p>
+                    <div class="notification-footer">
+                        <span class="notification-time">{{ getRelativeTime(notification.timestamp) }}</span>
+                        @if (notification.actionLabel) {
+                        <button class="action-link" (click)="handleAction(notification, $event)">
+                            {{ notification.actionLabel }}
+                        </button>
+                        }
+                    </div>
+                </div>
+
+                <div class="notification-actions">
+                    @if (hasLink(notification)) {
+                    <span class="notification-link-arrow material-symbols-outlined" aria-hidden="true">chevron_right</span>
+                    }
+                    @if (!notification.read) {
+                    <button class="icon-btn-small" (click)="markAsRead(notification.id); $event.stopPropagation()" title="Mark as read" aria-label="Mark as read">
+                        <span class="material-symbols-outlined" aria-hidden="true">done</span>
                     </button>
                     }
+                    <button class="icon-btn-small" (click)="deleteNotification(notification.id); $event.stopPropagation()" title="Delete notification" aria-label="Delete notification">
+                        <span class="material-symbols-outlined" aria-hidden="true">close</span>
+                    </button>
                 </div>
             </div>
-
-            <div class="notification-actions">
-                @if (hasLink(notification)) {
-                <span class="notification-link-arrow material-symbols-outlined">chevron_right</span>
-                }
-                @if (!notification.read) {
-                <button class="icon-btn-small" (click)="markAsRead(notification.id); $event.stopPropagation()" title="Mark as read">
-                    <span class="material-symbols-outlined">done</span>
-                </button>
-                }
-                <button class="icon-btn-small" (click)="deleteNotification(notification.id); $event.stopPropagation()" title="Delete">
-                    <span class="material-symbols-outlined">close</span>
-                </button>
-            </div>
-        </div>
+            }
+          </div>
         }
         }
     </div>

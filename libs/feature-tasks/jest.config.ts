@@ -12,7 +12,12 @@ export default {
       },
     ],
   },
-  transformIgnorePatterns: ['node_modules/(?!.*\\.mjs$)'],
+  transformIgnorePatterns: ['node_modules/(?!(@powersync|pouchdb|.*\\.mjs$))'],
+  moduleNameMapper: {
+    '^@powersync/web$':    '<rootDir>/../core/src/__mocks__/powersync-web.ts',
+    '^@powersync/common$': '<rootDir>/../core/src/__mocks__/powersync-common.ts',
+    '^pouchdb$':           '<rootDir>/../core/src/__mocks__/pouchdb.ts',
+  },
   snapshotSerializers: [
     'jest-preset-angular/build/serializers/no-ng-attributes',
     'jest-preset-angular/build/serializers/ng-snapshot',

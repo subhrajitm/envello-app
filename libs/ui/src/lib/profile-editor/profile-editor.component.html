@@ -1,83 +1,233 @@
-<env-modal [isOpen]="isOpen()" (closed)="close()" title="Edit Profile" size="md">
-    <div body>
-        <!-- Avatar -->
-        <div class="avatar-section flex flex-col items-center gap-4">
-            <div class="current-avatar flex-shrink-0">
-                @if (tempAvatar()) {
-                @if (isImageLoading()) {
-                <div class="avatar-loader"></div>
-                }
-                <img [src]="tempAvatar()" alt="Profile Avatar"
-                    [style.display]="isImageLoading() ? 'none' : 'block'"
-                    (load)="onImageLoad()" (error)="onImageError()">
-                } @else {
-                <span class="avatar-initials">{{ userInitials() }}</span>
-                }
+@if (isOpen()) {
+<div class="pe-backdrop" (click)="close()" aria-hidden="true"></div>
+<div class="pe-modal" role="dialog" aria-modal="true" aria-labelledby="pe-title" cdkTrapFocus cdkTrapFocusAutoCapture>
+
+  <!-- Close button -->
+  <button class="pe-close" type="button" (click)="close()" aria-label="Close profile settings">
+    <span class="material-symbols-outlined">close</span>
+  </button>
+
+  <!-- Left sidebar -->
+  <nav class="pe-sidebar" aria-label="Profile sections">
+    <div class="pe-sidebar-header" id="pe-title">Settings</div>
+    <div class="pe-sidebar-divider"></div>
+
+    @for (sec of [
+      ['profile',  'Profile'],
+      ['account',  'Account'],
+      ['security', 'Security']
+    ]; track sec[0]) {
+      <button class="pe-nav-item" type="button"
+        [class.pe-nav-item--active]="activeSection() === sec[0]"
+        [attr.aria-current]="activeSection() === sec[0] ? 'page' : null"
+        (click)="setSection($any(sec[0]))">
+        {{ sec[1] }}
+      </button>
+    }
+  </nav>
+
+  <!-- Right content -->
+  <div class="pe-content">
+
+    <!-- ── Profile section ───────────────────────────────────────────────── -->
+    @if (activeSection() === 'profile') {
+      <div class="pe-section-header">
+        <h2 class="pe-section-title">Profile</h2>
+        <button class="pe-save-btn" type="button"
+          [disabled]="!isProfileValid() || isSaving()"
+          (click)="saveProfile()">
+          @if (isSaving()) { <span class="pe-spinner"></span> Saving… }
+          @else { Save }
+        </button>
+      </div>
+
+      <!-- Avatar -->
+      <div class="pe-group-label">PHOTO</div>
+      <div class="pe-avatar-card">
+        <div class="pe-avatar-preview">
+          @if (tempAvatar()) {
+            @if (isImageLoading()) { <div class="pe-avatar-loader"></div> }
+            <img [src]="tempAvatar()" alt="Profile photo"
+              [style.display]="isImageLoading() ? 'none' : 'block'"
+              (load)="onImageLoad()" (error)="onImageError()">
+          } @else {
+            <span class="pe-avatar-initials">{{ userInitials() }}</span>
+          }
+        </div>
+        <div class="pe-avatar-right">
+          <div class="pe-avatar-actions">
+            <button class="pe-avatar-btn" type="button"
+              [class.pe-avatar-btn--active]="tempAvatar() && tempGender() === 'male'"
+              (click)="setAvatarOption('male')">
+              <span class="material-symbols-outlined" aria-hidden="true">man</span> Male
+            </button>
+            <button class="pe-avatar-btn" type="button"
+              [class.pe-avatar-btn--active]="tempAvatar() && tempGender() === 'female'"
+              (click)="setAvatarOption('female')">
+              <span class="material-symbols-outlined" aria-hidden="true">woman</span> Female
+            </button>
+            <button class="pe-avatar-btn" type="button"
+              [class.pe-avatar-btn--active]="!tempAvatar()"
+              (click)="setAvatarOption('initials')">
+              <span class="material-symbols-outlined" aria-hidden="true">person</span> Initials
+            </button>
+            <button class="pe-avatar-btn" type="button"
+              [class.pe-avatar-btn--active]="isGravatar()"
+              (click)="useGravatar()">
+              <span class="material-symbols-outlined" aria-hidden="true">account_circle</span> Gravatar
+            </button>
+          </div>
+          <div class="pe-url-row">
+            <input type="url" class="pe-input" placeholder="Paste image URL…"
+              [ngModel]="tempCustomUrl()" (ngModelChange)="tempCustomUrl.set($event)"
+              (keyup.enter)="applyCustomUrl()">
+            <button class="pe-url-apply" type="button"
+              [disabled]="!tempCustomUrl().trim()"
+              (click)="applyCustomUrl()">Apply</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Basic details -->
+      <div class="pe-group-label">BASIC DETAILS</div>
+      <div class="pe-field-card">
+        <label class="pe-field-label" for="pe-name">Full Name*</label>
+        <input id="pe-name" type="text" class="pe-field-input"
+          [(ngModel)]="tempName" placeholder="Your name" autocomplete="name">
+      </div>
+
+      <div class="pe-field-card">
+        <label class="pe-field-label" for="pe-bio">Bio</label>
+        <textarea id="pe-bio" class="pe-field-input pe-field-textarea"
+          [(ngModel)]="tempBio" placeholder="A short bio…" rows="3"
+          [maxlength]="BIO_MAX"></textarea>
+        <span class="pe-field-count"
+          [class.pe-field-count--warn]="tempBio.length > BIO_MAX - 20">
+          {{ tempBio.length }} / {{ BIO_MAX }}
+        </span>
+      </div>
+    }
+
+    <!-- ── Account section ──────────────────────────────────────────────── -->
+    @if (activeSection() === 'account') {
+      <div class="pe-section-header">
+        <h2 class="pe-section-title">Account</h2>
+      </div>
+
+      <div class="pe-group-label">ACCOUNT</div>
+
+      <!-- Change email row -->
+      <div class="pe-action-card" [class.pe-action-card--open]="expandedAction() === 'email'">
+        <button class="pe-action-row" type="button" (click)="toggleAction('email')"
+          [attr.aria-expanded]="expandedAction() === 'email'">
+          <span class="pe-action-label">Change Email</span>
+          <span class="pe-action-value">{{ currentEmail() }}</span>
+          <span class="material-symbols-outlined pe-action-chevron" aria-hidden="true">
+            {{ expandedAction() === 'email' ? 'expand_less' : 'chevron_right' }}
+          </span>
+        </button>
+        @if (expandedAction() === 'email') {
+          <div class="pe-action-form">
+            <label class="pe-field-label" for="pe-new-email">New email address</label>
+            <input id="pe-new-email" type="email" class="pe-field-input"
+              [ngModel]="newEmail()" (ngModelChange)="newEmail.set($event)"
+              placeholder="new@example.com" autocomplete="email">
+            @if (emailError()) {
+              <span class="pe-form-error" role="alert">{{ emailError() }}</span>
+            }
+            <div class="pe-form-actions">
+              <button class="pe-form-cancel" type="button" (click)="toggleAction('email')">Cancel</button>
+              <button class="pe-form-save" type="button"
+                [disabled]="!newEmail().trim() || isSavingEmail()"
+                (click)="saveEmail()">
+                @if (isSavingEmail()) { <span class="pe-spinner"></span> Sending… }
+                @else { Send confirmation }
+              </button>
             </div>
+            <p class="pe-form-hint">A confirmation link will be sent to the new address.</p>
+          </div>
+        }
+      </div>
 
-            <!-- Avatar preset options -->
-            <div class="avatar-presets">
-                <button class="avatar-preset-btn" [class.active]="tempAvatar() && tempGender() === 'male'"
-                    (click)="setAvatarOption('male')" [disabled]="isSaving()">
-                    <span class="material-symbols-outlined">man</span>
-                    Male
-                </button>
-                <button class="avatar-preset-btn" [class.active]="tempAvatar() && tempGender() === 'female'"
-                    (click)="setAvatarOption('female')" [disabled]="isSaving()">
-                    <span class="material-symbols-outlined">woman</span>
-                    Female
-                </button>
-                <button class="avatar-preset-btn" [class.active]="!tempAvatar()"
-                    (click)="setAvatarOption('initials')" [disabled]="isSaving()">
-                    <span class="material-symbols-outlined">person</span>
-                    Initials
-                </button>
-                <button class="avatar-preset-btn" [class.active]="isGravatar()"
-                    (click)="useGravatar()" [disabled]="isSaving()">
-                    <span class="material-symbols-outlined">account_circle</span>
-                    Gravatar
-                </button>
+      <!-- Change password row -->
+      <div class="pe-action-card" [class.pe-action-card--open]="expandedAction() === 'password'">
+        <button class="pe-action-row" type="button" (click)="toggleAction('password')"
+          [attr.aria-expanded]="expandedAction() === 'password'">
+          <span class="pe-action-label">Change Password</span>
+          <span class="pe-action-value">••••••••</span>
+          <span class="material-symbols-outlined pe-action-chevron" aria-hidden="true">
+            {{ expandedAction() === 'password' ? 'expand_less' : 'chevron_right' }}
+          </span>
+        </button>
+        @if (expandedAction() === 'password') {
+          <div class="pe-action-form">
+            <label class="pe-field-label" for="pe-new-password">New password</label>
+            <div class="pe-password-row">
+              <input id="pe-new-password"
+                [type]="showNewPassword() ? 'text' : 'password'"
+                class="pe-field-input"
+                [ngModel]="newPassword()" (ngModelChange)="newPassword.set($event)"
+                placeholder="At least 8 characters" autocomplete="new-password">
+              <button class="pe-password-toggle" type="button"
+                [attr.aria-label]="showNewPassword() ? 'Hide password' : 'Show password'"
+                (click)="showNewPassword.set(!showNewPassword())">
+                <span class="material-symbols-outlined" aria-hidden="true">
+                  {{ showNewPassword() ? 'visibility_off' : 'visibility' }}
+                </span>
+              </button>
             </div>
-
-            <!-- Custom URL input -->
-            <div class="avatar-url-row">
-                <input type="url" class="form-input avatar-url-input"
-                    placeholder="Or paste an image URL…"
-                    [ngModel]="tempCustomUrl()" (ngModelChange)="tempCustomUrl.set($event)"
-                    (keyup.enter)="applyCustomUrl()"
-                    [disabled]="isSaving()">
-                <button class="avatar-url-apply" (click)="applyCustomUrl()"
-                    [disabled]="!tempCustomUrl().trim() || isSaving()">
-                    Apply
-                </button>
+            <label class="pe-field-label" for="pe-confirm-password">Confirm new password</label>
+            <input id="pe-confirm-password"
+              [type]="showNewPassword() ? 'text' : 'password'"
+              class="pe-field-input"
+              [ngModel]="confirmPassword()" (ngModelChange)="confirmPassword.set($event)"
+              placeholder="Repeat password" autocomplete="new-password">
+            @if (passwordError()) {
+              <span class="pe-form-error" role="alert">{{ passwordError() }}</span>
+            }
+            <div class="pe-form-actions">
+              <button class="pe-form-cancel" type="button" (click)="toggleAction('password')">Cancel</button>
+              <button class="pe-form-save" type="button"
+                [disabled]="!newPassword() || !confirmPassword() || isSavingPassword()"
+                (click)="savePassword()">
+                @if (isSavingPassword()) { <span class="pe-spinner"></span> Saving… }
+                @else { Update password }
+              </button>
             </div>
-        </div>
+          </div>
+        }
+      </div>
+    }
 
-        <div class="form-group flex flex-col gap-2">
-            <label>Full Name</label>
-            <input type="text" [(ngModel)]="tempName" class="form-input" placeholder="Your name">
-        </div>
+    <!-- ── Security section ─────────────────────────────────────────────── -->
+    @if (activeSection() === 'security') {
+      <div class="pe-section-header">
+        <h2 class="pe-section-title">Security</h2>
+      </div>
 
-        <div class="form-group flex flex-col gap-2">
-            <label>Email</label>
-            <input type="email" [value]="user()?.email" class="form-input" disabled
-                title="Email cannot be changed">
-            <span class="field-hint">Email cannot be changed</span>
+      <div class="pe-group-label">SESSIONS</div>
+      <div class="pe-info-card">
+        <div class="pe-info-row">
+          <span class="pe-info-label">Signed in as</span>
+          <span class="pe-info-value">{{ currentEmail() }}</span>
         </div>
+        <div class="pe-info-row">
+          <span class="pe-info-label">Session</span>
+          <span class="pe-info-value pe-info-value--active">
+            <span class="pe-session-dot"></span> Active
+          </span>
+        </div>
+      </div>
 
-        <div class="form-group flex flex-col gap-2">
-            <label>Bio</label>
-            <textarea [(ngModel)]="tempBio" class="form-textarea"
-                placeholder="Tell us about yourself…"
-                rows="4" [maxlength]="BIO_MAX"></textarea>
-            <span class="char-count" [class.char-count--over]="tempBio.length > BIO_MAX">
-                {{ tempBio.length }}/{{ BIO_MAX }}
-            </span>
-        </div>
-    </div>
-    <div footer class="flex items-center justify-end gap-2">
-        <env-button variant="secondary" (clicked)="close()" [disabled]="isSaving()">Cancel</env-button>
-        <env-button variant="primary" (clicked)="save()" [disabled]="!isValid || isSaving()"
-            [loading]="isSaving()">Save Changes</env-button>
-    </div>
-</env-modal>
+      <div class="pe-action-card">
+        <button class="pe-action-row" type="button" (click)="openSecuritySettings()">
+          <span class="pe-action-label">Sessions &amp; Activity Log</span>
+          <span class="pe-action-value">Manage active devices</span>
+          <span class="material-symbols-outlined pe-action-chevron" aria-hidden="true">chevron_right</span>
+        </button>
+      </div>
+    }
+
+  </div>
+</div>
+}

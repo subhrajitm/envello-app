@@ -29,9 +29,9 @@
                     {{ space.title }}
                 </div>
                 <div class="col-status">
-                    <span class="status-badge" [class]="getStatusColor(space.status)">
+                    <env-badge [variant]="getStatusVariant(space.status)" size="xs">
                         {{ space.status }}
-                    </span>
+                    </env-badge>
                 </div>
                 <div class="col-words">{{ space.words }}</div>
                 <div class="col-updated">{{ space.updated }}</div>

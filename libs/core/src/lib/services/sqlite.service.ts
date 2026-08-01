@@ -1,8 +1,9 @@
 import { Injectable, inject } from '@angular/core';
 import { WorkspaceProfileService } from './workspace-profile.service';
 import { LoggingService } from './logging.service';
+import { DbEncryptionKeyService } from './db-encryption-key.service';
 import Database from '@tauri-apps/plugin-sql';
-import { readTextFile } from '@tauri-apps/plugin-fs';
+import { readTextFile, exists, writeTextFile } from '@tauri-apps/plugin-fs';
 import { BehaviorSubject, from, map, Observable } from 'rxjs';
 
 // Import Types
@@ -82,6 +83,7 @@ export class SqliteService {
 
     private profileService = inject(WorkspaceProfileService);
     private logging = inject(LoggingService);
+    private dbKeyService = inject(DbEncryptionKeyService);
 
     constructor() {
         // Don't initialize eagerly - only init when first database operation is called
@@ -131,10 +133,7 @@ export class SqliteService {
 
     private async initDb(): Promise<Database> {
         try {
-            // Check if running in Tauri environment
             if (!this.isTauri()) {
-                // Silently fail in non-Tauri environments (browser)
-                // This is expected behavior when developing with ng serve
                 throw new Error('SQLite is only available in Tauri desktop app');
             }
 
@@ -142,7 +141,18 @@ export class SqliteService {
             const dbName = profileId === 'default' ? 'envello.db' : `envello_${profileId}.db`;
 
             this.logging.info(`[SqliteService] Opening database: ${dbName}`);
-            const db = await Database.load(`sqlite:${dbName}`);
+
+            // Fetch the per-installation 256-bit key from Stronghold.
+            // Returns null when Stronghold is unavailable (non-Tauri or user not yet signed in).
+            const encKey = await this.dbKeyService.getOrCreateKey();
+
+            const db = encKey
+                ? await this.openEncrypted(dbName, encKey)
+                : await Database.load(`sqlite:${dbName}`);
+
+            if (!encKey) {
+                this.logging.warn('[SqliteService] DB encryption key unavailable — opening unencrypted.');
+            }
 
             // Set this.db before createTables/loadAllData so that reloadX() methods
             // can call getDb() without deadlocking. Reset to null if setup fails.
@@ -151,12 +161,11 @@ export class SqliteService {
                 await this.createTables(db);
                 await this.loadAllData();
             } catch (setupError) {
-                this.db = null; // Connection unusable without tables/data
+                this.db = null;
                 throw setupError;
             }
 
             this.logging.info(`[SqliteService] Database ready for profile ${profileId}`);
-            // Notify StoreService that DB data is now available.
             window.dispatchEvent(new CustomEvent('envello:db-ready'));
             return db;
         } catch (error) {
@@ -165,6 +174,47 @@ export class SqliteService {
             }
             throw error;
         }
+    }
+
+    /**
+     * Open a SQLCipher-encrypted database.
+     *
+     * How this works:
+     *  - sqlx (via tauri-plugin-sql) creates pools with min_connections = 0, so
+     *    Database.load() establishes no eager connections — no file reads happen yet.
+     *  - The first db.execute() call creates the connection. We make PRAGMA key the
+     *    very first SQL sent, so SQLCipher receives the key before reading any pages.
+     *    This works correctly for both new and already-encrypted databases.
+     *
+     * First-run migration (no .enc marker):
+     *  - PRAGMA key has no effect on a plaintext database.
+     *  - PRAGMA rekey = '...' re-encrypts every page of the database in place.
+     *  - A .enc marker file is written so subsequent opens use the key path.
+     */
+    private async openEncrypted(dbName: string, key: string): Promise<Database> {
+        const { appLocalDataDir } = await import('@tauri-apps/api/path');
+        const dir = await appLocalDataDir();
+        const markerPath = `${dir}/${dbName}.enc`;
+
+        const db = await Database.load(`sqlite:${dbName}`);
+
+        // Must be the very first SQL on this connection — see comment above.
+        await db.execute(`PRAGMA key='${key}'`);
+
+        if (!(await exists(markerPath))) {
+            this.logging.info(`[SqliteService] Encrypting database in place: ${dbName}`);
+            try {
+                // Encrypts all existing pages (no-op on a brand-new empty file,
+                // but still writes the SQLCipher header so future opens know it's encrypted).
+                await db.execute(`PRAGMA rekey='${key}'`);
+                await writeTextFile(markerPath, new Date().toISOString());
+                this.logging.info(`[SqliteService] Database encrypted: ${dbName}`);
+            } catch (e) {
+                console.error('[SqliteService] PRAGMA rekey failed — DB remains unencrypted:', e);
+            }
+        }
+
+        return db;
     }
 
     private async createTables(db: Database) {

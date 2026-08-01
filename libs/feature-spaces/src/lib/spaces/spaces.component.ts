@@ -6,7 +6,7 @@ import {
   ButtonComponent,
   ModalComponent,
   BadgeComponent,
-  IconButtonComponent,
+  BadgeVariant,
   ConfirmDialogComponent,
 } from '@envello/ui';
 
@@ -19,7 +19,6 @@ import {
     ButtonComponent,
     ModalComponent,
     BadgeComponent,
-    IconButtonComponent,
     ConfirmDialogComponent,
   ],
   templateUrl: './spaces.component.html',
@@ -76,6 +75,21 @@ export class SpacesComponent {
   // ── Helpers ───────────────────────────────────────────────────────────────
   isActive(id: string)    { return this.activeProfile()?.id === id; }
   isDeletable(id: string) { return id !== 'default' && !this.isActive(id); }
+
+  getStatusVariant(status: string): BadgeVariant {
+    switch (status?.toUpperCase()) {
+      case 'PLANNING':    return 'info';
+      case 'IN_PROGRESS':
+      case 'ACTIVE':      return 'accent';
+      case 'DONE':
+      case 'COMPLETED':   return 'success';
+      case 'ON_HOLD':
+      case 'PAUSED':      return 'warning';
+      case 'CANCELLED':
+      case 'ARCHIVED':    return 'error';
+      default:            return 'default';
+    }
+  }
 
   getInitials(name: string): string {
     if (!name?.trim()) return '?';

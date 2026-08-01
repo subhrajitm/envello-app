@@ -1,6 +1,7 @@
-import { Component, computed, inject, signal, HostListener } from '@angular/core';
+import { Component, computed, inject, signal, effect, untracked, OnInit, HostListener } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { ActivatedRoute } from '@angular/router';
 import {
   MeetingsService,
   Meeting,
@@ -18,20 +19,40 @@ import {
   MeetingAutopilotService,
   ContextService,
 } from '@envello/core';
-import { ConfirmDialogComponent, FeatureSidebarComponent, TableComponent, EnvTableColumn, EnvTableAction, EnvTableActionEvent, EnvTableSortEvent, AiAssistantPanelComponent, AiPanelMessage, EmptyStateComponent, SliderPanelComponent } from '@envello/ui';
+import { BadgeComponent, ChipComponent, ConfirmDialogComponent, FeatureSidebarComponent, TableComponent, EnvTableColumn, EnvTableAction, EnvTableActionEvent, EnvTableSortEvent, AiAssistantPanelComponent, AiPanelMessage, EmptyStateComponent, SliderPanelComponent } from '@envello/ui';
 @Component({
   selector: 'app-meetings',
   standalone: true,
-  imports: [CommonModule, FormsModule, ConfirmDialogComponent, FeatureSidebarComponent, TableComponent, AiAssistantPanelComponent, EmptyStateComponent, SliderPanelComponent],
+  imports: [CommonModule, FormsModule, BadgeComponent, ChipComponent, ConfirmDialogComponent, FeatureSidebarComponent, TableComponent, AiAssistantPanelComponent, EmptyStateComponent, SliderPanelComponent],
   templateUrl: './meetings.component.html',
   styleUrl: './meetings.component.css'
 })
-export class MeetingsComponent {
+export class MeetingsComponent implements OnInit {
   meetingsService = inject(MeetingsService);
   syncService = inject(CalendarSyncService);
+  private route = inject(ActivatedRoute);
   private aiService = inject(AiService);
   private contextService = inject(ContextService);
   readonly autopilotService = inject(MeetingAutopilotService);
+
+  private _pendingMeetingId = signal<string | null>(null);
+
+  constructor() {
+    effect(() => {
+      const id = this._pendingMeetingId();
+      if (!id) return;
+      const meeting = this.meetingsService.meetings().find(m => m.id === id);
+      if (meeting) {
+        this._pendingMeetingId.set(null);
+        untracked(() => this.openDetailsModal(meeting));
+      }
+    });
+  }
+
+  ngOnInit() {
+    const meetingId = this.route.snapshot.queryParamMap.get('meetingId');
+    if (meetingId) this._pendingMeetingId.set(meetingId);
+  }
   readonly providerMeta = PROVIDER_META;
 
   protected aiEnabled = computed(() => this.aiService.aiEnabled());
@@ -414,25 +435,25 @@ export class MeetingsComponent {
   readonly tableColumns: EnvTableColumn[] = [
     { key: 'title',    header: 'Title',    type: 'primary-text', sortable: true },
     { key: 'type',     header: 'Type',     type: 'badge', badgeMap: {
-      'video':     { label: 'Video',     dotColor: '#3b82f6', bgColor: 'rgba(59,130,246,0.12)',  textColor: '#3b82f6' },
-      'phone':     { label: 'Phone',     dotColor: '#8b5cf6', bgColor: 'rgba(139,92,246,0.12)',  textColor: '#8b5cf6' },
-      'in-person': { label: 'In Person', dotColor: '#10b981', bgColor: 'rgba(16,185,129,0.12)', textColor: '#10b981' },
-      'hybrid':    { label: 'Hybrid',    dotColor: '#f97316', bgColor: 'rgba(249,115,22,0.12)',  textColor: '#f97316' },
+      'video':     { label: 'Video',     variant: 'info',    icon: 'videocam'   },
+      'phone':     { label: 'Phone',     variant: 'purple',  icon: 'phone'      },
+      'in-person': { label: 'In Person', variant: 'success', icon: 'handshake'  },
+      'hybrid':    { label: 'Hybrid',    variant: 'warning', icon: 'devices'    },
     }},
     { key: 'date',     header: 'Date',     sortable: true },
     { key: 'time',     header: 'Time' },
     { key: 'space',  header: 'Project' },
     { key: 'attendees',header: 'Attendees' },
     { key: 'status',   header: 'Status',   type: 'badge', badgeMap: {
-      'scheduled':  { label: 'Scheduled',  dotColor: '#3b82f6', bgColor: 'rgba(59,130,246,0.12)',  textColor: '#3b82f6' },
-      'in_progress':{ label: 'In Progress',dotColor: '#f97316', bgColor: 'rgba(249,115,22,0.12)',  textColor: '#f97316' },
-      'completed':  { label: 'Done',       dotColor: '#10b981', bgColor: 'rgba(16,185,129,0.12)', textColor: '#10b981' },
-      'cancelled':  { label: 'Cancelled',  dotColor: '#ef4444', bgColor: 'rgba(239,68,68,0.12)',  textColor: '#ef4444' },
+      'scheduled':  { label: 'Scheduled',  variant: 'info',    icon: 'event'          },
+      'in_progress':{ label: 'In Progress',variant: 'warning', icon: 'pending'        },
+      'completed':  { label: 'Done',       variant: 'success', icon: 'check_circle'   },
+      'cancelled':  { label: 'Cancelled',  variant: 'error',   icon: 'event_busy'     },
     }},
     { key: 'priority', header: 'Priority', type: 'badge', badgeMap: {
-      'HIGH':   { label: 'High',   dotColor: '#ef4444', bgColor: 'rgba(239,68,68,0.12)',  textColor: '#ef4444' },
-      'MEDIUM': { label: 'Medium', dotColor: '#f97316', bgColor: 'rgba(249,115,22,0.12)', textColor: '#f97316' },
-      'LOW':    { label: 'Low',    dotColor: '#10b981', bgColor: 'rgba(16,185,129,0.12)', textColor: '#10b981' },
+      'HIGH':   { label: 'High',   variant: 'error',   icon: 'keyboard_double_arrow_up'   },
+      'MEDIUM': { label: 'Medium', variant: 'warning', icon: 'drag_handle'                },
+      'LOW':    { label: 'Low',    variant: 'success', icon: 'keyboard_double_arrow_down' },
     }},
   ];
 

@@ -8,11 +8,11 @@
         </h1>
 
         <div class="al-filter-pills">
-            <button class="filter-pill" [class.active]="activeFilter() === 'ALL'" (click)="setFilter('ALL')">All</button>
-            <button class="filter-pill" [class.active]="activeFilter() === 'ENTRY'" (click)="setFilter('ENTRY')">Entries</button>
-            <button class="filter-pill" [class.active]="activeFilter() === 'SYSTEM'" (click)="setFilter('SYSTEM')">System</button>
-            <button class="filter-pill" [class.active]="activeFilter() === 'SYNC'" (click)="setFilter('SYNC')">Sync</button>
-            <button class="filter-pill" [class.active]="activeFilter() === 'AI'" (click)="setFilter('AI')">AI</button>
+            <button (click)="setFilter('ALL')"><env-chip size="sm" [active]="activeFilter() === 'ALL'">All</env-chip></button>
+            <button (click)="setFilter('ENTRY')"><env-chip size="sm" [active]="activeFilter() === 'ENTRY'">Entries</env-chip></button>
+            <button (click)="setFilter('SYSTEM')"><env-chip size="sm" [active]="activeFilter() === 'SYSTEM'">System</env-chip></button>
+            <button (click)="setFilter('SYNC')"><env-chip size="sm" [active]="activeFilter() === 'SYNC'">Sync</env-chip></button>
+            <button (click)="setFilter('AI')"><env-chip size="sm" [active]="activeFilter() === 'AI'">AI</env-chip></button>
         </div>
 
         <div class="al-toolbar-right">

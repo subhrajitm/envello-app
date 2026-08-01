@@ -444,6 +444,13 @@ const library_files = new Table(
   { localOnly: true, indexes: { by_profile: ['profile_id'] } }
 );
 
+// Stores local Automerge CRDT state per note. Never synced via user_data —
+// the crdt_state field on the note record carries the state across devices.
+const note_crdt = new Table(
+  { state_b64: column.text },
+  { localOnly: true }
+);
+
 export const AppSchema = new Schema({
   // Synced via PowerSync ↔ Supabase
   user_data,
@@ -471,6 +478,8 @@ export const AppSchema = new Schema({
   people,
   user_preferences,
   library_files,
+  // CRDT state store — local only, never synced directly
+  note_crdt,
 });
 
 /**

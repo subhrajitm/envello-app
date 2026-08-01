@@ -17,6 +17,8 @@ interface Toast {
   icon: string;
   isAi: boolean;
   leaving: boolean;
+  actionLabel?: string;
+  actionCallback?: () => void;
 }
 
 @Component({
@@ -51,6 +53,13 @@ interface Toast {
           <!-- Body -->
           @if (toast.message) {
             <p class="toast-body">{{ toast.message }}</p>
+          }
+
+          <!-- Action button (e.g. "Retry" for sync errors) -->
+          @if (toast.actionLabel && toast.actionCallback) {
+            <button class="toast-action" (click)="invokeAction(toast)">
+              {{ toast.actionLabel }}
+            </button>
           }
 
           <!-- Progress bar -->
@@ -185,6 +194,29 @@ interface Toast {
       word-break: break-word;
     }
 
+    /* ── Action button ─────────────────────────────────────────── */
+    .toast-action {
+      display: inline-flex;
+      align-items: center;
+      margin: 6px 0 0 ${INDENT}px;
+      padding: 3px 10px;
+      border-radius: 5px;
+      border: 1px solid var(--border-subtle);
+      background: transparent;
+      color: var(--text-secondary);
+      font-size: 11px;
+      font-weight: 600;
+      font-family: var(--font-sans);
+      cursor: pointer;
+      letter-spacing: 0.02em;
+      transition: background 0.1s, color 0.1s, border-color 0.1s;
+    }
+    .toast-action:hover {
+      background: var(--bg-hover);
+      color: var(--text-primary);
+      border-color: var(--border-highlight);
+    }
+
     /* ── Progress bar ───────────────────────────────────────────── */
     .toast-progress {
       position: absolute;
@@ -248,6 +280,11 @@ export class ToastComponent {
     return icons[type] ?? 'info';
   }
 
+  invokeAction(toast: Toast) {
+    toast.actionCallback?.();
+    this.dismiss(toast.id);
+  }
+
   show(n: Notification) {
     const toast: Toast = {
       id: n.id,
@@ -257,6 +294,8 @@ export class ToastComponent {
       icon: n.icon ?? this.iconFor(n.type),
       isAi: !!n.isAi,
       leaving: false,
+      actionLabel: n.actionLabel,
+      actionCallback: n.actionCallback,
     };
 
     this.toasts.update(t => {

@@ -77,6 +77,7 @@ export interface MonitorFinding {
   reason: string;
   taskId: string;
   priority: Task['priority'];
+  due?: string; // ISO date string (YYYY-MM-DD)
 }
 
 export interface MonitorDigest {
@@ -246,6 +247,7 @@ export class SmartMonitorService {
         reason: `${tx.name} payment is due ${label}`,
         taskId: '',
         priority: daysUntil <= 1 ? 'HIGH' : 'MEDIUM',
+        due: due.toISOString().slice(0, 10),
       });
     }
     return findings;
@@ -266,6 +268,7 @@ export class SmartMonitorService {
         reason: `"${tx.name}" looks like a trial subscription`,
         taskId: '',
         priority: 'MEDIUM',
+        due: new Date().toISOString().slice(0, 10),
       });
     }
     return findings;
@@ -287,10 +290,11 @@ export class SmartMonitorService {
 
       findings.push({
         ruleId: 'overdue-tasks',
-        title: `Follow up: "${task.title}" (${daysOver}d overdue)`,
+        title: `Follow up: "${task.title}"`,
         reason: `Task "${task.title}" is ${daysOver} days past its due date`,
         taskId: '',
         priority: daysOver >= 7 ? 'HIGH' : 'MEDIUM',
+        due: new Date().toISOString().slice(0, 10),
       });
     }
     return findings;
@@ -315,6 +319,7 @@ export class SmartMonitorService {
           reason: `Open action item from meeting: "${meeting.title}"`,
           taskId: '',
           priority: action.priority ?? 'MEDIUM',
+          due: new Date().toISOString().slice(0, 10),
           // Store meetingId + actionId so we can link after task creation
           _meetingId: meeting.id,
           _actionId: action.id,
@@ -342,6 +347,7 @@ export class SmartMonitorService {
         reason: `${profile.person.name} has ${profile.openTasks} open task(s) and you haven't interacted in ${daysSince} days`,
         taskId: '',
         priority: 'LOW',
+        due: new Date().toISOString().slice(0, 10),
       });
     }
     return findings;
@@ -371,6 +377,7 @@ export class SmartMonitorService {
           reason: `Extracted from note: "${note.title}"`,
           taskId: '',
           priority: 'MEDIUM',
+          due: new Date().toISOString().slice(0, 10),
         });
       }
     }
@@ -397,6 +404,7 @@ export class SmartMonitorService {
       status: 'ACTIVE',
       labels: ['⚡ monitor', finding.ruleId],
       notes: finding.reason,
+      ...(finding.due && { due: finding.due }),
       createdAt: new Date().toISOString(),
     };
     finding.taskId = task.id;

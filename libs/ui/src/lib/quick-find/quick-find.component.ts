@@ -2,6 +2,8 @@ import { Component, inject, signal, computed, HostListener, ChangeDetectionStrat
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 import { StoreService, MeetingsService, SemanticSearchService, AiService, ContextService } from '@envello/core';
+import { BadgeComponent } from '../badge/badge.component';
+import { ChipComponent } from '../chip/chip.component';
 
 type ResultType = 'note' | 'task' | 'book' | 'bookmark' | 'meeting' | 'project' | 'command';
 type FilterType = 'all' | ResultType;
@@ -31,7 +33,7 @@ const TYPE_META: Record<ResultType, { label: string; icon: string; color: string
     book:     { label: 'Books',     icon: 'menu_book',    color: '#3b82f6' },
     bookmark: { label: 'Bookmarks', icon: 'bookmark',     color: '#a855f7' },
     meeting:  { label: 'Meetings',  icon: 'calendar_month', color: '#ec4899' },
-    project:  { label: 'Spaces',    icon: 'folder',       color: '#60a5fa' },
+    project:  { label: 'Workspaces', icon: 'folder',       color: '#60a5fa' },
     command:  { label: 'Commands',  icon: 'terminal',     color: '#94a3b8' },
 };
 
@@ -54,7 +56,7 @@ const NAV_COMMANDS: QuickFindResult[] = [
 @Component({
     selector: 'app-quick-find',
     standalone: true,
-    imports: [CommonModule],
+    imports: [CommonModule, BadgeComponent, ChipComponent],
     templateUrl: './quick-find.component.html',
     styleUrl: './quick-find.component.css',
     changeDetection: ChangeDetectionStrategy.OnPush

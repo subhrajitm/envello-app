@@ -15,7 +15,7 @@
       <!-- Subtitle hint (hidden during a conversation) -->
       @if (!isInConversation()) {
         <p class="input-hint">
-          Describe anything — task, note, meeting, bookmark, writing, space — and it will be created instantly.
+          Describe anything — task, note, meeting, bookmark, writing, workspace — and it will be created instantly.
         </p>
       }
 
@@ -203,11 +203,11 @@
                       @if (item.subtitle) {
                         <div class="ra-subtitle" [class.ra-subtitle--overdue]="item.isOverdue">{{ item.subtitle }}</div>
                       }
-                    </div>
-                    <div class="ra-right">
                       @if (item.relativeTime) {
                         <span class="ra-time">{{ item.relativeTime }}</span>
                       }
+                    </div>
+                    <div class="ra-right">
                       <div class="ra-actions">
                         @if (item.kind === 'task' && item.task) {
                           <button class="ra-action-btn"

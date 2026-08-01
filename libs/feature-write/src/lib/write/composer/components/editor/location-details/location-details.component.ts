@@ -9,11 +9,12 @@ import StarterKit from '@tiptap/starter-kit';
 import Placeholder from '@tiptap/extension-placeholder';
 import { TiptapEditorDirective } from 'ngx-tiptap';
 import { Location } from '@envello/core';
+import { BadgeComponent } from '@envello/ui';
 
 @Component({
   selector: 'app-location-details',
   standalone: true,
-  imports: [FormsModule, TiptapEditorDirective],
+  imports: [FormsModule, TiptapEditorDirective, BadgeComponent],
   templateUrl: './location-details.component.html',
   styleUrls: [
     './location-details.component.css',

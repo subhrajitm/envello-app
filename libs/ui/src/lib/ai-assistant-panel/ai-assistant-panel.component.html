@@ -39,7 +39,9 @@
         <div class="ai-panel-suggestions">
           <p class="ai-panel-suggestions-label">Suggested actions</p>
           @for (s of suggestions(); track s) {
-            <button class="ai-panel-chip" (click)="onSuggestionClick(s)">{{ s }}</button>
+            <button class="ai-panel-suggestion-btn" (click)="onSuggestionClick(s)">
+              <env-chip size="sm" variant="default">{{ s }}</env-chip>
+            </button>
           }
         </div>
       }

@@ -19,15 +19,14 @@
       <div class="header-center">
         <button
           class="voice-btn"
+          type="button"
           (click)="toggleVoice()"
           [class.active]="isVoiceActive()"
-          [title]="
-            isVoiceActive()
-              ? 'Deactivate voice search'
-              : 'Activate voice search'
-          "
+          [attr.aria-label]="isVoiceActive() ? 'Deactivate voice input' : 'Activate voice input (or hold Ctrl)'"
+          [attr.aria-pressed]="isVoiceActive()"
+          title="Voice input — click to toggle, or hold Ctrl for 0.5 s"
         >
-          <div class="voice-indicator">
+          <div class="voice-indicator" aria-hidden="true">
             <span class="voice-bar"></span>
             <span class="voice-bar"></span>
             <span class="voice-bar"></span>
@@ -37,23 +36,30 @@
       </div>
 
       <div class="header-actions flex items-center gap-2">
-        <button class="btn-new-space" (click)="openAddNew()" title="Add new (⌘N) · Capture (⌘⇧K)">
-          <span class="material-symbols-outlined btn-icon-inner">add</span>
+        <button class="btn-new-space" type="button"
+          (click)="openAddNew()"
+          aria-label="Add new item (⌘N)">
+          <span class="material-symbols-outlined btn-icon-inner" aria-hidden="true">add</span>
           <span>Add New</span>
         </button>
 
-        <button class="icon-btn notification-btn" (click)="openNotifications()">
-          <span class="material-symbols-outlined">notifications</span>
+        <button class="icon-btn notification-btn" type="button"
+          (click)="openNotifications()"
+          aria-label="Notifications"
+          aria-haspopup="true"
+          [attr.aria-expanded]="false">
+          <span class="material-symbols-outlined" aria-hidden="true">notifications</span>
           @if (unreadCount() > 0) {
-            <span class="notification-badge">{{ unreadCount() }}</span>
+            <env-badge size="xs" variant="error" [pill]="true" aria-label="{{ unreadCount() }} unread">{{ unreadCount() }}</env-badge>
           }
         </button>
         <button
           class="icon-btn"
+          type="button"
           (click)="toggleTheme()"
-          [title]="'Switch to ' + getNextTheme() + ' Mode'"
+          [attr.aria-label]="'Switch to ' + getNextTheme()"
         >
-          <span class="material-symbols-outlined">
+          <span class="material-symbols-outlined" aria-hidden="true">
             {{ getThemeIcon() }}
           </span>
         </button>
@@ -82,25 +88,29 @@
   @if (!isImmersive) {
     @if (navigationLayout() === 'horizontal') {
       <!-- Horizontal Navigation -->
-      <nav class="header-nav">
+      <nav class="header-nav" aria-label="Main navigation">
         <!-- Workspace pinned first -->
         <button
           class="nav-tab nav-tab-workspace"
+          type="button"
           [class.active]="isWorkspaceActive()"
+          [attr.aria-current]="isWorkspaceActive() ? 'page' : null"
           (click)="navigateTo('workspace')"
         >
-          <span class="material-symbols-outlined nav-tab-icon">dashboard</span>
+          <span class="material-symbols-outlined nav-tab-icon" aria-hidden="true">dashboard</span>
           Workspace
         </button>
-        <div class="nav-divider-v"></div>
+        <div class="nav-divider-v" aria-hidden="true"></div>
         <!-- Individual navigation items -->
         @for (item of allNavItems; track item.id) {
           <button
             class="nav-tab"
+            type="button"
             [class.active]="isItemActive(item)"
+            [attr.aria-current]="isItemActive(item) ? 'page' : null"
             (click)="navigateTo(item.route)"
           >
-            <span class="material-symbols-outlined nav-tab-icon">{{ item.icon }}</span>
+            <span class="material-symbols-outlined nav-tab-icon" aria-hidden="true">{{ item.icon }}</span>
             {{ item.label }}
           </button>
         }
@@ -110,17 +120,19 @@
       @if (!sidebarCollapsed()) {
         <div class="sidebar-backdrop" (click)="toggleSidebar()"></div>
       }
-      <aside class="sidebar" [class.collapsed]="sidebarCollapsed()">
+      <aside class="sidebar" [class.collapsed]="sidebarCollapsed()" aria-label="Site navigation">
         <nav class="sidebar-nav">
 
           <!-- ── Workspace (pinned top-level) ── -->
           <button
             class="sidebar-nav-item sidebar-workspace-item"
+            type="button"
             [class.active]="isWorkspaceActive()"
+            [attr.aria-current]="isWorkspaceActive() ? 'page' : null"
             (click)="navigateTo('workspace')"
-            [title]="sidebarCollapsed() ? 'Workspace' : ''"
+            [attr.aria-label]="sidebarCollapsed() ? 'Workspace' : null"
           >
-            <span class="material-symbols-outlined sidebar-icon">dashboard</span>
+            <span class="material-symbols-outlined sidebar-icon" aria-hidden="true">dashboard</span>
             @if (!sidebarCollapsed()) {
               <span class="sidebar-label">Workspace</span>
             }
@@ -130,11 +142,13 @@
           @for (item of allNavItems; track item.id) {
             <button
               class="sidebar-nav-item"
+              type="button"
               [class.active]="isItemActive(item)"
+              [attr.aria-current]="isItemActive(item) ? 'page' : null"
               (click)="navigateTo(item.route)"
-              [title]="sidebarCollapsed() ? item.label : ''"
+              [attr.aria-label]="sidebarCollapsed() ? item.label : null"
             >
-              <span class="material-symbols-outlined sidebar-icon">{{ item.icon }}</span>
+              <span class="material-symbols-outlined sidebar-icon" aria-hidden="true">{{ item.icon }}</span>
               @if (!sidebarCollapsed()) {
                 <span class="sidebar-label">{{ item.label }}</span>
               }
@@ -156,7 +170,7 @@
             @if (!sidebarCollapsed()) {
               <span class="sidebar-label">Bin</span>
               @if (binCount() > 0) {
-                <span class="sidebar-bin-badge">{{ binCount() }}</span>
+                <env-badge size="xs" variant="error" [pill]="true" style="margin-left:auto">{{ binCount() }}</env-badge>
               }
             } @else if (binCount() > 0) {
               <span class="sidebar-bin-dot"></span>
@@ -185,14 +199,28 @@
 
 
 
-<!-- Voice active banner -->
+<!-- Voice active popup -->
 @if (isVoiceActive()) {
-  <div class="voice-active-banner">
-    <span class="material-symbols-outlined" style="font-size:16px;">mic</span>
-    <span>Voice input active — click any text field to start dictating</span>
-    <button class="voice-banner-dismiss" (click)="toggleVoice()" title="Stop voice input">
-      <span class="material-symbols-outlined" style="font-size:16px;">mic_off</span>
-    </button>
+  <div class="voice-popup" role="status" aria-live="polite">
+    <span class="voice-popup-text" [class.voice-popup-text--idle]="!voiceText()">
+      {{ voiceText() || 'Listening...' }}
+    </span>
+    <div class="voice-popup-right">
+      <span class="material-symbols-outlined voice-popup-mic" aria-hidden="true">mic</span>
+      <div class="voice-popup-viz" aria-hidden="true">
+        <div class="vdot-col"></div>
+        <div class="vdot-col"></div>
+        <div class="vdot-col"></div>
+        <div class="vdot-col"></div>
+        <div class="vdot-col"></div>
+        <div class="vdot-col"></div>
+        <div class="vdot-col"></div>
+        <div class="vdot-col"></div>
+        <div class="vdot-col"></div>
+        <div class="vdot-col"></div>
+      </div>
+      <button class="voice-popup-stop" (click)="toggleVoice()" aria-label="Stop voice input"></button>
+    </div>
   </div>
 }
 

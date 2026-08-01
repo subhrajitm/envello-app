@@ -1,21 +1,23 @@
-import { Component, computed, inject, signal, HostListener, OnInit, OnDestroy, ChangeDetectionStrategy } from '@angular/core';
+import { Component, computed, inject, signal, effect, untracked, HostListener, OnInit, OnDestroy, ChangeDetectionStrategy, ViewChild, ElementRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { ActivatedRoute } from '@angular/router';
 import { StoreService, Task, NotificationService, FileStorageService, AiService, ThemeService, UserPreferencesService, AppPreferences, ContextService, RecentActivityService } from '@envello/core';
-import { SidebarNavItem, AiAssistantPanelComponent, AiPanelMessage, EmptyStateComponent, ConfirmDialogComponent } from '@envello/ui';
+import { SidebarNavItem, AiAssistantPanelComponent, AiPanelMessage, EmptyStateComponent, ConfirmDialogComponent, BadgeComponent, type BadgeVariant, ChipComponent } from '@envello/ui';
 
 type TaskViewFilter = 'inbox' | 'today' | 'upcoming' | 'completed' | 'monitor';
 type ViewMode = 'list' | 'thumbnails' | 'timeline';
 type TaskListItem =
   | { kind: 'header'; label: string; count: number; accent: string }
   | { kind: 'task'; task: Task }
-  | { kind: 'subtask'; task: Task; parentTitle: string };
+  | { kind: 'subtask'; task: Task; parentTitle: string }
+  | { kind: 'add-row'; group: string; accent: string };
 
 type SubtaskDraft = { title: string; priority: Task['priority']; due?: string };
 
 @Component({
   selector: 'app-tasks',
   standalone: true,
-  imports: [CommonModule, AiAssistantPanelComponent, EmptyStateComponent, ConfirmDialogComponent],
+  imports: [CommonModule, AiAssistantPanelComponent, EmptyStateComponent, ConfirmDialogComponent, BadgeComponent, ChipComponent],
   templateUrl: './tasks.component.html',
   styleUrl: './tasks.component.css',
   changeDetection: ChangeDetectionStrategy.OnPush
@@ -23,6 +25,7 @@ type SubtaskDraft = { title: string; priority: Task['priority']; due?: string };
 export class TasksComponent implements OnInit, OnDestroy {
   readonly today = new Date();
   store = inject(StoreService);
+  private route = inject(ActivatedRoute);
   private notificationService = inject(NotificationService);
   private fileStorage = inject(FileStorageService);
   private aiService = inject(AiService);
@@ -38,7 +41,7 @@ export class TasksComponent implements OnInit, OnDestroy {
   selectedView = signal<TaskViewFilter>('inbox');
   searchExpanded = signal(false);
   calSidebarCollapsed = signal(false);
-  collapsedGroups = signal<Set<string>>(new Set());
+  collapsedGroups = signal<Set<string>>(new Set(['No Date', 'Completed']));
   quickAddMode = signal<'do-now' | 'do-later'>('do-now');
   /**
    * Main content layout mode for the center panel.
@@ -50,6 +53,10 @@ export class TasksComponent implements OnInit, OnDestroy {
   // Quick add bar state
   quickAddVisible = signal<boolean>(false);
   quickAddInput = signal<string>('');
+
+  // Inline-add per group state
+  inlineAddGroup = signal<string | null>(null);
+  inlineAddTitle = signal<string>('');
 
   // Focus mode state
   focusMode = signal<boolean>(false);
@@ -136,10 +143,15 @@ export class TasksComponent implements OnInit, OnDestroy {
   // Loading states
   isLoading = signal<boolean>(false);
 
-  // Virtual scrolling
+  // Virtual scrolling (windowing for list view)
   virtualScrollEnabled = signal<boolean>(true);
-  visibleTaskRange = signal<{ start: number; end: number }>({ start: 0, end: 50 });
-  itemHeight: number = 65; // Approximate height of each task row
+  visibleTaskRange = signal<{ start: number; end: number }>({ start: 0, end: 75 });
+  itemHeight: number = 65; // Approximate height of each task row in px
+  private readonly WINDOW_THRESHOLD = 100; // only window above this many flat items
+  private readonly WINDOW_BUFFER    = 15;  // extra items above/below the viewport
+
+  // Thumbnails view load-more
+  thumbnailsLimit = signal(48);
 
   // Voice input
   isListening = signal<boolean>(false);
@@ -156,6 +168,21 @@ export class TasksComponent implements OnInit, OnDestroy {
   // Error handling
   errorMessage = signal<string | null>(null);
   showError = signal<boolean>(false);
+
+  private _pendingTaskId = signal<string | null>(null);
+
+  constructor() {
+    // Reactively open task details once the store has loaded and the task is found
+    effect(() => {
+      const taskId = this._pendingTaskId();
+      if (!taskId) return;
+      const task = this.store.tasks().find(t => t.id === taskId);
+      if (task) {
+        this._pendingTaskId.set(null);
+        untracked(() => this.openTaskDetails(task));
+      }
+    });
+  }
 
   // Image preview
   previewingImage = signal<string | null>(null);
@@ -181,6 +208,7 @@ export class TasksComponent implements OnInit, OnDestroy {
   // New task modal state
   newTaskModalOpen = signal<boolean>(false);
   newTaskTitle = signal<string>('');
+  @ViewChild('newTaskTitleRef') private newTaskTitleRef?: ElementRef<HTMLTextAreaElement>;
   newTaskDescription = signal<string>('');
   newTaskPriority = signal<Task['priority']>('MEDIUM');
   newTaskStatus = signal<Task['status']>('ACTIVE');
@@ -426,6 +454,7 @@ export class TasksComponent implements OnInit, OnDestroy {
     this.showMarkdownPreview.set(false);
     this.showNewTaskReminderPicker.set(false);
     this.newTaskModalOpen.set(true);
+    setTimeout(() => this.newTaskTitleRef?.nativeElement?.focus(), 0);
   }
 
   closeNewTaskDialog(force = false) {
@@ -740,6 +769,8 @@ export class TasksComponent implements OnInit, OnDestroy {
   onSidebarActiveChange(id: string) {
     this.selectedView.set(id as TaskViewFilter);
     this.sidebarActiveId.set(id);
+    this.visibleTaskRange.set({ start: 0, end: 75 });
+    this.thumbnailsLimit.set(48);
     // Reset metric and project filters when switching primary view
     this.metricFilter.set('none');
 
@@ -937,6 +968,9 @@ export class TasksComponent implements OnInit, OnDestroy {
         items.push({ kind: 'header', label, count: list.length, accent });
         if (!collapsed.has(label)) {
           list.forEach(t => items.push({ kind: 'task', task: t }));
+          if (label !== 'Completed' && label !== 'Overdue') {
+            items.push({ kind: 'add-row', group: label, accent });
+          }
         }
       };
 
@@ -973,6 +1007,45 @@ export class TasksComponent implements OnInit, OnDestroy {
     return items;
   });
 
+  /** Windowed slice of flatListItems for rendering — prevents DOM bloat with 100+ items. */
+  visibleFlatItems = computed((): TaskListItem[] => {
+    const items = this.flatListItems();
+    if (items.length <= this.WINDOW_THRESHOLD) return items;
+    const { start, end } = this.visibleTaskRange();
+    return items.slice(start, end);
+  });
+
+  topSpacerHeight = computed((): number => {
+    const items = this.flatListItems();
+    if (items.length <= this.WINDOW_THRESHOLD) return 0;
+    return this.visibleTaskRange().start * this.itemHeight;
+  });
+
+  bottomSpacerHeight = computed((): number => {
+    const items = this.flatListItems();
+    if (items.length <= this.WINDOW_THRESHOLD) return 0;
+    return Math.max(0, items.length - this.visibleTaskRange().end) * this.itemHeight;
+  });
+
+  /** Visible subset of filteredTasks for the thumbnails card grid. */
+  visibleThumbnailTasks = computed(() => this.filteredTasks().slice(0, this.thumbnailsLimit()));
+
+  loadMoreThumbnails() { this.thumbnailsLimit.update(n => n + 48); }
+
+  groupIcon(label: string): string {
+    switch (label) {
+      case 'Overdue':            return 'warning';
+      case 'Today':              return 'today';
+      case 'Upcoming':           return 'schedule';
+      case 'No Date':            return 'event_busy';
+      case 'Completed':          return 'check_circle';
+      case 'Subtasks Due':
+      case 'Subtasks Due Today':
+      case 'Upcoming Subtasks':  return 'subdirectory_arrow_right';
+      default:                   return 'circle';
+    }
+  }
+
   toggleGroupCollapse(label: string) {
     this.collapsedGroups.update(set => {
       const next = new Set(set);
@@ -983,6 +1056,60 @@ export class TasksComponent implements OnInit, OnDestroy {
 
   isGroupCollapsed(label: string) {
     return this.collapsedGroups().has(label);
+  }
+
+  // ── Inline add per group ──────────────────────────────────────────────────
+
+  openInlineAdd(group: string, event: Event) {
+    event.stopPropagation();
+    this.inlineAddGroup.set(group);
+    this.inlineAddTitle.set('');
+    setTimeout(() => {
+      (document.querySelector('.task-inline-input') as HTMLInputElement)?.focus();
+    }, 0);
+  }
+
+  closeInlineAdd() {
+    this.inlineAddGroup.set(null);
+    this.inlineAddTitle.set('');
+  }
+
+  onInlineAddBlur() {
+    setTimeout(() => {
+      if (!this.inlineAddTitle().trim()) this.closeInlineAdd();
+    }, 150);
+  }
+
+  submitInlineAdd(group: string, event?: Event) {
+    event?.stopPropagation();
+    const title = this.inlineAddTitle().trim();
+    if (!title) { this.closeInlineAdd(); return; }
+
+    const todayStr = new Date().toISOString().slice(0, 10);
+    const tomorrowDate = new Date(); tomorrowDate.setDate(tomorrowDate.getDate() + 1);
+    const tomorrowStr = tomorrowDate.toISOString().slice(0, 10);
+
+    let due: string | undefined;
+    let status: Task['status'] = 'ACTIVE';
+
+    if (group === 'Today')    due = todayStr;
+    if (group === 'Upcoming') due = tomorrowStr;
+    // 'No Date' → intentionally no due date
+
+    const task: Task = {
+      id: crypto.randomUUID(),
+      title,
+      priority: 'MEDIUM',
+      hours: '0',
+      status,
+      ...(due && { due }),
+      createdAt: new Date().toISOString(),
+    };
+    this.store.addTask(task);
+    this.inlineAddTitle.set('');
+    setTimeout(() => {
+      (document.querySelector('.task-inline-input') as HTMLInputElement)?.focus();
+    }, 0);
   }
 
   cycleTaskPriority(task: Task, event: Event) {
@@ -1526,6 +1653,15 @@ export class TasksComponent implements OnInit, OnDestroy {
       {
         pattern: /(\d{1,2})\/(\d{1,2})(?:\/(\d{2,4}))?/,
         value: (match: RegExpMatchArray) => `${this.parseDate(match[1], match[2], match[3])}, ${this.newTaskDueTime()}`
+      },
+      // "by 10th Aug 2026", "by Aug 10 2026", "by Aug 10", "10 Aug 2026", "Aug 10th 2026" etc.
+      {
+        pattern: /\b(?:by\s+)?(\d{1,2})(?:st|nd|rd|th)?\s+(jan(?:uary)?|feb(?:ruary)?|mar(?:ch)?|apr(?:il)?|may|jun(?:e)?|jul(?:y)?|aug(?:ust)?|sep(?:tember)?|oct(?:ober)?|nov(?:ember)?|dec(?:ember)?)\s*(\d{4})?\b/i,
+        value: (match: RegExpMatchArray) => this.parseNlpMonthDate(match[1], match[2], match[3])
+      },
+      {
+        pattern: /\b(?:by\s+)?(jan(?:uary)?|feb(?:ruary)?|mar(?:ch)?|apr(?:il)?|may|jun(?:e)?|jul(?:y)?|aug(?:ust)?|sep(?:tember)?|oct(?:ober)?|nov(?:ember)?|dec(?:ember)?)\s+(\d{1,2})(?:st|nd|rd|th)?\s*,?\s*(\d{4})?\b/i,
+        value: (match: RegExpMatchArray) => this.parseNlpMonthDate(match[2], match[1], match[3])
       }
     ];
 
@@ -2166,6 +2302,14 @@ export class TasksComponent implements OnInit, OnDestroy {
     }
     document.documentElement.setAttribute('data-font-size', this.fontSize());
 
+    // If navigated here with a specific task ID, set the pending signal.
+    // The constructor effect watches store.tasks() and opens the detail panel
+    // as soon as the task appears (handles both instant and deferred DB load).
+    const taskId = this.route.snapshot.queryParamMap.get('taskId');
+    if (taskId) {
+      this._pendingTaskId.set(taskId);
+    }
+
     // Initialize voice recognition if available
     this.initVoiceRecognition();
   }
@@ -2565,17 +2709,46 @@ export class TasksComponent implements OnInit, OnDestroy {
 
   parseDateFromString(dateStr: string): Date | null {
     if (!dateStr) return null;
-    if (dateStr.includes('Today')) {
-      return new Date();
-    }
+    if (dateStr.includes('Today')) return new Date();
     if (dateStr.includes('Tomorrow')) {
-      const tomorrow = new Date();
-      tomorrow.setDate(tomorrow.getDate() + 1);
-      return tomorrow;
+      const d = new Date(); d.setDate(d.getDate() + 1); return d;
     }
-    // Try to parse common date formats
-    const parsed = new Date(dateStr);
-    return isNaN(parsed.getTime()) ? null : parsed;
+
+    // ISO format — always has year, parse directly
+    if (/^\d{4}-\d{2}-\d{2}/.test(dateStr)) {
+      const d = new Date(dateStr + 'T00:00:00');
+      return isNaN(d.getTime()) ? null : d;
+    }
+
+    // Human-readable without year e.g. "Mon, May 18" or "May 18"
+    // Append current year so the date lands in the right year
+    const currentYear = new Date().getFullYear();
+    const withYear = `${dateStr}, ${currentYear}`;
+    const candidate = new Date(withYear);
+    if (!isNaN(candidate.getTime())) return candidate;
+
+    // Last resort — try raw string (handles full dates like "May 18, 2026")
+    const fallback = new Date(dateStr);
+    return isNaN(fallback.getTime()) ? null : fallback;
+  }
+
+  // Converts day + month-name + optional year to ISO "YYYY-MM-DD" for NLP parsing.
+  private parseNlpMonthDate(dayStr: string, monthStr: string, yearStr?: string): string {
+    const monthMap: Record<string, number> = {
+      jan: 0, january: 0, feb: 1, february: 1, mar: 2, march: 2,
+      apr: 3, april: 3, may: 4, jun: 5, june: 5, jul: 6, july: 6,
+      aug: 7, august: 7, sep: 8, september: 8, oct: 9, october: 9,
+      nov: 10, november: 10, dec: 11, december: 11,
+    };
+    const month = monthMap[monthStr.toLowerCase().slice(0, 3)];
+    if (month === undefined) return '';
+    const day   = parseInt(dayStr, 10);
+    const today = new Date();
+    let year    = yearStr ? parseInt(yearStr, 10) : today.getFullYear();
+    // If no year given and the date has already passed this year, use next year
+    if (!yearStr && new Date(year, month, day) < today) year++;
+    const d = new Date(year, month, day);
+    return d.toISOString().slice(0, 10);
   }
 
   // File attachment methods
@@ -2670,6 +2843,51 @@ export class TasksComponent implements OnInit, OnDestroy {
     this.bulkActionMode.set(false);
   }
 
+  // ── Group-level select-all ────────────────────────────────────────────────
+
+  private groupTaskIds(label: string): string[] {
+    const tasks = this.filteredTasks();
+    const today = new Date();
+    switch (label) {
+      case 'Overdue':   return tasks.filter(t => this.isOverdue(t) && t.status !== 'COMPLETED').map(t => t.id);
+      case 'Today':     return tasks.filter(t => this.dueDateMatchesDay(t.due, today) && t.status !== 'COMPLETED').map(t => t.id);
+      case 'Upcoming':  return tasks.filter(t => !!t.due && !this.dueDateMatchesDay(t.due, today) && !this.isOverdue(t) && t.status !== 'COMPLETED').map(t => t.id);
+      case 'No Date':   return tasks.filter(t => !t.due && t.status !== 'COMPLETED').map(t => t.id);
+      case 'Completed': return tasks.filter(t => t.status === 'COMPLETED').map(t => t.id);
+      default:          return [];
+    }
+  }
+
+  isGroupAllSelected(label: string): boolean {
+    const ids = this.groupTaskIds(label);
+    return ids.length > 0 && ids.every(id => this.selectedTasks().has(id));
+  }
+
+  toggleGroupSelection(label: string, event: Event) {
+    event.stopPropagation();
+    const ids = this.groupTaskIds(label);
+    const allSelected = this.isGroupAllSelected(label);
+    const next = new Set(this.selectedTasks());
+    if (allSelected) {
+      ids.forEach(id => next.delete(id));
+    } else {
+      ids.forEach(id => next.add(id));
+    }
+    this.selectedTasks.set(next);
+    this.bulkActionMode.set(next.size > 0);
+  }
+
+  clearCompletedTasks() {
+    const completed = this.store.tasks().filter(t => t.status === 'COMPLETED');
+    completed.forEach(t => this.store.deleteTask(t.id));
+    if (completed.length > 0) {
+      this.notificationService.success(
+        'Cleared',
+        `${completed.length} completed task${completed.length === 1 ? '' : 's'} moved to bin.`
+      );
+    }
+  }
+
   bulkCompleteTasks() {
     const selected = this.selectedTasks();
     let blocked = 0;
@@ -2704,6 +2922,22 @@ export class TasksComponent implements OnInit, OnDestroy {
     this.bulkDeleteModalOpen.set(false);
   }
 
+  bulkReopenTasks() {
+    const selected = this.selectedTasks();
+    selected.forEach(id => {
+      const task = this.store.tasks().find(t => t.id === id);
+      if (task && task.status === 'COMPLETED') {
+        this.store.updateTask(id, { status: 'ACTIVE' });
+      }
+    });
+    this.clearSelection();
+  }
+
+  hasCompletedSelected = computed(() => {
+    const selected = this.selectedTasks();
+    return this.store.tasks().some(t => selected.has(t.id) && t.status === 'COMPLETED');
+  });
+
   bulkChangePriority(priority: Task['priority']) {
     const selected = this.selectedTasks();
     selected.forEach(id => {
@@ -2728,17 +2962,16 @@ export class TasksComponent implements OnInit, OnDestroy {
 
   onScroll(event: Event) {
     const target = event.target as HTMLElement;
-    const scrollTop = target.scrollTop;
+    const items = this.flatListItems();
+    if (items.length <= this.WINDOW_THRESHOLD) return;
+
+    const scrollTop      = target.scrollTop;
     const containerHeight = target.clientHeight;
+    const visibleCount   = Math.ceil(containerHeight / this.itemHeight) + this.WINDOW_BUFFER * 2;
+    const start          = Math.max(0, Math.floor(scrollTop / this.itemHeight) - this.WINDOW_BUFFER);
+    const end            = Math.min(start + visibleCount, items.length);
 
-    const tasks = this.filteredTasks();
-    if (tasks.length <= 50) return;
-
-    // Calculate visible range
-    const start = Math.floor(scrollTop / this.itemHeight);
-    const end = Math.min(start + Math.ceil(containerHeight / this.itemHeight) + 10, tasks.length);
-
-    this.visibleTaskRange.set({ start: Math.max(0, start - 5), end });
+    this.visibleTaskRange.set({ start, end });
   }
 
   // Theme switching
@@ -2888,4 +3121,41 @@ export class TasksComponent implements OnInit, OnDestroy {
   }
 
   clearDetailsAiChat() { this.detailsAiMessages.set([]); }
+
+  getStatusVariant(status: string): BadgeVariant {
+    const map: Record<string, BadgeVariant> = {
+      todo: 'default', in_progress: 'info', completed: 'success', blocked: 'error'
+    };
+    return map[status.toLowerCase()] ?? 'default';
+  }
+
+  getStatusIcon(status: string): string {
+    const map: Record<string, string> = {
+      todo: 'radio_button_unchecked', in_progress: 'pending', completed: 'check_circle', blocked: 'block'
+    };
+    return map[status.toLowerCase()] ?? 'circle';
+  }
+
+  getStatusLabel(status: string): string {
+    const map: Record<string, string> = {
+      todo: 'Todo', in_progress: 'In Progress', completed: 'Done', blocked: 'Blocked'
+    };
+    return map[status.toLowerCase()] ?? status;
+  }
+
+  getPriorityVariant(priority: string): BadgeVariant {
+    const map: Record<string, BadgeVariant> = {
+      p1: 'error', high: 'error', p2: 'warning', medium: 'warning', p3: 'purple', low: 'default'
+    };
+    return map[priority.toLowerCase()] ?? 'default';
+  }
+
+  getPriorityIcon(priority: string): string {
+    const map: Record<string, string> = {
+      p1: 'keyboard_double_arrow_up', high: 'keyboard_double_arrow_up',
+      p2: 'drag_handle', medium: 'drag_handle',
+      p3: 'keyboard_double_arrow_down', low: 'keyboard_double_arrow_down'
+    };
+    return map[priority.toLowerCase()] ?? 'drag_handle';
+  }
 }

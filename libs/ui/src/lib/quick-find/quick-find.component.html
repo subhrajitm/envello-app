@@ -28,14 +28,13 @@
         @if (!isCommandMode() && !isAiMode()) {
         <div class="qf-filters">
             @for (f of filterTypes; track f) {
-                <button
-                    class="qf-filter-pill"
-                    [class.active]="activeFilter() === f"
-                    (click)="setFilter(f)">
+                <button class="qf-filter-btn" (click)="setFilter(f)">
+                  <env-chip [active]="activeFilter() === f" size="sm">
                     @if (f !== 'all') {
-                        <span class="material-symbols-outlined" style="font-size:13px">{{ $any(typeMeta)[$any(f)].icon }}</span>
+                      <span class="material-symbols-outlined" style="font-size:13px">{{ $any(typeMeta)[$any(f)].icon }}</span>
                     }
                     {{ f === 'all' ? 'All' : $any(typeMeta)[$any(f)].label }}
+                  </env-chip>
                 </button>
             }
         </div>
@@ -70,9 +69,8 @@
                         <div class="qf-ai-sources-label">Sources</div>
                         <div class="qf-ai-sources">
                             @for (src of aiSources(); track src.id) {
-                                <button class="qf-ai-source-chip" (click)="selectResult(src)">
-                                    <span class="material-symbols-outlined" style="font-size:13px" [style.color]="getTypeColor(src.type)">{{ src.icon }}</span>
-                                    {{ src.title }}
+                                <button class="qf-ai-source-btn" (click)="selectResult(src)">
+                                    <env-badge variant="accent" size="xs" [icon]="src.icon">{{ src.title }}</env-badge>
                                 </button>
                             }
                         </div>
@@ -142,7 +140,7 @@
                                 @if (item.preview) { <span class="qf-item-preview">{{ item.preview }}</span> }
                             </div>
                             <div class="qf-item-right">
-                                @if (item.badge) { <span class="qf-badge" [class]="'badge-' + item.type">{{ item.badge }}</span> }
+                                @if (item.badge) { <env-badge variant="default" size="xs">{{ item.badge }}</env-badge> }
                                 @if (item.date) { <span class="qf-item-date">{{ item.date }}</span> }
                             </div>
                             <span class="material-symbols-outlined qf-item-arrow">arrow_forward</span>
@@ -173,7 +171,7 @@
                                 </div>
                                 <div class="qf-item-right">
                                     @if (item.badge) {
-                                        <span class="qf-badge" [class]="'badge-' + item.type">{{ item.badge }}</span>
+                                        <env-badge variant="default" size="xs">{{ item.badge }}</env-badge>
                                     }
                                     @if (item.date) {
                                         <span class="qf-item-date">{{ item.date }}</span>
@@ -215,9 +213,9 @@
                                 </div>
                                 <div class="qf-item-right">
                                     @if (item.badge) {
-                                        <span class="qf-badge" [class]="'badge-' + item.type">{{ item.badge }}</span>
+                                        <env-badge variant="default" size="xs">{{ item.badge }}</env-badge>
                                     }
-                                    <span class="qf-ai-tag">AI</span>
+                                    <env-badge variant="accent" size="xs">AI</env-badge>
                                 </div>
                                 <span class="material-symbols-outlined qf-item-arrow">arrow_forward</span>
                             </div>

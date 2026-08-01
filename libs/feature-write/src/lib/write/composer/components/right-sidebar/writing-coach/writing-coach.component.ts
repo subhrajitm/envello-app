@@ -1,7 +1,7 @@
 import {
   Component, input, output, signal,
   computed, inject, ChangeDetectionStrategy,
-  ChangeDetectorRef, ViewEncapsulation,
+  ChangeDetectorRef, ViewEncapsulation, SecurityContext,
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
@@ -221,7 +221,8 @@ export class WritingCoachComponent {
       .replace(/(<li>.*<\/li>\n?)+/g, s => `<ul>${s}</ul>`)
       .replace(/\n{2,}/g, '</p><p>')
       .replace(/\n/g, '<br>');
-    return this.sanitizer.bypassSecurityTrustHtml(`<p>${html}</p>`);
+    const sanitized = this.sanitizer.sanitize(SecurityContext.HTML, `<p>${html}</p>`) ?? '';
+    return this.sanitizer.bypassSecurityTrustHtml(sanitized);
   }
 
   private computeOverusedWords(text: string): string {

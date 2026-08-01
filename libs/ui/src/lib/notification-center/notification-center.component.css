@@ -53,16 +53,6 @@
     color: var(--text-primary);
 }
 
-.unread-badge {
-    padding: 1px 6px;
-    background: var(--accent-primary);
-    color: var(--accent-primary-text);
-    border-radius: 10px;
-    font-size: 10px;
-    font-weight: 700;
-    font-family: var(--font-mono);
-}
-
 .header-actions {
     display: flex;
     gap: 4px;
@@ -380,4 +370,17 @@
     .notifications-list {
         min-height: 0;
     }
+}
+
+/* ── Date group headers ─────────────────────────────────────────────────── */
+.notif-group { display: contents; }
+
+.notif-group-label {
+    padding: 10px 16px 4px;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--text-tertiary);
+    user-select: none;
 }

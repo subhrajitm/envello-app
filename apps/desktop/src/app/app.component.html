@@ -1,3 +1,4 @@
+<a href="#main-content" class="skip-link">Skip to main content</a>
 @if (authService.initialized()) {
 <div class="dashboard">
   <app-titlebar [activeTab]="currentTab()"></app-titlebar>
@@ -8,7 +9,7 @@
   </lib-header>
   }
 
-  <div class="dashboard-content" [class.no-padding]="hasSidebar() || isFullScreen()"
+  <div id="main-content" class="dashboard-content" [class.no-padding]="hasSidebar() || isFullScreen()"
     [class.immersive-view]="isImmersive()"
     [class.with-sidebar]="!isImmersive() && !isFullScreen() && navigationLayout() !== 'horizontal'"
     [class.sidebar-collapsed]="sidebarCollapsed()" [class.horizontal-nav]="navigationLayout() === 'horizontal'"
@@ -38,11 +39,9 @@
 <app-keyboard-shortcuts></app-keyboard-shortcuts>
 <!-- Onboarding wizard (shown on first run) -->
 <app-onboarding></app-onboarding>
+<!-- What's New modal (shown after version upgrade) -->
+<app-whats-new></app-whats-new>
 <!-- Global toast notifications -->
 <env-toast></env-toast>
 <!-- In-app web preview drawer -->
 <env-web-preview></env-web-preview>
-<!-- Morning Briefing -->
-@if (showBriefing()) {
-  <env-morning-briefing #briefing (closed)="showBriefing.set(false)"></env-morning-briefing>
-}

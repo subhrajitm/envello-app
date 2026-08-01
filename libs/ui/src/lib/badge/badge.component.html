@@ -1,3 +1,11 @@
-<span [class]="['env-badge', 'env-badge--' + variant, 'inline-flex items-center px-2 py-0.5 rounded text-xs font-medium', pill ? 'env-badge--pill' : '']">
+<span
+  class="env-badge"
+  [class]="'env-badge--' + variant + ' env-badge--' + size + (pill ? ' env-badge--pill' : '') + (bordered ? ' env-badge--bordered' : '')"
+  [style.--badge-custom-color]="customColor || null"
+  [class.env-badge--custom]="!!customColor"
+>
+  @if (icon) {
+    <span class="material-symbols-outlined env-badge-icon" aria-hidden="true">{{ icon }}</span>
+  }
   <ng-content></ng-content>
 </span>

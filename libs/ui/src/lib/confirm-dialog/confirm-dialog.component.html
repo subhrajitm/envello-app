@@ -1,29 +1,37 @@
 @if (isOpen) {
-<div class="cd-backdrop" (click)="cancelled.emit()">
-    <div class="cd-dialog" (click)="$event.stopPropagation()" role="alertdialog" [attr.aria-label]="title">
+<div class="cd-backdrop" (click)="cancelled.emit()" aria-hidden="true">
+</div>
+<div
+  class="cd-dialog"
+  role="alertdialog"
+  aria-modal="true"
+  [attr.aria-labelledby]="'cd-title-' + title"
+  [attr.aria-describedby]="'cd-desc-' + title"
+  cdkTrapFocus
+  cdkTrapFocusAutoCapture
+>
 
-        @if (icon) {
-        <div class="cd-icon cd-icon--{{ variant }}">
-            <span class="material-symbols-outlined">{{ icon }}</span>
-        </div>
-        }
-
-        <h3 class="cd-title">{{ title }}</h3>
-
-        <div class="cd-desc">
-            <ng-content />
-        </div>
-
-        <div class="cd-actions">
-            <button class="cd-cancel" (click)="cancelled.emit()">{{ cancelLabel }}</button>
-            <button class="cd-confirm cd-confirm--{{ variant }}" (click)="confirmed.emit()">
-                @if (icon) {
-                <span class="material-symbols-outlined">{{ icon }}</span>
-                }
-                {{ confirmLabel }}
-            </button>
-        </div>
-
+    @if (icon) {
+    <div class="cd-icon cd-icon--{{ variant }}" aria-hidden="true">
+        <span class="material-symbols-outlined">{{ icon }}</span>
     </div>
+    }
+
+    <h3 class="cd-title" [id]="'cd-title-' + title">{{ title }}</h3>
+
+    <div class="cd-desc" [id]="'cd-desc-' + title">
+        <ng-content />
+    </div>
+
+    <div class="cd-actions">
+        <button class="cd-cancel" (click)="cancelled.emit()">{{ cancelLabel }}</button>
+        <button class="cd-confirm cd-confirm--{{ variant }}" (click)="confirmed.emit()">
+            @if (icon) {
+            <span class="material-symbols-outlined" aria-hidden="true">{{ icon }}</span>
+            }
+            {{ confirmLabel }}
+        </button>
+    </div>
+
 </div>
 }

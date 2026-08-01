@@ -1,3 +1,10 @@
+<a href="#main-content" class="skip-link">Skip to main content</a>
+@if (isOffline()) {
+<div class="offline-banner" role="status" aria-live="polite">
+  <span class="material-symbols-outlined" style="font-size:14px;opacity:0.8;" aria-hidden="true">cloud_off</span>
+  Offline — changes will sync when you reconnect.
+</div>
+}
 @if (updateAvailable()) {
 <div class="sw-update-banner">
   A new version is available.
@@ -11,7 +18,7 @@
   </lib-header>
   }
 
-  <div class="dashboard-content" [class.no-padding]="hasSidebar() || isFullScreen()"
+  <div id="main-content" class="dashboard-content" [class.no-padding]="hasSidebar() || isFullScreen()"
     [class.immersive-view]="isImmersive()"
     [class.with-sidebar]="!isImmersive() && !isFullScreen() && navigationLayout() !== 'horizontal'"
     [class.sidebar-collapsed]="sidebarCollapsed()" [class.horizontal-nav]="navigationLayout() === 'horizontal'"
@@ -25,11 +32,11 @@
 </div>
 <!-- Keyboard shortcuts modal (? key) -->
 <app-keyboard-shortcuts></app-keyboard-shortcuts>
+<!-- Onboarding wizard (shown on first run) -->
+<app-onboarding></app-onboarding>
+<!-- What's New modal (shown after version upgrade) -->
+<app-whats-new></app-whats-new>
 <!-- Global toast notifications -->
 <env-toast></env-toast>
 <!-- In-app web preview drawer -->
 <env-web-preview></env-web-preview>
-<!-- Morning Briefing -->
-@if (showBriefing()) {
-  <env-morning-briefing #briefing (closed)="showBriefing.set(false)"></env-morning-briefing>
-}

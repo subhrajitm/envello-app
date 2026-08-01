@@ -7,11 +7,13 @@ import { UserService, WorkspaceProfileService, StoreService, NotificationService
 import { ModalComponent } from '../modal/modal.component';
 import { ConfirmDialogComponent } from '../confirm-dialog/confirm-dialog.component';
 import { KeyboardShortcutsService } from '../keyboard-shortcuts/keyboard-shortcuts.service';
+import { BadgeComponent } from '../badge/badge.component';
+import { ChipComponent } from '../chip/chip.component';
 
 @Component({
   selector: 'app-profile-menu',
   standalone: true,
-  imports: [FormsModule, ModalComponent, ConfirmDialogComponent],
+  imports: [FormsModule, ModalComponent, ConfirmDialogComponent, BadgeComponent, ChipComponent],
   providers: [DatePipe],
   templateUrl: './profile-menu.component.html',
   styleUrl: './profile-menu.component.css',

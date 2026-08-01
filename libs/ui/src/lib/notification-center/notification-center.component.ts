@@ -4,11 +4,12 @@ import { Router } from '@angular/router';
 import { trigger, transition, style, animate } from '@angular/animations';
 import { NotificationService, Notification, NotificationType } from '@envello/core';
 import { ConfirmDialogComponent } from '../confirm-dialog/confirm-dialog.component';
+import { BadgeComponent } from '../badge/badge.component';
 
 @Component({
   selector: 'app-notification-center',
   standalone: true,
-  imports: [CommonModule, ConfirmDialogComponent],
+  imports: [CommonModule, ConfirmDialogComponent, BadgeComponent],
   templateUrl: './notification-center.component.html',
   styleUrl: './notification-center.component.css',
   animations: [
@@ -42,6 +43,29 @@ export class NotificationCenterComponent {
       return all.filter(n => !n.read);
     }
     return all;
+  });
+
+  // Grouped by date bucket: Today | Yesterday | Earlier
+  groupedNotifications = computed(() => {
+    const items = this.filteredNotifications();
+    const now = new Date();
+    const todayStart     = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const yesterdayStart = new Date(todayStart.getTime() - 86_400_000);
+
+    const groups: { label: string; items: Notification[] }[] = [
+      { label: 'Today',     items: [] },
+      { label: 'Yesterday', items: [] },
+      { label: 'Earlier',   items: [] },
+    ];
+
+    for (const n of items) {
+      const ts = n.timestamp instanceof Date ? n.timestamp : new Date(n.timestamp);
+      if (ts >= todayStart)     { groups[0].items.push(n); }
+      else if (ts >= yesterdayStart) { groups[1].items.push(n); }
+      else                      { groups[2].items.push(n); }
+    }
+
+    return groups.filter(g => g.items.length > 0);
   });
 
   open() {

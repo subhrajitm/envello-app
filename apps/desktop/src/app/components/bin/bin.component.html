@@ -8,14 +8,14 @@
         </h1>
 
         <div class="bin-filter-pills">
-            <button class="filter-pill" [class.active]="activeFilter() === 'ALL'" (click)="setFilter('ALL')">All</button>
-            <button class="filter-pill" [class.active]="activeFilter() === 'task'" (click)="setFilter('task')">Tasks</button>
-            <button class="filter-pill" [class.active]="activeFilter() === 'daily-note'" (click)="setFilter('daily-note')">Notes</button>
-            <button class="filter-pill" [class.active]="activeFilter() === 'write'" (click)="setFilter('write')">Write</button>
-            <button class="filter-pill" [class.active]="activeFilter() === 'meeting'" (click)="setFilter('meeting')">Meetings</button>
-            <button class="filter-pill" [class.active]="activeFilter() === 'bookmark'" (click)="setFilter('bookmark')">Bookmarks</button>
-            <button class="filter-pill" [class.active]="activeFilter() === 'transaction'" (click)="setFilter('transaction')">Transactions</button>
-            <button class="filter-pill" [class.active]="activeFilter() === 'credential'" (click)="setFilter('credential')">Vault</button>
+            <button (click)="setFilter('ALL')"><env-chip size="sm" [active]="activeFilter() === 'ALL'">All</env-chip></button>
+            <button (click)="setFilter('task')"><env-chip size="sm" [active]="activeFilter() === 'task'">Tasks</env-chip></button>
+            <button (click)="setFilter('daily-note')"><env-chip size="sm" [active]="activeFilter() === 'daily-note'">Notes</env-chip></button>
+            <button (click)="setFilter('write')"><env-chip size="sm" [active]="activeFilter() === 'write'">Write</env-chip></button>
+            <button (click)="setFilter('meeting')"><env-chip size="sm" [active]="activeFilter() === 'meeting'">Meetings</env-chip></button>
+            <button (click)="setFilter('bookmark')"><env-chip size="sm" [active]="activeFilter() === 'bookmark'">Bookmarks</env-chip></button>
+            <button (click)="setFilter('transaction')"><env-chip size="sm" [active]="activeFilter() === 'transaction'">Transactions</env-chip></button>
+            <button (click)="setFilter('credential')"><env-chip size="sm" [active]="activeFilter() === 'credential'">Vault</env-chip></button>
         </div>
 
         <div class="bin-toolbar-right">

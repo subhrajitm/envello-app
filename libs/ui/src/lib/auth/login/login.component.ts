@@ -1,5 +1,4 @@
 import { Component, inject, signal, effect, ViewChild, ElementRef, AfterViewInit, OnDestroy } from '@angular/core';
-import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { AuthService, TauriService } from '@envello/core';
 import { Router, RouterModule } from '@angular/router';
@@ -9,7 +8,7 @@ import { ButtonComponent } from '../../button/button.component';
 @Component({
   selector: 'app-login',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterModule, EnvLogoComponent, ButtonComponent],
+  imports: [FormsModule, RouterModule, EnvLogoComponent, ButtonComponent],
   template: `
     <div class="login-container">
       <div class="lines-bg">
@@ -53,10 +52,12 @@ import { ButtonComponent } from '../../button/button.component';
             >
           </div>
 
-          <div *ngIf="error()" class="error-message">
-            <span class="material-symbols-outlined">error</span>
+          @if (error()) {
+          <div class="error-message" role="alert">
+            <span class="material-symbols-outlined" aria-hidden="true">error</span>
             <span>{{ error() }}</span>
           </div>
+          }
 
           <env-button
             type="submit"
@@ -444,28 +445,53 @@ export class LoginComponent implements AfterViewInit, OnDestroy {
     return map[theme] ?? map['light'];
   }
 
+  private readonly emailRe = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
   async handleLogin() {
     if (!this.email || !this.password) {
       this.error.set('Please fill in all fields');
+      return;
+    }
+    if (!this.emailRe.test(this.email)) {
+      this.error.set('Please enter a valid email address');
+      return;
+    }
+    if (typeof navigator !== 'undefined' && !navigator.onLine) {
+      this.error.set('No internet connection — check your network and try again.');
       return;
     }
 
     this.loading.set(true);
     this.error.set(null);
 
-    const success = await this.authService.login(this.email, this.password);
-
-    if (success) {
-      // Router navigation handled by auth state subscription or manually here
-    } else {
-      this.error.set('Invalid credentials or login failed.');
+    try {
+      const success = await this.authService.login(this.email, this.password);
+      if (!success) {
+        this.error.set('Invalid credentials or login failed.');
+      }
+    } catch (e: any) {
+      const msg = e?.message ?? '';
+      if (msg.includes('fetch') || msg.includes('network') || msg.includes('Failed to fetch')) {
+        this.error.set('Could not reach the server — check your internet connection.');
+      } else {
+        this.error.set(msg || 'Login failed. Please try again.');
+      }
+    } finally {
+      this.loading.set(false);
     }
-    this.loading.set(false);
   }
 
   async handleSignUp() {
     if (!this.email || !this.password) {
       this.error.set('Please fill in all fields to sign up');
+      return;
+    }
+    if (!this.emailRe.test(this.email)) {
+      this.error.set('Please enter a valid email address');
+      return;
+    }
+    if (this.password.length < 8) {
+      this.error.set('Password must be at least 8 characters');
       return;
     }
 

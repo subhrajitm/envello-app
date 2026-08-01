@@ -194,18 +194,7 @@
   50% { opacity: 0.6; transform: scale(1.2); }
 }
 
-/* Type badge */
-.wr-type-badge {
-  display: inline-flex; align-items: center; padding: 2px 8px; border-radius: 4px;
-  font-size: 10px; font-weight: 700; text-transform: uppercase;
-  letter-spacing: 0.4px; border: 1px solid; white-space: nowrap;
-}
-
-/* Status badge */
-.wr-status-badge {
-  display: inline-flex; align-items: center; gap: 5px;
-  font-size: 12px; color: var(--text-secondary); white-space: nowrap;
-}
+/* Status dot (used in grid card and sidebar) */
 .wr-status-dot {
   width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0;
 }
@@ -342,33 +331,12 @@
   background: var(--bg-panel);
   flex-shrink: 0;
 }
-.wra-type-pill {
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-  height: 28px;
-  padding: 0 11px;
+.wra-type-pill-btn {
   background: transparent;
-  border: 1px solid var(--border-subtle);
-  border-radius: 14px;
-  font-size: 12px;
-  font-weight: 500;
-  color: var(--text-secondary);
+  border: none;
+  padding: 0;
   cursor: pointer;
-  transition: background 0.12s, color 0.12s, border-color 0.12s, opacity 0.12s;
 }
-.wra-type-pill:hover {
-  border-color: var(--pc);
-  color: var(--pc);
-  background: color-mix(in srgb, var(--pc) 8%, transparent);
-}
-.wra-type-pill--active {
-  border-color: var(--pc);
-  color: var(--pc);
-  background: color-mix(in srgb, var(--pc) 12%, transparent);
-  font-weight: 600;
-}
-.wra-type-pill .material-symbols-outlined { font-size: 14px; }
 
 /* Form pane */
 .wra-form-pane {

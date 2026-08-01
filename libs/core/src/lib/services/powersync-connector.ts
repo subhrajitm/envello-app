@@ -14,7 +14,8 @@ export class SupabasePowerSyncConnector implements PowerSyncBackendConnector {
   constructor(
     private readonly supabase: SupabaseService,
     private readonly auth: AuthService,
-    private readonly powerSyncUrl: string
+    private readonly powerSyncUrl: string,
+    private readonly isCollectionEnabled?: (collection: string) => boolean,
   ) {}
 
   async fetchCredentials() {
@@ -49,6 +50,9 @@ export class SupabasePowerSyncConnector implements PowerSyncBackendConnector {
         const id         = op.id;
         const profileId  = op.opData?.['profile_id'] ?? 'default';
         const collection = op.opData?.['collection'] ?? op.table;
+
+        // Skip collections the user has excluded from sync
+        if (this.isCollectionEnabled && !this.isCollectionEnabled(collection)) continue;
         const now        = new Date().toISOString();
 
         if (op.op === UpdateType.DELETE) {

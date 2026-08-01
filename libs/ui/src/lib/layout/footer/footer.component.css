@@ -54,13 +54,13 @@
     font-family: var(--font-mono);
 }
 
-/* Sync button */
+/* ── Sync status button (4-state) ── */
 .footer-sync-btn {
     display: flex;
     align-items: center;
-    gap: 4px;
+    gap: 5px;
     height: 20px;
-    padding: 0 7px;
+    padding: 0 8px;
     background: transparent;
     border: 1px solid var(--border-subtle);
     border-radius: 4px;
@@ -68,60 +68,92 @@
     font-weight: 500;
     color: var(--text-tertiary);
     cursor: pointer;
-    transition: border-color 0.2s, color 0.2s, background 0.2s, box-shadow 0.2s;
+    transition: border-color 0.2s, color 0.2s, background 0.2s;
     white-space: nowrap;
     font-family: var(--font-mono);
+    text-decoration: none;
 }
 
-.footer-sync-btn:hover:not(:disabled) {
+.footer-sync-btn:hover {
     border-color: var(--border-main);
     color: var(--text-secondary);
     background: var(--bg-hover);
 }
 
-.footer-sync-btn:disabled { cursor: default; }
-
 .footer-sync-icon {
     font-size: 12px;
-    display: inline-block;
     flex-shrink: 0;
 }
 
-.footer-sync-btn--active {
-    border-color: color-mix(in srgb, var(--accent-primary) 50%, transparent);
+/* Colored status dot */
+.footer-sync-dot {
+    width: 5px;
+    height: 5px;
+    border-radius: 50%;
+    flex-shrink: 0;
+    background: currentColor;
+}
+
+/* ── Synced (green) ── */
+.footer-sync-btn--synced {
+    color: var(--accent-green);
+    border-color: color-mix(in srgb, var(--accent-green) 30%, transparent);
+    background: color-mix(in srgb, var(--accent-green) 6%, transparent);
+}
+.footer-sync-btn--synced:hover {
+    background: color-mix(in srgb, var(--accent-green) 12%, transparent);
+    border-color: var(--accent-green);
+}
+
+/* ── Syncing (accent/blue, spinning icon) ── */
+.footer-sync-btn--syncing {
     color: var(--accent-primary);
+    border-color: color-mix(in srgb, var(--accent-primary) 40%, transparent);
     background: color-mix(in srgb, var(--accent-primary) 6%, transparent);
-    box-shadow: 0 0 0 2px color-mix(in srgb, var(--accent-primary) 10%, transparent);
+}
+.footer-sync-btn--syncing .footer-sync-icon {
+    animation: footer-sync-spin 0.9s linear infinite;
+}
+.footer-sync-btn--syncing .footer-sync-dot {
+    animation: footer-dot-pulse 1s ease-in-out infinite;
 }
 
-.footer-sync-btn--active .footer-sync-icon {
-    animation: footer-sync-spin 0.8s linear infinite;
-}
-
+/* ── Error (red) ── */
 .footer-sync-btn--error {
-    border-color: var(--accent-red)66;
     color: var(--accent-red);
-    background: var(--accent-red)0f;
+    border-color: color-mix(in srgb, var(--accent-red) 40%, transparent);
+    background: color-mix(in srgb, var(--accent-red) 6%, transparent);
 }
-
-.footer-sync-btn--error:hover:not(:disabled) {
-    background: var(--accent-red)1a;
+.footer-sync-btn--error:hover {
+    background: color-mix(in srgb, var(--accent-red) 12%, transparent);
     border-color: var(--accent-red);
 }
 
+/* ── Offline (muted gray) ── */
+.footer-sync-btn--offline {
+    color: var(--text-tertiary);
+    border-color: var(--border-subtle);
+    background: transparent;
+}
+
+/* ── Compact (collapsed bar) ── */
 .footer-sync-btn--compact {
     padding: 0 5px;
     border: none;
     background: transparent;
 }
+.footer-sync-btn--compact:hover { background: var(--bg-hover); }
 
-.footer-sync-label {
-    font-size: 10px;
-}
+.footer-sync-label { font-size: 10px; }
 
 @keyframes footer-sync-spin {
     from { transform: rotate(0deg); }
     to   { transform: rotate(360deg); }
+}
+
+@keyframes footer-dot-pulse {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50%       { opacity: 0.4; transform: scale(0.6); }
 }
 
 .footer-spacer {
@@ -216,4 +248,36 @@
     .streak-indicators {
         display: none;
     }
+}
+
+/* ── Retry button & pending counter ─────────────────────────────────────── */
+.footer-retry-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+    margin-left: 6px;
+    padding: 1px 7px;
+    border-radius: 4px;
+    border: 1px solid var(--accent-red);
+    background: transparent;
+    color: var(--accent-red);
+    font-size: 10px;
+    font-weight: 600;
+    font-family: var(--font-sans);
+    cursor: pointer;
+    letter-spacing: 0.02em;
+    transition: background 0.12s, color 0.12s;
+}
+
+.footer-retry-btn:hover {
+    background: var(--accent-red);
+    color: #fff;
+}
+
+.footer-pending {
+    margin-left: 6px;
+    font-size: 10px;
+    font-weight: 500;
+    color: var(--text-tertiary);
+    letter-spacing: 0.01em;
 }

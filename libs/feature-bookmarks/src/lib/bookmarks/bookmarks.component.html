@@ -101,12 +101,7 @@
         <!-- Active filter chips -->
         @if (selectedTags().length > 0) {
           @for (tag of selectedTags(); track tag) {
-            <span class="bm-filter-chip filter-chip">
-              #{{ tag }}
-              <button (click)="toggleTagFilter(tag)">
-                <span class="material-symbols-outlined">close</span>
-              </button>
-            </span>
+            <env-chip [removable]="true" (removed)="toggleTagFilter(tag)">#{{ tag }}</env-chip>
           }
           <button class="bm-filter-clear filter-clear" (click)="clearFilters()">Clear</button>
           <div class="bm-tb-divider"></div>
@@ -365,12 +360,7 @@
         <label class="bma-label">Tags</label>
         <div class="bma-tag-row">
           @for (tag of addTags(); track tag) {
-            <span class="bma-tag-chip">
-              #{{ tag }}
-              <button (click)="removeAddTag(tag)">
-                <span class="material-symbols-outlined">close</span>
-              </button>
-            </span>
+            <env-chip [removable]="true" (removed)="removeAddTag(tag)">#{{ tag }}</env-chip>
           }
           <input class="bma-tag-input" type="text" placeholder="Add tag…"
             [value]="addTagInput()"
@@ -464,12 +454,7 @@
         <label class="bma-label">Tags</label>
         <div class="bma-tag-row">
           @for (tag of editTags(); track tag) {
-            <span class="bma-tag-chip">
-              #{{ tag }}
-              <button (click)="removeEditTag(tag)">
-                <span class="material-symbols-outlined">close</span>
-              </button>
-            </span>
+            <env-chip [removable]="true" (removed)="removeEditTag(tag)">#{{ tag }}</env-chip>
           }
           <input class="bma-tag-input" type="text" placeholder="Add tag…"
             [value]="editTagInput()" (input)="editTagInput.set($any($event.target).value)"
@@ -646,7 +631,7 @@
               <span class="bm-ao-group-name">{{ group.folder.name }}</span>
               <span class="bm-ao-group-count">{{ group.bookmarks.length }}</span>
               @if (isNewFolder(group.folder.name)) {
-                <span class="bm-ao-new-badge">New</span>
+                <env-badge variant="success">New</env-badge>
               }
             </div>
             <div class="bm-ao-group-items">

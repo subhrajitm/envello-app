@@ -68,8 +68,9 @@
                 <div class="mentions-label">Characters:</div>
                 <div class="mentions-list">
                     @for (char of mentionedCharacters(); track char) {
-                    <button class="mention-badge character-mention mention-btn"
-                        (click)="characterClicked.emit(char)" title="Go to character">{{ char }}</button>
+                    <button class="mention-btn" (click)="characterClicked.emit(char)" title="Go to character">
+                        <env-badge variant="accent">{{ char }}</env-badge>
+                    </button>
                     }
                 </div>
             </div>
@@ -79,7 +80,7 @@
                 <div class="mentions-label">Locations:</div>
                 <div class="mentions-list">
                     @for (loc of mentionedLocations(); track loc) {
-                    <span class="mention-badge location-mention">{{ loc }}</span>
+                    <env-badge variant="default" class="location-mention-badge">{{ loc }}</env-badge>
                     }
                 </div>
             </div>

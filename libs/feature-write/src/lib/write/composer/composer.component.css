@@ -793,12 +793,6 @@
     background: var(--bg-hover);
 }
 
-.ne-draft-tag {
-    color: var(--text-tertiary);
-    /* Muted for enterprise look */
-    font-weight: 500;
-}
-
 .ne-empty-tag {
     color: var(--text-disabled);
 }
@@ -3056,25 +3050,6 @@
     gap: 6px;
 }
 
-.mention-badge {
-    padding: 4px 10px;
-    border-radius: 4px;
-    font-size: 11px;
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 0.3px;
-}
-
-.mention-badge.character-mention {
-    background: var(--accent-blue, #60a5fa);
-    color: var(--accent-primary-text);
-}
-
-.mention-badge.location-mention {
-    background: var(--accent-purple, #a855f7);
-    color: #fff;
-}
-
 .meta-pill {
     background: var(--bg-hover);
     padding: 4px 8px;
@@ -3602,44 +3577,6 @@
     gap: 6px;
     margin-top: 7px;
     flex-wrap: wrap;
-}
-
-/* Type pill (CHARACTER / LOCATION label) */
-.ne-ent-type-pill {
-    display: inline-flex;
-    align-items: center;
-    gap: 3px;
-    font-size: 11px;
-    font-weight: 700;
-    letter-spacing: 0.8px;
-    text-transform: uppercase;
-    color: var(--text-tertiary);
-    padding: 2px 7px 2px 5px;
-    border: 1px solid var(--border-subtle);
-    border-radius: 4px;
-    background: var(--bg-app);
-}
-
-.ne-ent-type-pill .material-symbols-outlined {
-    font-size: 11px;
-}
-
-/* Attribute chips in header */
-.ne-ent-attr-chip {
-    font-size: 11px;
-    font-weight: 500;
-    color: var(--accent-primary);
-    background: var(--accent-primary-dim);
-    border: 1px solid color-mix(in srgb, var(--accent-primary) 25%, transparent);
-    border-radius: 4px;
-    padding: 2px 8px;
-    line-height: 1.5;
-}
-
-.ne-ent-attr-chip--muted {
-    color: var(--text-secondary);
-    background: var(--bg-subtle);
-    border-color: var(--border-subtle);
 }
 
 /* Content sections */
@@ -5083,11 +5020,6 @@
     gap: 4px !important;
 }
 
-.mention-badge {
-    padding: 3px 8px !important;
-    font-size: 10px !important;
-}
-
 /* ============================================
    SIDEBAR TOGGLES - COMPACT
    ============================================ */
@@ -5181,7 +5113,6 @@
 
 .status-badge,
 .version-badge,
-.mention-badge,
 .meta-pill {
     border-radius: 4px !important;
 }
@@ -5393,21 +5324,6 @@
   flex-shrink: 0;
 }
 
-/* Word count chip in manuscript editor meta row */
-.word-count-chip {
-  font-size: 11px;
-  color: var(--text-tertiary);
-}
-
-.session-words-chip {
-  font-size: 10px;
-  color: #fff;
-  font-weight: 600;
-  background: var(--accent-green);
-  padding: 2px 7px;
-  border-radius: 10px;
-  letter-spacing: 0.03em;
-}
 
 /* Chapter word count in sidebar list */
 .chap-word-count {
@@ -5488,21 +5404,6 @@
     color: var(--text-primary);
 }
 
-.ne-tbl-badge {
-    min-width: 20px;
-    height: 20px;
-    padding: 0 6px;
-    background: var(--bg-hover);
-    border: 1px solid var(--border-subtle);
-    border-radius: 10px;
-    font-size: 11px;
-    font-weight: 600;
-    color: var(--text-tertiary);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    line-height: 1;
-}
 
 .ne-tbl-add-btn {
     display: inline-flex;

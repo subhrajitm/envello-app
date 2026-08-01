@@ -1,70 +1,59 @@
-import { Component, signal } from '@angular/core';
+import { Component, inject, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
-
-interface Project {
-  id: string;
-  title: string;
-  status: 'DRAFTING' | 'PLANNING' | 'COMPLETE' | 'REVIEW';
-  words: string;
-  updated: string;
-  icon: string;
-}
+import { BadgeComponent, BadgeVariant } from '@envello/ui';
+import { StoreService } from '@envello/core';
 
 @Component({
   selector: 'app-project-oversight',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, BadgeComponent],
   templateUrl: './project-oversight.component.html',
   styleUrl: './project-oversight.component.css'
 })
 export class ProjectOversightComponent {
-  projects = signal<Project[]>([
-    {
-      id: '1',
-      title: 'Project Alpha: Final Manuscript',
-      status: 'DRAFTING',
-      words: '48.2k',
-      updated: '2m ago',
-      icon: 'menu_book',
-    },
-    {
-      id: '2',
-      title: 'Neon Orchard Chronicles',
-      status: 'PLANNING',
-      words: '12.5k',
-      updated: '1h ago',
-      icon: 'description',
-    },
-    {
-      id: '3',
-      title: 'The Scent of Green',
-      status: 'COMPLETE',
-      words: '82.1k',
-      updated: 'Oct 24',
-      icon: 'check_circle',
-    },
-    {
-      id: '4',
-      title: 'Echoes of the Void',
-      status: 'REVIEW',
-      words: '35.0k',
-      updated: '2d ago',
-      icon: 'extension',
-    },
-  ]);
+  private readonly store = inject(StoreService);
 
-  getStatusColor(status: string): string {
+  projects = computed(() =>
+    this.store.books()
+      .slice()
+      .sort((a, b) => (b.lastUpdated ?? '').localeCompare(a.lastUpdated ?? ''))
+      .slice(0, 8)
+      .map(b => ({
+        id: b.id,
+        title: b.title,
+        status: b.status as 'DRAFTING' | 'PLANNING' | 'REVISING' | 'PUBLISHED',
+        words: this.formatWords(b.wordCount ?? 0),
+        updated: this.timeAgo(b.lastUpdated),
+        icon: b.icon ?? 'menu_book',
+      }))
+  );
+
+  getStatusVariant(status: string): BadgeVariant {
     switch (status) {
-      case 'DRAFTING':
-        return 'status-yellow';
-      case 'PLANNING':
-        return 'status-blue';
-      case 'COMPLETE':
-        return 'status-green';
-      case 'REVIEW':
-        return 'status-orange';
-      default:
-        return 'status-gray';
+      case 'DRAFTING':  return 'warning';
+      case 'PLANNING':  return 'info';
+      case 'REVISING':  return 'accent';
+      case 'PUBLISHED': return 'success';
+      default:          return 'default';
     }
+  }
+
+  private formatWords(count: number): string {
+    if (count >= 1_000_000) return (count / 1_000_000).toFixed(1) + 'M';
+    if (count >= 1_000) return (count / 1_000).toFixed(1) + 'k';
+    return count.toString();
+  }
+
+  private timeAgo(iso: string | undefined): string {
+    if (!iso) return '—';
+    const diff = Date.now() - new Date(iso).getTime();
+    const mins = Math.floor(diff / 60_000);
+    if (mins < 1)   return 'just now';
+    if (mins < 60)  return `${mins}m ago`;
+    const hrs = Math.floor(mins / 60);
+    if (hrs < 24)   return `${hrs}h ago`;
+    const days = Math.floor(hrs / 24);
+    if (days < 7)   return `${days}d ago`;
+    return new Date(iso).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
   }
 }

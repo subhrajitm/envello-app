@@ -261,24 +261,12 @@
   position: relative;
 }
 
-.notification-badge {
+/* env-badge replaces .notification-badge — positioned absolutely over the icon */
+.notification-btn env-badge {
   position: absolute;
-  top: -2px;
-  right: -2px;
-  min-width: 16px;
-  height: 16px;
-  padding: 0 4px;
-  background: var(--accent-primary);
-  color: var(--accent-primary-text);
-  border-radius: 8px;
-  font-size: 10px;
-  font-weight: 700;
-  font-family: var(--font-mono);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  line-height: 1;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+  top: -4px;
+  right: -4px;
+  pointer-events: none;
 }
 
 .profile-menu {
@@ -703,51 +691,127 @@
 
 
 /* ── Voice active banner ── */
-.voice-active-banner {
+/* ── Voice popup (pill-shaped listening indicator) ── */
+.voice-popup {
   position: fixed;
-  top: calc(52px + var(--titlebar-height, 0px));
+  bottom: 28px;
   left: 50%;
   transform: translateX(-50%);
   z-index: var(--z-popover);
   display: flex;
   align-items: center;
-  gap: 10px;
-  padding: 8px 18px;
-  background: var(--bg-element);
-  border: 1px solid var(--border-highlight);
-  border-radius: 99px; /* Pill shaped */
-  color: var(--text-primary);
-  font-size: 13px;
-  font-weight: 500;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 0 10px 0 22px;
+  height: 52px;
+  min-width: 380px;
+  background: #4a3322;
+  border-radius: 999px;
   white-space: nowrap;
-  animation: banner-drop 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
-  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.4), 0 8px 10px -6px rgba(0, 0, 0, 0.4);
+  animation: voice-popup-in 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+  box-shadow: 0 16px 36px -6px rgba(0, 0, 0, 0.55), 0 6px 12px -3px rgba(0, 0, 0, 0.3);
 }
 
-.voice-active-banner .material-symbols-outlined {
-  color: var(--accent-primary);
+.voice-popup-text {
+  font-size: 15px;
+  font-weight: 400;
+  letter-spacing: -0.01em;
+  color: rgba(255, 243, 225, 0.95);
+  max-width: 320px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  transition: color 0.2s;
 }
 
-@keyframes banner-drop {
-  from { opacity: 0; transform: translateX(-50%); }
-  to   { opacity: 1; transform: translateX(-50%); }
+.voice-popup-text--idle {
+  font-style: italic;
+  color: rgba(255, 243, 225, 0.45);
 }
 
-.voice-banner-dismiss {
-  background: var(--bg-hover);
-  border: none;
-  cursor: pointer;
-  color: var(--text-tertiary);
-  padding: 4px;
-  border-radius: 50%;
+.voice-popup-right {
   display: flex;
   align-items: center;
-  margin-left: 8px;
-  transition: background 0.2s, color 0.2s;
+  gap: 10px;
 }
-.voice-banner-dismiss:hover {
-  color: var(--text-primary);
-  background: var(--bg-active);
+
+.voice-popup-mic {
+  font-size: 18px;
+  color: rgba(235, 175, 65, 0.88);
+  flex-shrink: 0;
+}
+
+/* ── Dot grid visualizer ── */
+.voice-popup-viz {
+  display: flex;
+  align-items: flex-end;
+  gap: 4px;
+  height: 32px;
+  padding-bottom: 2px;
+  flex-shrink: 0;
+}
+
+.vdot-col {
+  width: 4px;
+  background-image: radial-gradient(circle, rgba(232, 172, 60, 0.88) 1.5px, transparent 1.5px);
+  background-size: 4px 7px;
+  background-repeat: repeat-y;
+  background-position: center 1px;
+  border-radius: 2px;
+  animation: vdot-pulse 1.5s ease-in-out infinite;
+}
+
+.vdot-col:nth-child(1)  { height: 7px;  animation-delay: 0.00s; }
+.vdot-col:nth-child(2)  { height: 14px; animation-delay: 0.12s; }
+.vdot-col:nth-child(3)  { height: 21px; animation-delay: 0.22s; }
+.vdot-col:nth-child(4)  { height: 28px; animation-delay: 0.30s; }
+.vdot-col:nth-child(5)  { height: 31px; animation-delay: 0.36s; }
+.vdot-col:nth-child(6)  { height: 31px; animation-delay: 0.38s; }
+.vdot-col:nth-child(7)  { height: 28px; animation-delay: 0.34s; }
+.vdot-col:nth-child(8)  { height: 21px; animation-delay: 0.26s; }
+.vdot-col:nth-child(9)  { height: 14px; animation-delay: 0.16s; }
+.vdot-col:nth-child(10) { height: 7px;  animation-delay: 0.06s; }
+
+@keyframes vdot-pulse {
+  0%, 100% { opacity: 0.32; }
+  50%       { opacity: 1; }
+}
+
+/* ── Stop button ── */
+.voice-popup-stop {
+  width: 34px;
+  height: 34px;
+  border-radius: 9px;
+  background: rgba(232, 172, 60, 0.9);
+  border: none;
+  cursor: pointer;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.15s, transform 0.1s;
+}
+
+.voice-popup-stop::after {
+  content: '';
+  width: 11px;
+  height: 11px;
+  background: #3a2010;
+  border-radius: 2px;
+}
+
+.voice-popup-stop:hover  { background: rgba(245, 190, 75, 1); }
+.voice-popup-stop:active { transform: scale(0.93); }
+
+@keyframes voice-popup-in {
+  from {
+    opacity: 0;
+    transform: translateX(-50%) translateY(10px) scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0) scale(1);
+  }
 }
 
 /* ── Sidebar utility area (Bin, etc.) ── */
@@ -760,18 +824,6 @@
 .sidebar-utility-item {
   font-size: 12px;
   color: var(--text-tertiary);
-}
-
-.sidebar-bin-badge {
-  margin-left: auto;
-  background: var(--accent-red, #ef4444);
-  color: #fff;
-  font-size: 11px;
-  font-weight: 700;
-  padding: 1px 5px;
-  border-radius: 10px;
-  min-width: 16px;
-  text-align: center;
 }
 
 .sidebar-bin-dot {

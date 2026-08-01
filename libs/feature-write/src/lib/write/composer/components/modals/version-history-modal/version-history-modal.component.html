@@ -41,7 +41,7 @@
               <div class="vh-entry-top">
                 <span class="vh-entry-time">{{ vhs.formatTimestamp(v.timestamp) }}</span>
                 @if (isCurrent(v)) {
-                  <span class="vh-badge-current">Current</span>
+                  <env-badge variant="success" size="xs">Current</env-badge>
                 }
               </div>
               <span class="vh-entry-date">{{ vhs.formatFull(v.timestamp) }}</span>

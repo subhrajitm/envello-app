@@ -4,14 +4,15 @@ import {
   StoreService, RelationshipService, PersonInteraction,
   ContactsImportService, ImportPreview, ImportedContact,
 } from '@envello/core';
-import { Person } from '@envello/domain';
+import { Person, RelationshipType } from '@envello/domain';
 import {
   ConfirmDialogComponent, EmptyStateComponent, FeatureSidebarComponent,
-  TableComponent, SliderPanelComponent,
+  TableComponent, SliderPanelComponent, BadgeComponent, ChipComponent,
+  type BadgeVariant,
 } from '@envello/ui';
 import type { EnvTableColumn, EnvTableAction, EnvTableActionEvent } from '@envello/ui';
 
-type PeopleFilter = 'all' | 'meetings' | 'tasks' | 'recent';
+type PeopleFilter = 'all' | 'birthday' | 'followup' | 'lostouch' | 'meetings' | 'tasks' | 'recent';
 type ViewMode = 'table' | 'grid';
 
 @Component({
@@ -20,6 +21,7 @@ type ViewMode = 'table' | 'grid';
   imports: [
     CommonModule, ConfirmDialogComponent, EmptyStateComponent,
     FeatureSidebarComponent, TableComponent, SliderPanelComponent,
+    BadgeComponent, ChipComponent,
   ],
   templateUrl: './people.component.html',
   styleUrl: './people.component.css',
@@ -50,6 +52,15 @@ export class PeopleComponent {
   editNotes     = signal('');
   editTagInput  = signal('');
   editTags      = signal<string[]>([]);
+  // CRM edit fields
+  editBirthday      = signal('');
+  editReminderDate  = signal('');
+  editRelType       = signal('');
+  editLocation      = signal('');
+  editLinkedin      = signal('');
+  editTwitter       = signal('');
+  editWebsite       = signal('');
+  logContactDone    = signal(false);
 
   // ── Bulk selection ──────────────────────────────────────────────────────────
   selectedPeople  = signal<Set<string>>(new Set());
@@ -81,12 +92,20 @@ export class PeopleComponent {
     const today = new Date();
     const cutoff30 = new Date(today); cutoff30.setDate(today.getDate() - 30);
 
+    const todayStart = new Date(); todayStart.setHours(0,0,0,0);
     const byFilter = (() => {
       switch (filter) {
-        case 'meetings': return all.filter(p => p.interactions.some(i => i.type === 'meeting'));
-        case 'tasks':    return all.filter(p => p.openTasks > 0);
-        case 'recent':   return all.filter(p => p.lastSeen && new Date(p.lastSeen) >= cutoff30);
-        default:         return all;
+        case 'birthday':  return all.filter(p => { const b = this.birthdayInfo(p.person.birthday); return b !== null && b.days <= 14; });
+        case 'followup':  return all.filter(p => p.person.reminderDate && new Date(p.person.reminderDate) <= todayStart);
+        case 'lostouch':  return all.filter(p => {
+          const last = p.person.lastContacted ?? p.lastSeen;
+          if (!last) return true;
+          return (Date.now() - new Date(last).getTime()) > 60 * 86_400_000;
+        });
+        case 'meetings':  return all.filter(p => p.interactions.some(i => i.type === 'meeting'));
+        case 'tasks':     return all.filter(p => p.openTasks > 0);
+        case 'recent':    return all.filter(p => p.lastSeen && new Date(p.lastSeen) >= cutoff30);
+        default:          return all;
       }
     })();
 
@@ -109,12 +128,16 @@ export class PeopleComponent {
   readonly sidebarNavItems = computed(() => {
     const all = this.profiles();
     const today = new Date();
+    const todayStart = new Date(); todayStart.setHours(0,0,0,0);
     const cutoff30 = new Date(today); cutoff30.setDate(today.getDate() - 30);
     return [
-      { id: 'all',      label: 'All People',         icon: 'group',          count: all.length },
-      { id: 'meetings', label: 'Meeting Contacts',   icon: 'calendar_month', count: all.filter(p => p.interactions.some(i => i.type === 'meeting')).length },
-      { id: 'tasks',    label: 'Task Collaborators', icon: 'check_circle',   count: all.filter(p => p.openTasks > 0).length },
-      { id: 'recent',   label: 'Recently Seen',      icon: 'schedule',       count: all.filter(p => p.lastSeen && new Date(p.lastSeen) >= cutoff30).length },
+      { id: 'all',      label: 'All People',       icon: 'group',                    count: all.length },
+      { id: 'birthday', label: 'Birthday Soon',    icon: 'cake',                     count: all.filter(p => { const b = this.birthdayInfo(p.person.birthday); return b !== null && b.days <= 14; }).length },
+      { id: 'followup', label: 'Follow Up',        icon: 'notification_important',   count: all.filter(p => p.person.reminderDate && new Date(p.person.reminderDate) <= todayStart).length },
+      { id: 'lostouch', label: 'Lost Touch',       icon: 'person_off',               count: all.filter(p => { const l = p.person.lastContacted ?? p.lastSeen; return !l || (Date.now() - new Date(l).getTime()) > 60 * 86_400_000; }).length },
+      { id: 'meetings', label: 'Meeting Contacts', icon: 'calendar_month',           count: all.filter(p => p.interactions.some(i => i.type === 'meeting')).length },
+      { id: 'tasks',    label: 'Collaborators',    icon: 'check_circle',             count: all.filter(p => p.openTasks > 0).length },
+      { id: 'recent',   label: 'Recently Seen',    icon: 'schedule',                 count: all.filter(p => p.lastSeen && new Date(p.lastSeen) >= cutoff30).length },
     ];
   });
 
@@ -213,6 +236,13 @@ export class PeopleComponent {
     this.editNotes.set(p.notes ?? '');
     this.editTags.set([...(p.tags ?? [])]);
     this.editTagInput.set('');
+    this.editBirthday.set(p.birthday ?? '');
+    this.editReminderDate.set(p.reminderDate ?? '');
+    this.editRelType.set(p.relationshipType ?? '');
+    this.editLocation.set(p.location ?? '');
+    this.editLinkedin.set(p.socialLinks?.linkedin ?? '');
+    this.editTwitter.set(p.socialLinks?.twitter ?? '');
+    this.editWebsite.set(p.socialLinks?.website ?? '');
     this.editMode.set(true);
   }
 
@@ -224,14 +254,20 @@ export class PeopleComponent {
   saveEdit() {
     const id = this.selectedId();
     if (!id || !this.editName().trim()) return;
+    const sl = { linkedin: this.editLinkedin().trim() || undefined, twitter: this.editTwitter().trim() || undefined, website: this.editWebsite().trim() || undefined };
     this.store.updatePerson(id, {
-      name:    this.editName().trim(),
-      email:   this.editEmail().trim()   || undefined,
-      phone:   this.editPhone().trim()   || undefined,
-      company: this.editCompany().trim() || undefined,
-      role:    this.editRole().trim()    || undefined,
-      notes:   this.editNotes().trim()   || undefined,
-      tags:    this.editTags(),
+      name:             this.editName().trim(),
+      email:            this.editEmail().trim()        || undefined,
+      phone:            this.editPhone().trim()        || undefined,
+      company:          this.editCompany().trim()      || undefined,
+      role:             this.editRole().trim()         || undefined,
+      notes:            this.editNotes().trim()        || undefined,
+      tags:             this.editTags(),
+      birthday:         this.editBirthday().trim()     || undefined,
+      reminderDate:     this.editReminderDate().trim() || undefined,
+      relationshipType: (this.editRelType() as RelationshipType) || undefined,
+      location:         this.editLocation().trim()     || undefined,
+      socialLinks:      (sl.linkedin || sl.twitter || sl.website) ? sl : undefined,
     });
     this.editMode.set(false);
   }
@@ -258,6 +294,13 @@ export class PeopleComponent {
     this.editNotes.set('');
     this.editTags.set([]);
     this.editTagInput.set('');
+    this.editBirthday.set('');
+    this.editReminderDate.set('');
+    this.editRelType.set('');
+    this.editLocation.set('');
+    this.editLinkedin.set('');
+    this.editTwitter.set('');
+    this.editWebsite.set('');
     this.addMode.set(true);
     this.editMode.set(false);
     this.selectedId.set(null);
@@ -268,15 +311,21 @@ export class PeopleComponent {
   addPerson() {
     const name = this.editName().trim();
     if (!name) return;
+    const sl = { linkedin: this.editLinkedin().trim() || undefined, twitter: this.editTwitter().trim() || undefined, website: this.editWebsite().trim() || undefined };
     const person: Person = {
       id: `person-${crypto.randomUUID()}`,
       name,
-      email:   this.editEmail().trim()   || undefined,
-      phone:   this.editPhone().trim()   || undefined,
-      company: this.editCompany().trim() || undefined,
-      role:    this.editRole().trim()    || undefined,
-      notes:   this.editNotes().trim()   || undefined,
-      tags:    this.editTags(),
+      email:            this.editEmail().trim()        || undefined,
+      phone:            this.editPhone().trim()        || undefined,
+      company:          this.editCompany().trim()      || undefined,
+      role:             this.editRole().trim()         || undefined,
+      notes:            this.editNotes().trim()        || undefined,
+      tags:             this.editTags(),
+      birthday:         this.editBirthday().trim()     || undefined,
+      reminderDate:     this.editReminderDate().trim() || undefined,
+      relationshipType: (this.editRelType() as RelationshipType) || undefined,
+      location:         this.editLocation().trim()     || undefined,
+      socialLinks:      (sl.linkedin || sl.twitter || sl.website) ? sl : undefined,
       createdAt: new Date().toISOString(),
     };
     this.store.addPerson(person);
@@ -294,6 +343,16 @@ export class PeopleComponent {
     this.store.deletePerson(p.id);
     this.deleteTarget.set(null);
     if (this.selectedId() === p.id) this.closeSlider();
+  }
+
+  // ── Log Contact ─────────────────────────────────────────────────────────────
+
+  logContact() {
+    const id = this.selectedId();
+    if (!id) return;
+    this.store.updatePerson(id, { lastContacted: new Date().toISOString() });
+    this.logContactDone.set(true);
+    setTimeout(() => this.logContactDone.set(false), 2500);
   }
 
   // ── AI Insight ──────────────────────────────────────────────────────────────
@@ -381,6 +440,13 @@ export class PeopleComponent {
     return map[type];
   }
 
+  interactionVariant(type: PersonInteraction['type']): BadgeVariant {
+    const map: Record<typeof type, BadgeVariant> = {
+      meeting: 'info', task: 'warning', note: 'success', transaction: 'error',
+    };
+    return map[type] ?? 'default';
+  }
+
   initials(name: string): string {
     return name.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase();
   }
@@ -393,4 +459,59 @@ export class PeopleComponent {
   profileIndex(): number {
     return this.profiles().findIndex(p => p.person.id === this.selectedId());
   }
+
+  // ── CRM helpers ──────────────────────────────────────────────────────────────
+
+  birthdayInfo(birthday?: string): { days: number; label: string; today: boolean } | null {
+    if (!birthday) return null;
+    const parts = birthday.split('-');
+    let month: number, day: number;
+    if (parts.length === 3) { month = +parts[1] - 1; day = +parts[2]; }
+    else if (parts.length === 2) { month = +parts[0] - 1; day = +parts[1]; }
+    else return null;
+    if (isNaN(month) || isNaN(day)) return null;
+    const today = new Date(); today.setHours(0,0,0,0);
+    const next = new Date(today.getFullYear(), month, day);
+    if (next.getTime() < today.getTime()) next.setFullYear(today.getFullYear() + 1);
+    const days = Math.round((next.getTime() - today.getTime()) / 86_400_000);
+    if (days === 0) return { days: 0, label: 'Today! 🎂', today: true };
+    if (days === 1) return { days: 1, label: 'Tomorrow', today: false };
+    if (days <= 7)  return { days, label: `In ${days} days`, today: false };
+    return { days, label: `In ${days} days`, today: false };
+  }
+
+  birthdayDisplay(birthday?: string): string {
+    if (!birthday) return '';
+    const d = new Date(birthday + (birthday.length === 5 ? '/2000' : ''));
+    if (isNaN(d.getTime())) return birthday;
+    return d.toLocaleDateString('en-US', { month: 'long', day: 'numeric' });
+  }
+
+  reminderInfo(reminderDate?: string): { label: string; overdue: boolean } | null {
+    if (!reminderDate) return null;
+    const d = new Date(reminderDate); d.setHours(0,0,0,0);
+    const today = new Date(); today.setHours(0,0,0,0);
+    const days = Math.round((d.getTime() - today.getTime()) / 86_400_000);
+    if (days < 0)  return { label: `Overdue by ${-days}d`, overdue: true };
+    if (days === 0) return { label: 'Due today', overdue: true };
+    if (days === 1) return { label: 'Due tomorrow', overdue: false };
+    return { label: `In ${days} days`, overdue: false };
+  }
+
+  lastContactedDisplay(person: Person, lastSeen: string | null): string {
+    const raw = person.lastContacted ?? lastSeen;
+    return this.daysSince(raw);
+  }
+
+  relTypeLabel(type?: string): string {
+    const map: Record<string, string> = { friend: 'Friend', colleague: 'Colleague', client: 'Client', family: 'Family', mentor: 'Mentor', acquaintance: 'Acquaintance' };
+    return map[type ?? ''] ?? '';
+  }
+
+  relTypeIcon(type?: string): string {
+    const map: Record<string, string> = { friend: 'favorite', colleague: 'work', client: 'handshake', family: 'family_restroom', mentor: 'school', acquaintance: 'person' };
+    return map[type ?? ''] ?? 'person';
+  }
+
+  readonly relTypeOptions: RelationshipType[] = ['friend', 'colleague', 'client', 'family', 'mentor', 'acquaintance'];
 }

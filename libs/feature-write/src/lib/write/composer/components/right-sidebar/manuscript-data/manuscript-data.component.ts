@@ -1,10 +1,11 @@
 import { Component, input, output, ChangeDetectionStrategy, ViewEncapsulation } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { BadgeComponent } from '@envello/ui';
 
 @Component({
   selector: 'app-manuscript-data',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, BadgeComponent],
   templateUrl: './manuscript-data.component.html',
   styleUrls: [
     './manuscript-data.component.css',

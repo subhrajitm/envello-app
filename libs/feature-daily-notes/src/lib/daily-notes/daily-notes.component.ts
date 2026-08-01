@@ -4,7 +4,7 @@ import { CommonModule } from '@angular/common';
 import { StoreService, Note, AiService, ContextService, RecentActivityService, NoteHistoryService, NotificationService } from '@envello/core';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
-import { ButtonComponent, IconButtonComponent, ModalComponent, EmptyStateComponent, AiAssistantPanelComponent, AiPanelMessage, ConfirmDialogComponent, NoteHistoryPanelComponent } from '@envello/ui';
+import { ButtonComponent, IconButtonComponent, ModalComponent, EmptyStateComponent, AiAssistantPanelComponent, AiPanelMessage, ConfirmDialogComponent, NoteHistoryPanelComponent, BadgeComponent, ChipComponent } from '@envello/ui';
 import { TauriService } from '@envello/core';
 import { Editor, Extension } from '@tiptap/core';
 import StarterKit from '@tiptap/starter-kit';
@@ -42,7 +42,7 @@ const FOLDER_COLORS = ['#f87171','#fb923c','#fbbf24','#4ade80','#34d399','#38bdf
 @Component({
   selector: 'app-daily-notes',
   standalone: true,
-  imports: [CommonModule, FormsModule, TiptapEditorDirective, EditorFloatingMenuComponent, ButtonComponent, IconButtonComponent, ModalComponent, EmptyStateComponent, AiAssistantPanelComponent, ConfirmDialogComponent, NoteHistoryPanelComponent],
+  imports: [CommonModule, FormsModule, TiptapEditorDirective, EditorFloatingMenuComponent, ButtonComponent, IconButtonComponent, ModalComponent, EmptyStateComponent, AiAssistantPanelComponent, ConfirmDialogComponent, NoteHistoryPanelComponent, BadgeComponent, ChipComponent],
   templateUrl: './daily-notes.component.html',
   styleUrl: './daily-notes.component.css',
   changeDetection: ChangeDetectionStrategy.OnPush
@@ -134,6 +134,10 @@ export class DailyNotesComponent implements OnInit, OnDestroy {
   showSortMenu = signal(false);
   focusedNoteId = signal<string | null>(null);
   showColorPicker = signal<boolean>(false);
+  showReminderPicker = signal<boolean>(false);
+  reminderPickerValue = signal<string>('');
+  selectedNoteRemindAt = computed(() => this.selectedNote()?.remindAt ?? null);
+  private reminderTimeouts = new Map<string, ReturnType<typeof setTimeout>>();
   isFullWidth = signal<boolean>(
     typeof localStorage !== 'undefined'
       ? localStorage.getItem('envello-daily-notes-full-width') !== 'false'
@@ -708,11 +712,15 @@ export class DailyNotesComponent implements OnInit, OnDestroy {
     if (noteId) {
       this.selectNote(noteId);
     }
+
+    this.scheduleAllPendingReminders();
   }
 
   ngOnDestroy(): void {
     if (this.saveTimeout) clearTimeout(this.saveTimeout);
     if (this.searchDebounceId) clearTimeout(this.searchDebounceId);
+    this.reminderTimeouts.forEach(t => clearTimeout(t));
+    this.reminderTimeouts.clear();
     this.flushTitleSave();
     // Flush pending note content writes when navigating away from this route.
     this.store.flushPendingNoteSaves().catch(() => {});
@@ -1161,6 +1169,70 @@ export class DailyNotesComponent implements OnInit, OnDestroy {
     this.showColorPicker.set(false);
   }
 
+  openReminderPicker() {
+    const existing = this.selectedNoteRemindAt();
+    if (existing) {
+      // Convert ISO to local datetime-local format (YYYY-MM-DDTHH:mm)
+      const d = new Date(existing);
+      const pad = (n: number) => String(n).padStart(2, '0');
+      const local = `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+      this.reminderPickerValue.set(local);
+    } else {
+      // Default to 1 hour from now
+      const d = new Date(Date.now() + 60 * 60 * 1000);
+      const pad = (n: number) => String(n).padStart(2, '0');
+      const local = `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+      this.reminderPickerValue.set(local);
+    }
+    this.showReminderPicker.update(v => !v);
+    this.showColorPicker.set(false);
+  }
+
+  saveReminder() {
+    const id = this.selectedEntryId();
+    const value = this.reminderPickerValue();
+    if (!id || !value) return;
+    const isoString = new Date(value).toISOString();
+    this.store.updateNote(id, { remindAt: isoString });
+    this.scheduleReminder(id, isoString, this.selectedNote()?.title ?? 'Note');
+    this.showReminderPicker.set(false);
+  }
+
+  clearReminder() {
+    const id = this.selectedEntryId();
+    if (!id) return;
+    this.store.updateNote(id, { remindAt: undefined });
+    const existing = this.reminderTimeouts.get(id);
+    if (existing) { clearTimeout(existing); this.reminderTimeouts.delete(id); }
+    this.showReminderPicker.set(false);
+  }
+
+  formatRemindAt(iso: string): string {
+    return new Date(iso).toLocaleString([], { dateStyle: 'medium', timeStyle: 'short' });
+  }
+
+  private scheduleReminder(noteId: string, isoString: string, title: string) {
+    const existing = this.reminderTimeouts.get(noteId);
+    if (existing) clearTimeout(existing);
+    const delay = new Date(isoString).getTime() - Date.now();
+    if (delay <= 0) return;
+    const t = setTimeout(() => {
+      this.notify.info('Note reminder', `"${title}" — time to revisit this note.`);
+      this.reminderTimeouts.delete(noteId);
+      // Clear the stored remindAt so it doesn't re-fire on reload
+      this.store.updateNote(noteId, { remindAt: undefined });
+    }, delay);
+    this.reminderTimeouts.set(noteId, t);
+  }
+
+  private scheduleAllPendingReminders() {
+    for (const note of this.store.notes()) {
+      if (note.remindAt && new Date(note.remindAt).getTime() > Date.now()) {
+        this.scheduleReminder(note.id, note.remindAt, note.title);
+      }
+    }
+  }
+
   submitTagInput() {
     const tag = this.tagInputValue().trim();
     if (tag) this.addTag(tag);
@@ -1322,6 +1394,9 @@ export class DailyNotesComponent implements OnInit, OnDestroy {
     if (!target.closest('.dropdown-wrapper') && !target.closest('.color-picker-wrapper')) {
       if (this.showDropdown()) this.showDropdown.set(false);
       if (this.showColorPicker()) this.showColorPicker.set(false);
+    }
+    if (!target.closest('.reminder-picker-wrapper')) {
+      if (this.showReminderPicker()) this.showReminderPicker.set(false);
     }
     if (!target.closest('.folder-menu-wrapper')) {
       if (this.activeFolderMenuId()) this.activeFolderMenuId.set(null);

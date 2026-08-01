@@ -1,41 +1,93 @@
 .env-badge {
   display: inline-flex;
   align-items: center;
-  padding: 2px 8px;
-  border-radius: 6px;
-  font-size: 11px;
+  gap: 4px;
+  border-radius: 4px;
   font-weight: 600;
   line-height: 1.4;
   text-transform: uppercase;
-  letter-spacing: 0.5px;
+  letter-spacing: 0.4px;
+  white-space: nowrap;
 }
 
+.env-badge-icon {
+  font-size: 11px;
+  flex-shrink: 0;
+  opacity: 0.9;
+}
+
+.env-badge--md .env-badge-icon {
+  font-size: 13px;
+}
+
+/* ── Sizes ── */
+.env-badge--xs {
+  padding: 0 5px;
+  height: 16px;
+  min-width: 16px;
+  font-size: 10px;
+  border-radius: 10px;
+  justify-content: center;
+}
+
+.env-badge--sm {
+  padding: 2px 7px;
+  font-size: 11px;
+}
+
+.env-badge--md {
+  padding: 3px 10px;
+  font-size: 12px;
+}
+
+/* ── Pill override ── */
 .env-badge--pill {
-  border-radius: 12px;
-  padding: 4px 10px;
+  border-radius: 999px;
 }
 
+/* ── Variants ── */
 .env-badge--default {
-  background: var(--bg-hover);
+  background: var(--bg-active);
   color: var(--text-secondary);
 }
 
 .env-badge--success {
-  background: var(--accent-green)26;
-  color: var(--accent-green);
+  background: var(--accent-green);
+  color: #fff;
 }
 
 .env-badge--warning {
-  background: var(--accent-yellow)26;
-  color: var(--accent-yellow);
+  background: var(--accent-yellow);
+  color: #1a1008;
 }
 
 .env-badge--error {
-  background: var(--accent-red)26;
-  color: var(--accent-red);
+  background: var(--accent-red);
+  color: #fff;
 }
 
 .env-badge--accent {
-  background: var(--accent-primary-dim);
-  color: var(--accent-primary);
+  background: var(--accent-primary);
+  color: var(--accent-primary-text, #fff);
+}
+
+.env-badge--info {
+  background: var(--accent-blue);
+  color: #fff;
+}
+
+.env-badge--purple {
+  background: var(--accent-indigo);
+  color: #fff;
+}
+
+/* ── Custom color via --badge-custom-color ── */
+.env-badge--custom {
+  background: var(--badge-custom-color);
+  color: #fff;
+}
+
+/* ── Bordered variant ── */
+.env-badge--bordered {
+  border: 1px solid color-mix(in srgb, currentColor 30%, transparent);
 }

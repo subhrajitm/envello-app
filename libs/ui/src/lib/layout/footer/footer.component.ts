@@ -1,6 +1,7 @@
 import { Component, signal, OnInit, OnDestroy, inject, computed, effect } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { UserService, TauriService, APP_VERSION, SyncService } from '@envello/core';
+import { Router } from '@angular/router';
+import { UserService, TauriService, APP_VERSION, SyncService, PowerSyncService } from '@envello/core';
 
 @Component({
   selector: 'app-footer',
@@ -16,15 +17,43 @@ export class FooterComponent implements OnInit, OnDestroy {
   private userStats = computed(() => this.userService.user()?.stats);
 
   private readonly syncService = inject(SyncService);
+  private readonly ps = inject(PowerSyncService);
+  private readonly router = inject(Router);
 
   currentStreak = computed(() => this.userStats()?.daysActive || 0);
   appVersion = signal(this.injectedVersion);
   isCollapsed = signal(false);
   isOnline = signal(navigator.onLine);
 
-  readonly syncError = this.syncService.syncError;
+  readonly syncError      = this.syncService.syncError;
+  readonly pendingUploads = this.syncService.pendingUploads;
+  readonly isConnected    = this.ps.isConnected;
   readonly syncAnimating = signal(false);
-  readonly isActivelySyncing = computed(() => this.syncService.isSyncing() || this.syncAnimating());
+  readonly isActivelySyncing = computed(() => this.syncService.isSyncing() || this.ps.isSyncing() || this.syncAnimating());
+
+  /** Derived state for the 4-color status: synced | syncing | error | offline */
+  readonly syncState = computed<'synced' | 'syncing' | 'error' | 'offline'>(() => {
+    if (this.syncError())        return 'error';
+    if (this.isActivelySyncing()) return 'syncing';
+    if (this.isConnected())      return 'synced';
+    return 'offline';
+  });
+
+  readonly syncLabel = computed(() => {
+    switch (this.syncState()) {
+      case 'syncing': return 'Syncing…';
+      case 'error':   return 'Sync error';
+      case 'offline': return 'Offline';
+      default:        return 'Synced';
+    }
+  });
+
+  readonly syncTooltip = computed(() => {
+    if (this.syncError())         return `Sync error: ${this.syncError()}`;
+    if (this.isActivelySyncing()) return 'Sync in progress…';
+    if (this.isConnected())       return 'All data synced · Click to open sync settings';
+    return 'Not connected to sync · Click to open sync settings';
+  });
   private syncAnimTimer: ReturnType<typeof setTimeout> | null = null;
 
   private syncCompleteListener = () => {
@@ -65,7 +94,11 @@ export class FooterComponent implements OnInit, OnDestroy {
   }
 
   triggerManualSync(): void {
-    window.dispatchEvent(new CustomEvent('envello:manual-sync'));
+    this.router.navigate(['/settings'], { queryParams: { section: 'data' } });
+  }
+
+  retrySync(): void {
+    this.syncService.retryPendingSync();
   }
 
   private _onOnline?: () => void;

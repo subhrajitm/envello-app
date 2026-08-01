@@ -5,7 +5,7 @@ import { VaultStore } from '@envello/state';
 import { AiService, VaultUnlockService, ContextService } from '@envello/core';
 import { Credential } from '@envello/domain';
 import { VaultUnlockComponent } from '../vault-unlock/vault-unlock.component';
-import { AiAssistantPanelComponent, AiPanelMessage, TableComponent, ConfirmDialogComponent, FeatureSidebarComponent, SliderPanelComponent } from '@envello/ui';
+import { AiAssistantPanelComponent, AiPanelMessage, TableComponent, ConfirmDialogComponent, FeatureSidebarComponent, SliderPanelComponent, ChipComponent } from '@envello/ui';
 import type { EnvTableColumn, EnvTableAction, EnvTableSortEvent, EnvTableActionEvent } from '@envello/ui';
 
 const TYPE_META: Record<string, { label: string; icon: string; color: string; bg: string }> = {
@@ -29,7 +29,7 @@ const URL_LABEL: Record<string, string> = {
 @Component({
   selector: 'app-vault',
   standalone: true,
-  imports: [CommonModule, FormsModule, AiAssistantPanelComponent, TableComponent, ConfirmDialogComponent, FeatureSidebarComponent, SliderPanelComponent, VaultUnlockComponent],
+  imports: [CommonModule, FormsModule, AiAssistantPanelComponent, TableComponent, ConfirmDialogComponent, FeatureSidebarComponent, SliderPanelComponent, VaultUnlockComponent, ChipComponent],
   templateUrl: './vault.component.html',
   styleUrl: './vault.component.css',
   changeDetection: ChangeDetectionStrategy.OnPush
@@ -162,11 +162,11 @@ export class VaultComponent {
     { key: 'name',     header: 'Credential', type: 'primary-text', sortable: true },
     { key: 'type',     header: 'Type',       type: 'badge', sortable: true,
       badgeMap: {
-        login:   { label: 'Login',       dotColor: '#22c55e', bgColor: 'rgba(22,163,74,0.1)',   textColor: '#16a34a'  },
-        api_key: { label: 'API Key',     dotColor: '#60a5fa', bgColor: 'rgba(37,99,235,0.1)',   textColor: '#2563eb'  },
-        ssh:     { label: 'SSH',         dotColor: '#a855f7', bgColor: 'rgba(109,40,217,0.1)',  textColor: '#7c3aed'  },
-        db:      { label: 'Database',    dotColor: '#fb923c', bgColor: 'rgba(194,65,12,0.1)',   textColor: '#c2410c'  },
-        note:    { label: 'Secure Note', dotColor: '#f59e0b', bgColor: 'rgba(180,83,9,0.1)',    textColor: '#b45309'  },
+        login:   { label: 'Login',       variant: 'success', icon: 'person'      },
+        api_key: { label: 'API Key',     variant: 'info',    icon: 'key'         },
+        ssh:     { label: 'SSH',         variant: 'purple',  icon: 'terminal'    },
+        db:      { label: 'Database',    variant: 'warning', icon: 'storage'     },
+        note:    { label: 'Secure Note', variant: 'warning', icon: 'lock'        },
       }
     },
     { key: 'username', header: 'Username' },

@@ -19,6 +19,11 @@ const ONE_WEEK_MS = 7  * ONE_DAY_MS;
 export class RecentActivityService {
   private records: AccessRecord[] = this.load();
 
+  /** Returns the N most recently accessed items. */
+  recentItems(limit = 10): AccessRecord[] {
+    return this.records.slice(0, limit);
+  }
+
   /** Record that the user opened/viewed an item. */
   track(id: string, type: ActivityItemType): void {
     // Move to front if already present, otherwise prepend

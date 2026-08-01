@@ -1,15 +1,19 @@
 <footer class="footer" [class.footer--collapsed]="isCollapsed()">
-  <button class="footer-collapse-btn" (click)="toggleCollapse()" [title]="isCollapsed() ? 'Expand status bar' : 'Collapse status bar'">
-    <span class="material-symbols-outlined" style="font-size:14px;">{{ isCollapsed() ? 'expand_less' : 'expand_more' }}</span>
+  <button class="footer-collapse-btn" type="button"
+    (click)="toggleCollapse()"
+    [attr.aria-label]="isCollapsed() ? 'Expand status bar' : 'Collapse status bar'">
+    <span class="material-symbols-outlined" style="font-size:14px;" aria-hidden="true">
+      {{ isCollapsed() ? 'expand_less' : 'expand_more' }}
+    </span>
   </button>
 
   @if (!isCollapsed()) {
     <div class="footer-inner flex items-center justify-between gap-4">
       <div class="footer-item flex items-center gap-2">
-        <span class="material-symbols-outlined footer-icon">local_fire_department</span>
+        <span class="material-symbols-outlined footer-icon" aria-hidden="true">local_fire_department</span>
         <span class="footer-label">STREAK:</span>
         <span class="footer-value">{{ currentStreak() }} Days</span>
-        <div class="streak-indicators">
+        <div class="streak-indicators" aria-hidden="true">
           <span class="streak-dot" [class.active]="streakIndicator(0)"></span>
           <span class="streak-dot" [class.active]="streakIndicator(1)"></span>
           <span class="streak-dot" [class.active]="streakIndicator(2)"></span>
@@ -19,39 +23,60 @@
       <div class="footer-spacer"></div>
       <div class="footer-item footer-sync-item">
         <button
+          type="button"
           class="footer-sync-btn"
-          [class.footer-sync-btn--active]="isActivelySyncing() && !syncError()"
-          [class.footer-sync-btn--error]="syncError()"
-          [title]="syncError() ?? (isActivelySyncing() ? 'Syncing…' : 'Click to sync now')"
-          [disabled]="isActivelySyncing()"
+          [class.footer-sync-btn--synced]="syncState() === 'synced'"
+          [class.footer-sync-btn--syncing]="syncState() === 'syncing'"
+          [class.footer-sync-btn--error]="syncState() === 'error'"
+          [class.footer-sync-btn--offline]="syncState() === 'offline'"
+          [title]="syncTooltip()"
           (click)="triggerManualSync()"
-          aria-label="Sync data"
+          [attr.aria-label]="syncTooltip()"
+          aria-live="polite"
+          aria-atomic="true"
         >
-          <span class="material-symbols-outlined footer-sync-icon">
-            {{ syncError() ? 'sync_problem' : 'sync' }}
+          <span class="footer-sync-dot" aria-hidden="true"></span>
+          <span class="material-symbols-outlined footer-sync-icon" aria-hidden="true">
+            {{ syncState() === 'error' ? 'sync_problem' : syncState() === 'offline' ? 'cloud_off' : 'sync' }}
           </span>
-          <span class="footer-sync-label">
-            @if (isActivelySyncing()) { Syncing… }
-            @else if (syncError()) { Failed }
-            @else { Synced }
-          </span>
+          <span class="footer-sync-label">{{ syncLabel() }}</span>
         </button>
+        @if (syncState() === 'error') {
+          <button
+            type="button"
+            class="footer-retry-btn"
+            (click)="retrySync()"
+            title="Retry sync now"
+            aria-label="Retry sync"
+          >
+            <span class="material-symbols-outlined" style="font-size:12px;" aria-hidden="true">refresh</span>
+            Retry
+          </button>
+        }
+        @if (pendingUploads() > 0) {
+          <span class="footer-pending" [title]="pendingUploads() + ' items waiting to sync'">
+            {{ pendingUploads() }} pending
+          </span>
+        }
       </div>
       <div class="footer-item footer-version" title="App version">v{{ appVersion() }}</div>
     </div>
   } @else {
     <div class="footer-collapsed-bar">
       <button
+        type="button"
         class="footer-sync-btn footer-sync-btn--compact"
-        [class.footer-sync-btn--active]="isActivelySyncing() && !syncError()"
-        [class.footer-sync-btn--error]="syncError()"
-        [title]="syncError() ?? (isActivelySyncing() ? 'Syncing…' : 'Click to sync now')"
-        [disabled]="isActivelySyncing()"
+        [class.footer-sync-btn--synced]="syncState() === 'synced'"
+        [class.footer-sync-btn--syncing]="syncState() === 'syncing'"
+        [class.footer-sync-btn--error]="syncState() === 'error'"
+        [class.footer-sync-btn--offline]="syncState() === 'offline'"
+        [title]="syncTooltip()"
         (click)="triggerManualSync()"
-        aria-label="Sync data"
+        [attr.aria-label]="syncTooltip()"
       >
-        <span class="material-symbols-outlined footer-sync-icon">
-          {{ syncError() ? 'sync_problem' : 'sync' }}
+        <span class="footer-sync-dot" aria-hidden="true"></span>
+        <span class="material-symbols-outlined footer-sync-icon" aria-hidden="true">
+          {{ syncState() === 'error' ? 'sync_problem' : syncState() === 'offline' ? 'cloud_off' : 'sync' }}
         </span>
       </button>
       <span class="footer-version-sm">v{{ appVersion() }}</span>

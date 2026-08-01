@@ -1,3 +1,21 @@
+/* mention button reset — keeps env-badge visual, adds click affordance */
+.mention-btn {
+    background: none;
+    border: none;
+    padding: 0;
+    cursor: pointer;
+    display: inline-flex;
+}
+.mention-btn:hover env-badge {
+    filter: brightness(1.1);
+}
+
+/* purple tint for location mentions */
+.location-mention-badge .env-badge {
+    background: color-mix(in srgb, var(--accent-purple, #a855f7) 15%, transparent);
+    color: var(--accent-purple, #a855f7);
+}
+
 /* Material Icons font for proper icon rendering */
 .material-symbols-outlined {
     font-family: 'Material Symbols Outlined';

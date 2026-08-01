@@ -14,6 +14,7 @@ import { NotificationCenterComponent } from '../../notification-center/notificat
 import { ProfileMenuComponent } from '../../profile-menu/profile-menu.component';
 import { ProfileEditorComponent } from '../../profile-editor/profile-editor.component';
 import { EnvLogoComponent } from '../../logo/logo.component';
+import { BadgeComponent } from '../../badge/badge.component';
 
 export interface NavItem {
   id: string;
@@ -27,7 +28,7 @@ export interface NavItem {
 @Component({
   selector: 'lib-header',
   standalone: true,
-  imports: [CommonModule, QuickFindComponent, AddNewModalComponent, NotificationCenterComponent, ProfileMenuComponent, ProfileEditorComponent, EnvLogoComponent],
+  imports: [CommonModule, QuickFindComponent, AddNewModalComponent, NotificationCenterComponent, ProfileMenuComponent, ProfileEditorComponent, EnvLogoComponent, BadgeComponent],
   templateUrl: './header.component.html',
   styleUrl: './header.component.css',
   changeDetection: ChangeDetectionStrategy.OnPush
@@ -100,6 +101,7 @@ export class HeaderComponent implements OnInit, OnDestroy {
 
   voiceService = inject(VoiceService);
   isVoiceActive = this.voiceService.isVoiceActive;
+  voiceText = this.voiceService.voiceText;
 
 
   private navigationLayoutListener?: (event: CustomEvent) => void;

@@ -30,7 +30,7 @@ const PAGE_MAP: Record<string, string> = {
   'bookmarks':    'Bookmarks',
   'vault':        'Vault',
   'subscriptions':'Subscriptions',
-  'spaces':       'Spaces',
+  'spaces':       'Workspaces',
   'activity-log': 'Activity Log',
   'bin':               'Bin',
 };

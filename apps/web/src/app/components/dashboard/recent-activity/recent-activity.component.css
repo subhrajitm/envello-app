@@ -68,11 +68,16 @@
     background: var(--bg-hover);
     border: 1px solid var(--border-subtle);
     border-radius: 4px;
-    transition: border-color 0.2s;
+    transition: border-color 0.15s, background 0.15s;
+    cursor: pointer;
+    width: 100%;
+    text-align: left;
+    align-items: center;
 }
 
 .activity-item:hover {
     border-color: var(--border-highlight);
+    background: var(--bg-secondary);
 }
 
 .activity-icon {
@@ -86,12 +91,54 @@
     gap: 3px;
 }
 
-.activity-action {
-    color: var(--text-secondary);
+.activity-title {
+    color: var(--text-primary);
     font-size: 12px;
+    font-weight: 500;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 180px;
+}
+
+.activity-meta {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    margin-top: 1px;
+}
+
+.activity-type {
+    color: var(--text-tertiary);
+    font-size: 10px;
+    text-transform: capitalize;
+}
+
+.activity-dot {
+    color: var(--text-tertiary);
+    font-size: 10px;
 }
 
 .activity-time {
     color: var(--text-tertiary);
     font-size: 10px;
+}
+
+.activity-arrow {
+    font-size: 16px;
+    color: var(--text-tertiary);
+    opacity: 0;
+    transition: opacity 0.15s;
+    flex-shrink: 0;
+}
+
+.activity-item:hover .activity-arrow {
+    opacity: 1;
+}
+
+.activity-empty {
+    color: var(--text-tertiary);
+    font-size: 12px;
+    text-align: center;
+    padding: 12px 0;
 }

@@ -1,4 +1,4 @@
-import { Component, inject, signal, computed, input, output, OnInit, ChangeDetectionStrategy, effect, untracked } from '@angular/core';
+import { Component, inject, signal, computed, input, output, OnInit, ChangeDetectionStrategy, effect, untracked, ViewChild, ElementRef, HostListener } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, ActivatedRoute } from '@angular/router';
@@ -6,9 +6,9 @@ import { TransactionStore } from '@envello/state';
 import { Transaction, TransactionType } from '@envello/domain';
 import { ConfirmDialogComponent } from '@envello/ui';
 import {
-    TYPE_META, STATUS_META, CURRENCIES, CATEGORY_OPTIONS, POPULAR_VENDOR_KEYS,
+    TYPE_META, STATUS_META, CATEGORY_OPTIONS, POPULAR_VENDOR_KEYS,
     VENDOR_PRESETS, toDisplayName, toLocalDateString, autoDate, avatarBg,
-    currencySymbol, categoryIcon,
+    currencySymbol, categoryIcon, ALL_CURRENCIES,
 } from './transaction.constants';
 
 
@@ -28,11 +28,11 @@ const POPULAR_VENDOR_OPTIONS = ALL_VENDOR_OPTIONS.filter(v => POPULAR_VENDOR_KEY
 
   <!-- ── SLIDER HEADER (embedded mode) ── -->
   @if (embeddedMode()) {
-    <div class="tf-slider-header">
-      <button class="tf-slider-close" (click)="back()" title="Close">
-        <span class="material-symbols-outlined">close</span>
-      </button>
-      <span class="tf-slider-title">
+    <div class="tf-slider-header" [class.tf-slider-header--add]="!isEditMode()">
+      @if (!isEditMode()) {
+        <span class="material-symbols-outlined tf-header-add-icon">add_circle</span>
+      }
+      <span class="tf-slider-title" [class.tf-slider-title--add]="!isEditMode()">
         {{ isEditMode() ? 'Transaction Details' : 'New Transaction' }}
       </span>
       <span class="tf-slider-type-badge"
@@ -46,6 +46,9 @@ const POPULAR_VENDOR_OPTIONS = ALL_VENDOR_OPTIONS.filter(v => POPULAR_VENDOR_KEY
           <span class="material-symbols-outlined">delete</span>
         </button>
       }
+      <button class="tf-slider-close" (click)="back()" title="Close">
+        <span class="material-symbols-outlined">close</span>
+      </button>
     </div>
   }
 
@@ -227,25 +230,192 @@ const POPULAR_VENDOR_OPTIONS = ALL_VENDOR_OPTIONS.filter(v => POPULAR_VENDOR_KEY
 
     <!-- ── FORM (add mode always; edit mode when in 'edit' state) ── -->
     @if (!embeddedMode() || !isEditMode() || sliderTab() === 'edit') {
-      @if (embeddedMode() && !isEditMode()) {
-        <div class="tf-slider-form-label">Fill in details</div>
-      }
 
-    <!-- Form layout -->
+    <!-- ── AMOUNT STAGE: centered hero for embedded add mode ── -->
+    @if (embeddedMode() && !isEditMode()) {
+      <div class="tf-amount-stage">
+        <div class="tf-curr-wrap tf-amount-stage-curr">
+          <button type="button" class="tf-currency-sel tf-currency-sel--stage"
+            (click)="currencyDropdownOpen.set(!currencyDropdownOpen())"
+            [title]="formCurrency()">
+            {{ formCurrency() }}
+            <span class="material-symbols-outlined tf-currency-chevron">expand_more</span>
+          </button>
+          @if (currencyDropdownOpen()) {
+            <div class="tf-curr-drop tf-curr-drop--stage">
+              <div class="tf-curr-search-wrap">
+                <span class="material-symbols-outlined tf-curr-search-icon">search</span>
+                <input class="tf-curr-search" type="text" placeholder="Search currency…"
+                  [ngModel]="currencySearch()"
+                  (ngModelChange)="currencySearch.set($event)"
+                  (click)="$event.stopPropagation()"
+                  autofocus>
+              </div>
+              <div class="tf-curr-list">
+                @for (c of filteredCurrencies(); track c.code) {
+                  <button type="button" class="tf-curr-opt"
+                    [class.tf-curr-opt--active]="formCurrency() === c.code"
+                    (click)="selectCurrency(c.code)">
+                    <span class="tf-curr-code">{{ c.code }}</span>
+                    <span class="tf-curr-name">{{ c.name }}</span>
+                  </button>
+                }
+                @if (filteredCurrencies().length === 0) {
+                  <div class="tf-curr-empty">No results</div>
+                }
+              </div>
+            </div>
+          }
+        </div>
+        <input #amountInput type="number" step="0.01" min="0" class="tf-amount-stage-input"
+          [ngModel]="formAmount() || null"
+          (ngModelChange)="formAmount.set(+($event ?? 0))"
+          (focus)="$any($event.target).select()"
+          (wheel)="$event.preventDefault()"
+          placeholder="0.00">
+        @if (formAmount() <= 0) {
+          <div class="tf-amount-stage-hint">Enter your amount above</div>
+        }
+      </div>
+    }
+
+    <!-- Form fields -->
     <div class="tf-cols">
-
-      <!-- Form -->
       <div class="tf-form-col">
         <div [class.tf-card]="!embeddedMode()">
 
-          <!-- ── Q1: Type ── -->
+          <!-- Q1: Amount (route mode only — embedded uses the stage above) -->
+          @if (!embeddedMode()) {
+            <div class="tf-q-section">
+              <div class="tf-q-label">How much?</div>
+              <div class="tf-amount-hero">
+                <div class="tf-curr-wrap">
+                  <button type="button" class="tf-currency-sel"
+                    (click)="currencyDropdownOpen.set(!currencyDropdownOpen())"
+                    [title]="formCurrency()">
+                    {{ formCurrency() }}
+                  </button>
+                  @if (currencyDropdownOpen()) {
+                    <div class="tf-curr-drop">
+                      <div class="tf-curr-search-wrap">
+                        <span class="material-symbols-outlined tf-curr-search-icon">search</span>
+                        <input class="tf-curr-search" type="text" placeholder="Search currency…"
+                          [ngModel]="currencySearch()"
+                          (ngModelChange)="currencySearch.set($event)"
+                          (click)="$event.stopPropagation()"
+                          autofocus>
+                      </div>
+                      <div class="tf-curr-list">
+                        @for (c of filteredCurrencies(); track c.code) {
+                          <button type="button" class="tf-curr-opt"
+                            [class.tf-curr-opt--active]="formCurrency() === c.code"
+                            (click)="selectCurrency(c.code)">
+                            <span class="tf-curr-code">{{ c.code }}</span>
+                            <span class="tf-curr-name">{{ c.name }}</span>
+                          </button>
+                        }
+                        @if (filteredCurrencies().length === 0) {
+                          <div class="tf-curr-empty">No results</div>
+                        }
+                      </div>
+                    </div>
+                  }
+                </div>
+                <input #amountInput type="number" step="0.01" min="0" class="tf-amount-big"
+                  [ngModel]="formAmount() || null"
+                  (ngModelChange)="formAmount.set(+($event ?? 0))"
+                  (focus)="$any($event.target).select()"
+                  (wheel)="$event.preventDefault()"
+                  placeholder="0.00">
+              </div>
+            </div>
+          }
+
+          <!-- ── Q2: Name ── -->
+          <div class="tf-q-section">
+            <div class="tf-q-label">{{ formName() ? nameQuestion() : "What's this for?" }}</div>
+            <div class="tf-vendor-wrap">
+
+              <!-- Collapsed: show selected name or trigger -->
+              @if (formName() && !vendorDropdownOpen()) {
+                <div class="tf-vendor-selected">
+                  <div class="vd-avatar tf-vendor-sel-av" [style.background]="avatarBgFn(formName())">
+                    {{ formName().charAt(0).toUpperCase() }}
+                  </div>
+                  <span class="tf-vendor-sel-name">{{ formName() }}</span>
+                  @if (presetApplied()) {
+                    <span class="preset-badge">
+                      <span class="material-symbols-outlined" style="font-size:11px">auto_awesome</span>
+                      auto-filled
+                    </span>
+                  }
+                  <button type="button" class="tf-vendor-edit" (click)="clearVendor()" title="Change">
+                    <span class="material-symbols-outlined">edit</span>
+                  </button>
+                </div>
+              } @else {
+                <button type="button" class="tf-vendor-trigger"
+                  (click)="vendorDropdownOpen.set(true)"
+                  [style.display]="vendorDropdownOpen() ? 'none' : ''">
+                  <span class="material-symbols-outlined tf-vendor-trigger-icon">search</span>
+                  <span class="tf-vendor-trigger-placeholder">Netflix, AWS, rent…</span>
+                </button>
+              }
+
+              <!-- Dropdown panel -->
+              @if (vendorDropdownOpen()) {
+                <div class="tf-curr-drop tf-vendor-drop">
+                  <div class="tf-curr-search-wrap">
+                    <span class="material-symbols-outlined tf-curr-search-icon">search</span>
+                    <input class="tf-curr-search" type="text" placeholder="Search or type a name…"
+                      [ngModel]="vendorSearch()"
+                      (ngModelChange)="vendorSearch.set($event); onNameChange($event)"
+                      (keydown.enter)="vendorDropdownOpen.set(false)"
+                      (click)="$event.stopPropagation()"
+                      autofocus>
+                    @if (vendorSearch()) {
+                      <button type="button" class="tf-vendor-use-btn"
+                        (click)="formName.set(vendorSearch()); vendorDropdownOpen.set(false); vendorSearch.set('')"
+                        title="Use this name">
+                        <span class="material-symbols-outlined">check</span>
+                      </button>
+                    }
+                  </div>
+                  <div class="tf-curr-list">
+                    @if (!vendorSearch()) {
+                      <div class="tf-curr-section-lbl">
+                        <span class="material-symbols-outlined" style="font-size:13px">bolt</span>
+                        Popular services
+                      </div>
+                    }
+                    @for (v of filteredVendors(); track v.key) {
+                      <button type="button" class="tf-curr-opt tf-vendor-opt"
+                        (click)="selectVendorFromDropdown(v)">
+                        <div class="vd-avatar tf-vendor-opt-av" [style.background]="avatarBgFn(v.displayName)">
+                          {{ v.displayName.charAt(0).toUpperCase() }}
+                        </div>
+                        <div class="tf-vendor-opt-info">
+                          <span class="tf-curr-code" style="width:auto">{{ v.displayName }}</span>
+                          <span class="tf-curr-name">{{ v.category }} · {{ v.billingCycle }}</span>
+                        </div>
+                      </button>
+                    }
+                    @if (filteredVendors().length === 0) {
+                      <div class="tf-curr-empty">No matches — press Enter to use "{{ vendorSearch() }}"</div>
+                    }
+                  </div>
+                </div>
+              }
+            </div>
+          </div>
+
+          <!-- ── Q3: Type ── -->
           <div class="tf-q-section">
             <div class="tf-q-label">Transaction type</div>
             <div class="type-chips">
               @for (opt of typeOptions; track opt) {
                 <button type="button" class="type-chip"
                   [class.type-chip--active]="formType() === opt"
-                  [style.--chip-color]="typeMeta(opt).color"
                   (click)="selectType(opt)">
                   <span class="material-symbols-outlined">{{ typeMeta(opt).icon }}</span>
                   <span>{{ typeMeta(opt).label }}</span>
@@ -254,20 +424,9 @@ const POPULAR_VENDOR_OPTIONS = ALL_VENDOR_OPTIONS.filter(v => POPULAR_VENDOR_KEY
             </div>
           </div>
 
-          <!-- ── Q2: Amount (hero size) ── -->
+          <!-- ── Q4: When? (billing cycle + date — depend on type) ── -->
           <div class="tf-q-section">
-            <div class="tf-q-label">How much?</div>
-            <div class="tf-amount-hero">
-              <select class="tf-currency-sel"
-                [ngModel]="formCurrency()" (ngModelChange)="formCurrency.set($event)">
-                @for (c of currencies; track c) {
-                  <option [value]="c">{{ c }}</option>
-                }
-              </select>
-              <input type="number" step="0.01" min="0" class="tf-amount-big"
-                [ngModel]="formAmount()" (ngModelChange)="formAmount.set($event)"
-                placeholder="0.00">
-            </div>
+            <div class="tf-q-label">{{ dateLabel() }}</div>
 
             <!-- Billing cycle pills (recurring only) -->
             @if (formType() === 'recurring') {
@@ -284,13 +443,12 @@ const POPULAR_VENDOR_OPTIONS = ALL_VENDOR_OPTIONS.filter(v => POPULAR_VENDOR_KEY
               </div>
             }
 
-            <!-- Date — summary, expands on click -->
             <div class="tf-date-row">
               @if (!showDateInput()) {
                 <button type="button" class="date-summary" (click)="showDateInput.set(true)">
                   <span class="material-symbols-outlined">calendar_month</span>
                   <span class="date-summary-text">
-                    {{ dateLabel() }}: <strong>{{ formatPreviewDate(formDate()) }}</strong>
+                    <strong>{{ formatPreviewDate(formDate()) }}</strong>
                   </span>
                   @if (daysUntilPreview() !== null && (formType() === 'recurring' || formType() === 'bill')) {
                     <span class="date-badge"
@@ -323,60 +481,7 @@ const POPULAR_VENDOR_OPTIONS = ALL_VENDOR_OPTIONS.filter(v => POPULAR_VENDOR_KEY
             </div>
           </div>
 
-          <!-- ── Q3: Name ── -->
-          <div class="tf-q-section">
-            <div class="tf-q-label">{{ nameQuestion() }}</div>
-            <div class="vd-wrap">
-              <div class="name-wrap">
-                <span class="material-symbols-outlined vd-search-icon">search</span>
-                <input type="text" class="form-input vd-input vendor-name-input"
-                  [ngModel]="formName()" (ngModelChange)="onNameChange($event)"
-                  (click)="showVendorDropdown.set(true)"
-                  (blur)="onVendorBlur()"
-                  (keydown)="onVendorKeydown($event)"
-                  [attr.placeholder]="namePlaceholder()"
-                  autocomplete="off">
-                @if (presetApplied()) {
-                  <span class="preset-badge">
-                    <span class="material-symbols-outlined" style="font-size:11px">auto_awesome</span>
-                    auto-filled
-                  </span>
-                }
-              </div>
-              @if (showVendorDropdown() && vendorSuggestions().length > 0) {
-                <div class="vd-dropdown">
-                  @if (!formName()) {
-                    <div class="vd-section-label">
-                      <span class="material-symbols-outlined" style="font-size:13px;vertical-align:middle">bolt</span>
-                      Popular services
-                    </div>
-                  }
-                  @for (v of vendorSuggestions(); track v.key; let i = $index) {
-                    <button type="button" class="vd-item"
-                      [class.vd-item-highlighted]="vendorHighlightIdx() === i"
-                      (mousedown)="selectVendor(v)">
-                      <div class="vd-avatar" [style.background]="avatarBgFn(v.displayName)">
-                        {{ v.displayName.charAt(0).toUpperCase() }}
-                      </div>
-                      <div class="vd-info">
-                        <span class="vd-name">{{ v.displayName }}</span>
-                        <span class="vd-meta">
-                          <span class="material-symbols-outlined" style="font-size:12px;vertical-align:middle">{{ categoryIconFn(v.category) }}</span>
-                          {{ v.category }}
-                        </span>
-                      </div>
-                      <div class="vd-chips">
-                        <span class="vd-chip">{{ v.billingCycle }}</span>
-                        <span class="vd-chip vd-chip-currency">{{ v.currency }}</span>
-                      </div>
-                    </button>
-                  }
-                </div>
-              }
-            </div>
-          </div>
-
-          <!-- ── Q4: Category (optional) ── -->
+          <!-- ── Q5: Category (optional) ── -->
           <div class="tf-q-section">
             <div class="tf-q-label">Category <span class="tf-q-opt">optional</span></div>
             <div class="cat-pills">
@@ -391,7 +496,7 @@ const POPULAR_VENDOR_OPTIONS = ALL_VENDOR_OPTIONS.filter(v => POPULAR_VENDOR_KEY
             </div>
           </div>
 
-          <!-- ── Q5: Notes (optional) ── -->
+          <!-- ── Q6: Notes (optional) ── -->
           <div class="tf-q-section tf-q-section--last">
             <div class="tf-q-label">Notes <span class="tf-q-opt">optional</span></div>
             <textarea class="form-input form-textarea" rows="2"
@@ -423,105 +528,8 @@ const POPULAR_VENDOR_OPTIONS = ALL_VENDOR_OPTIONS.filter(v => POPULAR_VENDOR_KEY
         </div>
       </div>
 
-      <!-- Preview (route mode only — slider already has hero card) -->
-      @if (!embeddedMode()) {
-      <div class="tf-preview-col">
-        <div class="tf-section-label preview-section-label">Preview</div>
-        <div class="preview-card">
-          <div class="preview-header">
-            <div class="preview-avatar" [style.background]="avatarBgFn(formName() || 'N')">
-              {{ (formName() || 'N').charAt(0).toUpperCase() }}
-            </div>
-            <div class="preview-info">
-              <div class="preview-name" [class.preview-ghost]="!formName()">
-                {{ formName() || 'Service name' }}
-              </div>
-              <div class="preview-type" [style.color]="typeMeta(formType()).color">
-                <span class="material-symbols-outlined" style="font-size:12px">{{ typeMeta(formType()).icon }}</span>
-                {{ typeMeta(formType()).label }}
-              </div>
-            </div>
-          </div>
-          <div class="preview-amount-row">
-            <span class="preview-amount" [class.preview-ghost]="formAmount() <= 0">{{ previewAmountStr() }}</span>
-            @if (formType() === 'recurring') {
-              <span class="preview-cycle-badge">/ {{ formCycle() }}</span>
-            }
-          </div>
-          <div class="preview-details">
-            @if (formDate()) {
-              <div class="preview-detail-row">
-                <span class="preview-detail-label">{{ dateLabel() }}</span>
-                <span class="preview-detail-val">{{ formatPreviewDate(formDate()) }}</span>
-              </div>
-              @let days = daysUntilPreview();
-              @if ((formType() === 'recurring' || formType() === 'bill') && days !== null) {
-                <div class="preview-detail-row">
-                  <span class="preview-detail-label">Due in</span>
-                  <span class="preview-detail-val"
-                    [class.preview-due-soon]="days <= 7 && days >= 0"
-                    [class.preview-overdue]="days < 0">
-                    @if (days < 0) { overdue }
-                    @else if (days === 0) { today }
-                    @else { {{ days }}d }
-                  </span>
-                </div>
-              }
-            }
-            @if (formCategory()) {
-              <div class="preview-detail-row">
-                <span class="preview-detail-label">Category</span>
-                <span class="preview-detail-val">{{ formCategory() }}</span>
-              </div>
-            }
-          </div>
-          <div class="preview-status-row">
-            <span class="status-dot" [style.background]="statusMetaFn(formStatus()).color"></span>
-            <span class="preview-status-label" [style.color]="statusMetaFn(formStatus()).color">
-              {{ statusMetaFn(formStatus()).label }}
-            </span>
-          </div>
-        </div>
-      </div>
-      } <!-- end @if (!embeddedMode()) preview col -->
-
     </div>
 
-    <!-- ── LIVE PREVIEW card (embedded add mode, at bottom) ── -->
-    @if (embeddedMode() && !isEditMode()) {
-      <div class="tf-slider-preview-section">
-        <div class="tf-slider-preview-label">
-          <span class="material-symbols-outlined">visibility</span>
-          Preview
-        </div>
-        <div class="tf-slider-hero-card tf-slider-hero-card--bottom">
-          <div class="tf-slider-hero-left">
-            <div class="tf-hero-avatar tf-hero-avatar--lg" [style.background]="avatarBgFn(formName() || 'N')">
-              {{ (formName() || 'N').charAt(0).toUpperCase() }}
-            </div>
-            <div class="tf-slider-hero-info">
-              <div class="tf-slider-service-name" [class.tf-hero-ghost]="!formName()">
-                {{ formName() || 'Service name' }}
-              </div>
-              <div class="tf-slider-status-row">
-                <span class="tf-status-dot" [style.background]="typeMeta(formType()).color"></span>
-                <span class="tf-slider-status-label" [style.color]="typeMeta(formType()).color">
-                  {{ typeMeta(formType()).label }}
-                </span>
-              </div>
-            </div>
-          </div>
-          <div class="tf-slider-hero-right">
-            <div class="tf-slider-amount" [class.tf-hero-ghost]="formAmount() <= 0">
-              {{ previewAmountStr() }}
-            </div>
-            @if (formType() === 'recurring') {
-              <div class="tf-slider-cycle-label">per {{ formCycle() }}</div>
-            }
-          </div>
-        </div>
-      </div>
-    }
     } <!-- end Updates / add form -->
 
   </div> <!-- end tf-scroll -->
@@ -536,8 +544,8 @@ const POPULAR_VENDOR_OPTIONS = ALL_VENDOR_OPTIONS.filter(v => POPULAR_VENDOR_KEY
         Edit Details
       </button>
     } @else {
-      @if (!canSave() && formName() && !embeddedMode()) {
-        <span class="save-hint">{{ formAmount() <= 0 ? 'Enter an amount' : '' }}</span>
+      @if (!canSave() && formName()) {
+        <span class="save-hint">{{ formAmount() <= 0 ? 'Enter an amount to continue' : '' }}</span>
       }
       @if (embeddedMode() && isEditMode()) {
         <button class="tf-cancel-btn tf-cancel-btn--embedded" (click)="sliderTab.set('details')">
@@ -548,10 +556,17 @@ const POPULAR_VENDOR_OPTIONS = ALL_VENDOR_OPTIONS.filter(v => POPULAR_VENDOR_KEY
           Cancel
         </button>
       }
-      <button class="tf-save-btn" [class.tf-save-btn--embedded]="embeddedMode()"
+      <button class="tf-save-btn"
+        [class.tf-save-btn--embedded]="embeddedMode()"
+        [class.tf-save-btn--ready]="canSave() && embeddedMode() && !isEditMode()"
         [disabled]="!canSave()" (click)="save()">
-        <span class="material-symbols-outlined">{{ isEditMode() ? 'sync' : 'add_circle' }}</span>
-        {{ isEditMode() ? 'Update Transaction' : 'Save Transaction' }}
+        @if (saving()) {
+          <span class="tf-save-spinner"></span>
+          {{ isEditMode() ? 'Updating…' : 'Saving…' }}
+        } @else {
+          <span class="material-symbols-outlined">{{ isEditMode() ? 'sync' : 'add_circle' }}</span>
+          {{ isEditMode() ? 'Update Transaction' : 'Save Transaction' }}
+        }
       </button>
     }
   </div>
@@ -627,17 +642,23 @@ const POPULAR_VENDOR_OPTIONS = ALL_VENDOR_OPTIONS.filter(v => POPULAR_VENDOR_KEY
     }
     .tf-hero-ghost { opacity: 0.35; font-style: italic; }
 
-    /* ── Two-column layout ── */
-    .tf-cols { display: flex; gap: 20px; align-items: flex-start; max-width: 860px; }
-    .tf-form-col { flex: 1; min-width: 0; }
-    .tf-preview-col { width: 224px; flex-shrink: 0; position: sticky; top: 0; align-self: flex-start; }
+    /* ── Form layout ── */
+    .tf-cols { display: block; max-width: 560px; }
+    .tf-form-col { width: 100%; }
 
     /* ── Slider header ── */
     .tf-slider-header {
       display: flex; align-items: center; gap: 10px;
-      height: 48px; padding: 0 14px; flex-shrink: 0;
+      height: 52px; padding: 0 14px; flex-shrink: 0;
       border-bottom: 1px solid var(--border-subtle);
       background: var(--bg-panel);
+      transition: background 0.2s;
+    }
+    /* Add mode: accent top stripe + warm tint */
+    .tf-slider-header--add {
+      border-top: 3px solid var(--accent-primary);
+      background: color-mix(in srgb, var(--accent-primary) 5%, var(--bg-panel));
+      height: 55px;
     }
     .tf-slider-close {
       background: transparent; border: none; color: var(--text-tertiary);
@@ -646,8 +667,14 @@ const POPULAR_VENDOR_OPTIONS = ALL_VENDOR_OPTIONS.filter(v => POPULAR_VENDOR_KEY
     }
     .tf-slider-close:hover { background: var(--bg-hover); color: var(--text-primary); }
     .tf-slider-close .material-symbols-outlined { font-size: 18px; display: block; }
+    .tf-header-add-icon {
+      font-size: 20px; color: var(--accent-primary); flex-shrink: 0;
+    }
     .tf-slider-title {
       flex: 1; font-size: 14px; font-weight: 600; color: var(--text-primary);
+    }
+    .tf-slider-title--add {
+      font-size: 15px; font-weight: 700;
     }
     .tf-slider-type-badge {
       display: inline-flex; align-items: center; gap: 4px;
@@ -655,6 +682,36 @@ const POPULAR_VENDOR_OPTIONS = ALL_VENDOR_OPTIONS.filter(v => POPULAR_VENDOR_KEY
       font-size: 11px; font-weight: 600; flex-shrink: 0;
     }
     .tf-slider-type-badge .material-symbols-outlined { font-size: 12px; }
+
+    /* ── Amount stage (embedded add mode) ── */
+    .tf-amount-stage {
+      display: flex; flex-direction: column; align-items: center;
+      padding: 28px 20px 20px; gap: 8px;
+      background: color-mix(in srgb, var(--accent-primary) 4%, var(--bg-panel));
+      border-bottom: 1px solid var(--border-subtle);
+      flex-shrink: 0;
+    }
+    .tf-amount-stage-curr { position: relative; }
+    .tf-currency-sel--stage {
+      display: flex; align-items: center; gap: 4px;
+      font-size: 13px; font-weight: 600; color: var(--text-secondary);
+      background: var(--bg-hover); border: 1px solid var(--border-subtle);
+      border-radius: 100px; padding: 4px 10px 4px 12px; cursor: pointer;
+      outline: none; transition: all 0.15s;
+    }
+    .tf-currency-sel--stage:hover { border-color: var(--accent-primary); color: var(--accent-primary); }
+    .tf-currency-chevron { font-size: 16px !important; }
+    .tf-curr-drop--stage { left: 50%; transform: translateX(-50%); width: 240px; }
+    .tf-amount-stage-input {
+      font-size: 52px; font-weight: 800; color: var(--text-primary);
+      background: transparent; border: none; outline: none;
+      text-align: center; width: 100%; letter-spacing: -2px;
+      font-family: inherit;
+    }
+    .tf-amount-stage-input::placeholder { color: var(--border-main); }
+    .tf-amount-stage-hint {
+      font-size: 12px; color: var(--text-tertiary); margin-top: -4px;
+    }
 
     /* ── Slider hero card ── */
     .tf-slider-hero-card {
@@ -759,10 +816,7 @@ const POPULAR_VENDOR_OPTIONS = ALL_VENDOR_OPTIONS.filter(v => POPULAR_VENDOR_KEY
 
     /* ── Embedded overrides ── */
     .tf-shell--embedded .tf-scroll { overflow-x: hidden; padding: 0 0 16px; }
-    .tf-shell--embedded .tf-cols { flex-wrap: wrap; padding: 0 16px; }
-    .tf-shell--embedded .tf-preview-col { display: none; }
-    .tf-shell--embedded .preview-card { display: none; }
-    .tf-shell--embedded .preview-section-label { display: none; }
+    .tf-shell--embedded .tf-cols { flex-wrap: wrap; padding: 0 16px; max-width: none; }
 
     /* ── Embedded type-chips: single-row segmented style ── */
     .tf-shell--embedded .type-chips {
@@ -784,22 +838,11 @@ const POPULAR_VENDOR_OPTIONS = ALL_VENDOR_OPTIONS.filter(v => POPULAR_VENDOR_KEY
     .tf-shell--embedded .type-chip--active {
       background: var(--bg-panel) !important;
       box-shadow: 0 1px 4px rgba(0,0,0,0.14);
+      color: var(--accent-primary) !important;
       font-weight: 600;
     }
 
     /* ── Bottom live preview (embedded add mode) ── */
-    .tf-slider-preview-section { padding: 16px 16px 4px; }
-    .tf-slider-preview-label {
-      display: flex; align-items: center; gap: 5px;
-      font-size: 9.5px; font-weight: 700; text-transform: uppercase;
-      letter-spacing: 0.08em; color: var(--text-tertiary); margin-bottom: 10px;
-    }
-    .tf-slider-preview-label .material-symbols-outlined { font-size: 13px; }
-    .tf-slider-hero-card--bottom {
-      border: 1px solid var(--border-subtle) !important;
-      border-radius: 12px; border-bottom: 1px solid var(--border-subtle) !important;
-    }
-
     /* ── Embedded footer ── */
     .tf-footer--embedded {
       padding: 10px 16px; gap: 10px;
@@ -863,7 +906,6 @@ const POPULAR_VENDOR_OPTIONS = ALL_VENDOR_OPTIONS.filter(v => POPULAR_VENDOR_KEY
       font-size: 10px; font-weight: 700; text-transform: uppercase;
       letter-spacing: 0.5px; color: var(--text-tertiary); margin-bottom: 8px;
     }
-    .preview-section-label { margin-bottom: 6px; }
     .tf-divider { border: none; border-top: 1px solid var(--border-subtle); margin: 12px 0; }
 
     /* ── Type chips ── */
@@ -876,11 +918,11 @@ const POPULAR_VENDOR_OPTIONS = ALL_VENDOR_OPTIONS.filter(v => POPULAR_VENDOR_KEY
       cursor: pointer; transition: all 0.15s; white-space: nowrap;
     }
     .type-chip .material-symbols-outlined { font-size: 15px; }
-    .type-chip:hover { border-color: var(--chip-color, var(--accent-primary)); color: var(--chip-color, var(--accent-primary)); background: var(--bg-hover); }
+    .type-chip:hover { border-color: var(--accent-primary); color: var(--accent-primary); background: var(--bg-hover); }
     .type-chip--active {
-      border-color: var(--chip-color, var(--accent-primary));
-      color: var(--chip-color, var(--accent-primary));
-      background: color-mix(in srgb, var(--chip-color, var(--accent-primary)) 10%, transparent);
+      border-color: var(--accent-primary);
+      color: var(--accent-primary);
+      background: var(--accent-primary-dim);
       font-weight: 600;
     }
 
@@ -954,18 +996,100 @@ const POPULAR_VENDOR_OPTIONS = ALL_VENDOR_OPTIONS.filter(v => POPULAR_VENDOR_KEY
     /* ── Amount hero ── */
     .tf-amount-hero {
       display: flex; align-items: center; gap: 10px;
-      padding: 10px 0; border-bottom: 2px solid var(--border-subtle);
-      margin-bottom: 12px;
+      padding: 6px 0;
     }
-    .tf-amount-hero:focus-within { border-bottom-color: var(--accent-primary); }
+    /* ── Custom currency picker ── */
+    .tf-curr-wrap { position: relative; flex-shrink: 0; }
     .tf-currency-sel {
-      font-size: 15px; font-weight: 700; color: var(--text-secondary);
+      font-size: 13px; font-weight: 700; color: var(--text-secondary);
       background: var(--bg-hover); border: 1px solid var(--border-subtle);
-      border-radius: 6px; padding: 5px 8px; cursor: pointer;
-      -webkit-appearance: none; appearance: none; outline: none;
-      transition: all 0.15s; flex-shrink: 0;
+      border-radius: 6px; padding: 5px 10px; cursor: pointer;
+      outline: none; transition: all 0.15s;
+      width: 60px; text-align: center; letter-spacing: 0.02em;
     }
-    .tf-currency-sel:focus { border-color: var(--accent-primary); }
+    .tf-currency-sel:hover { border-color: var(--border-highlight); color: var(--text-primary); }
+
+    .tf-curr-drop {
+      position: absolute; top: calc(100% + 6px); left: 0;
+      width: 220px; z-index: var(--z-notification);
+      background: var(--bg-panel); border: 1px solid var(--border-subtle);
+      border-radius: 10px; box-shadow: 0 8px 24px rgba(0,0,0,0.18);
+      overflow: hidden; display: flex; flex-direction: column;
+    }
+    .tf-curr-search-wrap {
+      display: flex; align-items: center; gap: 6px;
+      padding: 8px 10px; border-bottom: 1px solid var(--border-subtle);
+      flex-shrink: 0;
+    }
+    .tf-curr-search-icon { font-size: 15px; color: var(--text-tertiary); flex-shrink: 0; }
+    .tf-curr-search {
+      flex: 1; background: transparent; border: none; outline: none;
+      font-size: 12px; color: var(--text-primary);
+    }
+    .tf-curr-search::placeholder { color: var(--text-tertiary); }
+    .tf-curr-list {
+      overflow-y: auto; max-height: 240px;
+      padding: 4px;
+    }
+    .tf-curr-opt {
+      display: flex; align-items: center; gap: 10px; width: 100%;
+      padding: 7px 10px; border: none; border-radius: 6px;
+      background: transparent; cursor: pointer; text-align: left;
+      transition: background 0.1s;
+    }
+    .tf-curr-opt:hover, .tf-curr-opt--active { background: var(--bg-hover); }
+    .tf-curr-opt--active .tf-curr-code { color: var(--accent-primary); }
+    .tf-curr-code {
+      font-size: 12px; font-weight: 700; color: var(--text-primary);
+      width: 36px; flex-shrink: 0; font-family: var(--font-mono, monospace);
+    }
+    .tf-curr-name { font-size: 12px; color: var(--text-tertiary); }
+    .tf-curr-empty { padding: 16px; text-align: center; font-size: 12px; color: var(--text-tertiary); }
+    .tf-curr-section-lbl {
+      display: flex; align-items: center; gap: 4px;
+      padding: 6px 10px 4px; font-size: 10.5px; font-weight: 600;
+      color: var(--text-tertiary); letter-spacing: 0.04em;
+    }
+
+    /* ── Vendor picker ── */
+    .tf-vendor-wrap { position: relative; }
+    .tf-vendor-drop { width: 100%; left: 0; }
+
+    .tf-vendor-trigger {
+      display: flex; align-items: center; gap: 8px; width: 100%;
+      padding: 9px 12px; border: 1px solid var(--border-subtle);
+      border-radius: 8px; background: var(--bg-app); cursor: pointer;
+      color: var(--text-tertiary); font-size: 13px; transition: border-color 0.15s;
+    }
+    .tf-vendor-trigger:hover { border-color: var(--border-highlight); color: var(--text-secondary); }
+    .tf-vendor-trigger-icon { font-size: 16px; flex-shrink: 0; }
+    .tf-vendor-trigger-placeholder { flex: 1; text-align: left; }
+
+    .tf-vendor-selected {
+      display: flex; align-items: center; gap: 10px;
+      padding: 8px 12px; border: 1px solid var(--border-subtle);
+      border-radius: 8px; background: var(--bg-hover);
+    }
+    .tf-vendor-sel-av { width: 28px !important; height: 28px !important; border-radius: 7px !important; font-size: 12px !important; flex-shrink: 0; }
+    .tf-vendor-sel-name { flex: 1; font-size: 13px; font-weight: 600; color: var(--text-primary); }
+    .tf-vendor-edit {
+      background: none; border: none; cursor: pointer; padding: 4px;
+      color: var(--text-tertiary); border-radius: 5px; display: flex;
+      transition: color 0.12s, background 0.12s; flex-shrink: 0;
+    }
+    .tf-vendor-edit:hover { color: var(--text-primary); background: var(--bg-active); }
+    .tf-vendor-edit .material-symbols-outlined { font-size: 15px; display: block; }
+
+    .tf-vendor-opt { gap: 10px; }
+    .tf-vendor-opt-av { width: 28px !important; height: 28px !important; border-radius: 7px !important; font-size: 12px !important; flex-shrink: 0; }
+    .tf-vendor-opt-info { display: flex; flex-direction: column; gap: 1px; min-width: 0; }
+
+    .tf-vendor-use-btn {
+      background: var(--accent-primary-dim); border: none; cursor: pointer;
+      color: var(--accent-primary); border-radius: 5px; padding: 3px 5px;
+      display: flex; align-items: center; flex-shrink: 0;
+    }
+    .tf-vendor-use-btn .material-symbols-outlined { font-size: 15px; display: block; }
     .tf-amount-big {
       font-size: 32px; font-weight: 800; color: var(--text-primary);
       background: transparent; border: none; outline: none;
@@ -1114,49 +1238,6 @@ const POPULAR_VENDOR_OPTIONS = ALL_VENDOR_OPTIONS.filter(v => POPULAR_VENDOR_KEY
     }
 
 
-    /* ── Preview card ── */
-    .preview-card {
-      background: var(--bg-panel); border: 1px solid var(--border-subtle);
-      border-radius: 10px; padding: 12px;
-    }
-    .preview-header { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; }
-    .preview-avatar {
-      width: 28px; height: 28px; border-radius: 7px; flex-shrink: 0;
-      display: flex; align-items: center; justify-content: center;
-      font-size: 12px; font-weight: 700; color: #fff;
-      text-shadow: 0 1px 2px rgba(0,0,0,0.25);
-    }
-    .preview-info { flex: 1; min-width: 0; }
-    .preview-name {
-      font-size: 12px; font-weight: 600; color: var(--text-primary);
-      white-space: nowrap; overflow: hidden; text-overflow: ellipsis; line-height: 1.3;
-    }
-    .preview-ghost { color: var(--text-tertiary) !important; font-style: italic; opacity: 0.6; }
-    .preview-type {
-      display: flex; align-items: center; gap: 3px;
-      font-size: 10px; font-weight: 500; margin-top: 2px;
-    }
-    .preview-amount-row {
-      display: flex; align-items: baseline; gap: 5px; margin-bottom: 10px;
-    }
-    .preview-amount {
-      font-size: 20px; font-weight: 700; color: var(--text-primary); letter-spacing: -0.4px;
-      transition: opacity 0.15s;
-    }
-    .preview-cycle-badge { font-size: 10.5px; color: var(--text-tertiary); font-weight: 500; }
-    .preview-details { display: flex; flex-direction: column; gap: 6px; margin-bottom: 10px; }
-    .preview-detail-row { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
-    .preview-detail-label { font-size: 10.5px; color: var(--text-tertiary); }
-    .preview-detail-val { font-size: 10.5px; font-weight: 500; color: var(--text-secondary); text-align: right; }
-    .preview-due-soon { color: #fbbf24 !important; font-weight: 700 !important; }
-    .preview-overdue { color: #ef4444 !important; font-weight: 700 !important; }
-    .preview-status-row {
-      display: flex; align-items: center; gap: 5px;
-      padding-top: 8px; border-top: 1px solid var(--border-subtle);
-    }
-    .status-dot { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; }
-    .preview-status-label { font-size: 10.5px; font-weight: 600; }
-
     /* ── Footer ── */
     .tf-footer {
       display: flex; align-items: center; justify-content: flex-end; gap: 8px;
@@ -1181,6 +1262,25 @@ const POPULAR_VENDOR_OPTIONS = ALL_VENDOR_OPTIONS.filter(v => POPULAR_VENDOR_KEY
     .tf-save-btn:hover { opacity: 0.88; }
     .tf-save-btn:disabled { opacity: 0.5; cursor: not-allowed; }
     .tf-save-btn .material-symbols-outlined { font-size: 15px; }
+    /* Full-width prominent button when form is complete */
+    .tf-save-btn--ready {
+      flex: 1; justify-content: center;
+      padding: 12px 16px !important;
+      font-size: 14px !important; font-weight: 700 !important;
+      border-radius: 10px !important;
+      box-shadow: 0 4px 14px color-mix(in srgb, var(--accent-primary) 40%, transparent);
+      animation: tf-ready-pulse 2s ease-in-out infinite;
+    }
+    @keyframes tf-ready-pulse {
+      0%, 100% { box-shadow: 0 4px 14px color-mix(in srgb, var(--accent-primary) 40%, transparent); }
+      50%       { box-shadow: 0 4px 20px color-mix(in srgb, var(--accent-primary) 60%, transparent); }
+    }
+    .tf-save-spinner {
+      width: 13px; height: 13px; border-radius: 50%; flex-shrink: 0;
+      border: 2px solid rgba(0,0,0,0.2); border-top-color: var(--accent-primary-text);
+      animation: tf-spin 0.7s linear infinite;
+    }
+    @keyframes tf-spin { to { transform: rotate(360deg); } }
     `]
 })
 export class TransactionFormComponent implements OnInit {
@@ -1195,7 +1295,7 @@ export class TransactionFormComponent implements OnInit {
 
     readonly typeOptions: TransactionType[] = ['recurring', 'one-time', 'bill', 'purchase', 'refund'];
     readonly categoryOptions = CATEGORY_OPTIONS;
-    readonly currencies = CURRENCIES;
+    readonly currencies = ALL_CURRENCIES;
 
     // ── Mode ──────────────────────────────────────────────────────────────
     isEditMode = signal(false);
@@ -1207,7 +1307,7 @@ export class TransactionFormComponent implements OnInit {
     formCategory  = signal('');
     formProjectId = signal('global');
     formAmount    = signal<number>(0);
-    formCurrency  = signal('USD');
+    formCurrency  = signal(this.defaultCurrency());
     formCycle     = signal<'monthly' | 'yearly' | 'weekly'>('monthly');
     formDate      = signal('');
     formStatus    = signal<'active' | 'paused' | 'cancelled' | 'completed'>('active');
@@ -1219,6 +1319,27 @@ export class TransactionFormComponent implements OnInit {
 
     deleteConfirmOpen = signal(false);
     sliderTab = signal<'details' | 'updates' | 'edit'>('details');
+    saving = signal(false);
+    currencyDropdownOpen = signal(false);
+    currencySearch = signal('');
+    vendorDropdownOpen = signal(false);
+    vendorSearch = signal('');
+    filteredVendors = computed(() => {
+        const q = this.vendorSearch().toLowerCase().trim();
+        if (!q) return POPULAR_VENDOR_OPTIONS;
+        return ALL_VENDOR_OPTIONS.filter(v =>
+            v.key.includes(q) || v.displayName.toLowerCase().includes(q)
+        ).slice(0, 12);
+    });
+    filteredCurrencies = computed(() => {
+        const q = this.currencySearch().toLowerCase().trim();
+        if (!q) return this.currencies;
+        return this.currencies.filter(c =>
+            c.code.toLowerCase().startsWith(q) ||
+            c.name.toLowerCase().includes(q)
+        );
+    });
+    @ViewChild('amountInput') private amountInputRef?: ElementRef<HTMLInputElement>;
 
     // ── Computed ──────────────────────────────────────────────────────────
     private _editingTx = computed(() => {
@@ -1227,7 +1348,7 @@ export class TransactionFormComponent implements OnInit {
         return this.transactionStore.transactions().find(t => t.id === id) ?? null;
     });
 
-    canSave = computed(() => !!this.formName() && this.formAmount() > 0);
+    canSave = computed(() => !!this.formName() && this.formAmount() > 0 && !this.saving());
 
     nameLabel = computed<string>(() => {
         const map: Record<TransactionType, string> = {
@@ -1319,14 +1440,15 @@ export class TransactionFormComponent implements OnInit {
                     this.formCategory.set('');
                     this.formProjectId.set('global');
                     this.formAmount.set(0);
-                    this.formCurrency.set('USD');
+                    this.formCurrency.set(this.defaultCurrency());
                     this.formCycle.set('monthly');
                     this.formDate.set(autoDate('monthly'));
                     this.formStatus.set('active');
                     this.formNotes.set('');
                     this.presetApplied.set(false);
                     this.showDateInput.set(false);
-                    this.sliderTab.set('updates');
+                    this.sliderTab.set('details');
+                    setTimeout(() => this.amountInputRef?.nativeElement?.focus(), 0);
                 }
             });
         });
@@ -1343,6 +1465,7 @@ export class TransactionFormComponent implements OnInit {
             this.sliderTab.set('details');
         } else {
             this.formDate.set(autoDate('monthly'));
+            setTimeout(() => this.amountInputRef?.nativeElement?.focus(), 0);
         }
     }
 
@@ -1366,26 +1489,31 @@ export class TransactionFormComponent implements OnInit {
 
     async save() {
         if (!this.canSave()) return;
-        const type = this.formType();
-        const payload: Partial<Transaction> = {
-            name:         this.formName(),
-            type,
-            category:     this.formCategory() || undefined,
-            projectId:    this.formProjectId() !== 'global' ? this.formProjectId() : undefined,
-            amount:       Number(this.formAmount()),
-            currency:     this.formCurrency(),
-            date:         this.formDate() || new Date().toISOString().split('T')[0],
-            billingCycle: type === 'recurring' ? this.formCycle() : undefined,
-            status:       this.formStatus(),
-            notes:        this.formNotes() || undefined,
-        };
-        if (this.isEditMode() && this.editingId()) {
-            await this.transactionStore.update(this.editingId()!, payload);
-            if (this.embeddedMode()) { this.sliderTab.set('updates'); return; }
-        } else {
-            await this.transactionStore.add({ id: crypto.randomUUID(), ...payload } as Transaction);
+        this.saving.set(true);
+        try {
+            const type = this.formType();
+            const payload: Partial<Transaction> = {
+                name:         this.formName(),
+                type,
+                category:     this.formCategory() || undefined,
+                projectId:    this.formProjectId() !== 'global' ? this.formProjectId() : undefined,
+                amount:       Math.max(0, Number(this.formAmount())),
+                currency:     this.formCurrency(),
+                date:         this.formDate() || new Date().toISOString().split('T')[0],
+                billingCycle: type === 'recurring' ? this.formCycle() : undefined,
+                status:       this.formStatus(),
+                notes:        this.formNotes() || undefined,
+            };
+            if (this.isEditMode() && this.editingId()) {
+                await this.transactionStore.update(this.editingId()!, payload);
+                if (this.embeddedMode()) { this.sliderTab.set('updates'); return; }
+            } else {
+                await this.transactionStore.add({ id: crypto.randomUUID(), ...payload } as Transaction);
+            }
+            this.back();
+        } finally {
+            this.saving.set(false);
         }
-        this.back();
     }
 
     async confirmDelete() {
@@ -1492,6 +1620,46 @@ export class TransactionFormComponent implements OnInit {
 
 
     // ── Display helpers ───────────────────────────────────────────────────
+    selectCurrency(code: string) {
+        this.formCurrency.set(code);
+        this.currencyDropdownOpen.set(false);
+        this.currencySearch.set('');
+    }
+
+    selectVendorFromDropdown(v: { key: string; displayName: string; category: string; billingCycle: 'monthly' | 'yearly'; currency: string }) {
+        this.selectVendor(v);
+        this.vendorDropdownOpen.set(false);
+        this.vendorSearch.set('');
+    }
+
+    clearVendor() {
+        this.formName.set('');
+        this.presetApplied.set(false);
+        this.vendorSearch.set('');
+        this.vendorDropdownOpen.set(true);
+    }
+
+    @HostListener('document:click', ['$event'])
+    onDocumentClick(e: MouseEvent) {
+        const target = e.target as Element;
+        if (this.currencyDropdownOpen() && !target.closest('.tf-curr-wrap')) {
+            this.currencyDropdownOpen.set(false);
+            this.currencySearch.set('');
+        }
+        if (this.vendorDropdownOpen() && !target.closest('.tf-vendor-wrap')) {
+            this.vendorDropdownOpen.set(false);
+            this.vendorSearch.set('');
+        }
+    }
+
+    defaultCurrency(): string {
+        try {
+            const saved = localStorage.getItem('envello-settings');
+            if (saved) return (JSON.parse(saved)?.defaultCurrency as string) || 'USD';
+        } catch { /* ok */ }
+        return 'USD';
+    }
+
     typeMeta(type: TransactionType)   { return TYPE_META[type]; }
     statusMetaFn(status: string)      { return STATUS_META[status] ?? STATUS_META['active']; }
     avatarBgFn(name: string)          { return avatarBg(name); }

@@ -1,11 +1,12 @@
 import { Component, input, output, signal, inject, ChangeDetectionStrategy, ViewEncapsulation } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { VersionHistoryService, VersionSnapshot } from '@envello/core';
+import { BadgeComponent } from '@envello/ui';
 
 @Component({
   selector: 'app-version-history-modal',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, BadgeComponent],
   templateUrl: './version-history-modal.component.html',
   styleUrls: ['./version-history-modal.component.css'],
   changeDetection: ChangeDetectionStrategy.OnPush,
