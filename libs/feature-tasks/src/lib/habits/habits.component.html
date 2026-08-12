@@ -1,0 +1,148 @@
+<div class="habits-page">
+
+  <!-- Toolbar -->
+  <div class="habits-toolbar">
+    <div class="habits-toolbar-search">
+      <span class="material-symbols-outlined habits-search-icon">search</span>
+      <input class="habits-search-input" type="text" placeholder="Search habits…"
+        [value]="searchQuery()"
+        (input)="searchQuery.set($any($event.target).value)" />
+    </div>
+    <div class="habits-toolbar-right">
+      <span class="habits-count-label">{{ filteredHabits().length }} habit{{ filteredHabits().length === 1 ? '' : 's' }}</span>
+      <div class="habits-tb-divider"></div>
+      <button class="habits-new-btn" (click)="openForm()">
+        <span class="material-symbols-outlined">add</span>
+        New Habit
+      </button>
+    </div>
+  </div>
+
+  <!-- New habit form -->
+  @if (showForm()) {
+  <div class="habit-form-bar">
+    <input class="habit-form-input" type="text" placeholder="Habit name…"
+      [value]="formTitle()"
+      (input)="formTitle.set($any($event.target).value)"
+      (keydown.enter)="saveHabit()"
+      (keydown.escape)="showForm.set(false)" />
+    <select class="habit-form-select"
+      [value]="formFrequency()"
+      (change)="formFrequency.set($any($event.target).value)">
+      <option value="daily">Daily</option>
+      <option value="weekly">Weekly</option>
+    </select>
+    <button class="habit-form-save" type="button" [disabled]="!formTitle().trim()" (click)="saveHabit()">Add</button>
+    <button class="habit-form-cancel" type="button" (click)="showForm.set(false)">Cancel</button>
+  </div>
+  }
+
+  <!-- Content -->
+  <div class="habits-content">
+
+    @if (filteredHabits().length === 0) {
+    <div class="habits-empty-state">
+      <span class="material-symbols-outlined habits-empty-icon">local_fire_department</span>
+      <p class="habits-empty-title">No habits yet</p>
+      <p class="habits-empty-sub">Build consistency with daily habits — every streak starts with day one.</p>
+      <button class="habits-cta-btn" (click)="openForm()">
+        <span class="material-symbols-outlined">add</span>
+        Add your first habit
+      </button>
+    </div>
+
+    } @else {
+
+    <!-- Pending today -->
+    @if (pendingToday().length > 0) {
+    <div class="habits-section">
+      <div class="habits-section-hdr">
+        <span class="habits-section-label">TODAY</span>
+        <span class="habits-section-count">{{ pendingToday().length }} remaining</span>
+      </div>
+      @for (task of pendingToday(); track task.id) {
+      <div class="habit-row">
+        <button class="habit-check-btn" (click)="logToday(task, $event)" title="Mark done">
+          <span class="material-symbols-outlined">radio_button_unchecked</span>
+        </button>
+        <div class="habit-row-body">
+          <span class="habit-row-title">{{ task.title }}</span>
+          <div class="habit-row-dots">
+            @for (dot of habit7DayDots(task); track dot.label + $index) {
+            <div class="habit-dot"
+              [class.habit-dot--done]="dot.done"
+              [class.habit-dot--today]="dot.today"
+              [title]="dot.label">
+            </div>
+            }
+          </div>
+        </div>
+        @if ((task.streak ?? 0) > 0) {
+        <span class="habit-streak-badge">
+          <span class="material-symbols-outlined habit-fire-icon">local_fire_department</span>
+          {{ task.streak }}
+        </span>
+        }
+        <button class="habit-delete-btn" (click)="requestDelete(task, $event)" title="Delete habit">
+          <span class="material-symbols-outlined">delete</span>
+        </button>
+      </div>
+      }
+    </div>
+    }
+
+    <!-- Completed today -->
+    @if (completedToday().length > 0) {
+    <div class="habits-section">
+      <div class="habits-section-hdr">
+        <span class="habits-section-label">COMPLETED</span>
+        <span class="habits-section-count habits-section-count--done">{{ completedToday().length }} done</span>
+      </div>
+      @for (task of completedToday(); track task.id) {
+      <div class="habit-row habit-row--done">
+        <button class="habit-check-btn habit-check-btn--done" title="Done today" disabled>
+          <span class="material-symbols-outlined">check_circle</span>
+        </button>
+        <div class="habit-row-body">
+          <span class="habit-row-title habit-row-title--done">{{ task.title }}</span>
+          <div class="habit-row-dots">
+            @for (dot of habit7DayDots(task); track dot.label + $index) {
+            <div class="habit-dot habit-dot--done"
+              [class.habit-dot--today]="dot.today"
+              [title]="dot.label">
+            </div>
+            }
+          </div>
+        </div>
+        @if ((task.streak ?? 0) > 0) {
+        <span class="habit-streak-badge habit-streak-badge--done">
+          <span class="material-symbols-outlined habit-fire-icon">local_fire_department</span>
+          {{ task.streak }}
+        </span>
+        }
+        <button class="habit-delete-btn" (click)="requestDelete(task, $event)" title="Delete habit">
+          <span class="material-symbols-outlined">delete</span>
+        </button>
+      </div>
+      }
+    </div>
+    }
+
+    }
+  </div>
+
+</div>
+
+<env-confirm-dialog
+  [isOpen]="!!habitPendingDelete()"
+  title="Delete habit"
+  icon="delete"
+  variant="danger"
+  confirmLabel="Delete"
+  cancelLabel="Cancel"
+  (confirmed)="confirmDelete()"
+  (cancelled)="habitPendingDelete.set(null)">
+  @if (habitPendingDelete(); as h) {
+    Delete "<strong>{{ h.title }}</strong>"? All streak and log data will be lost.
+  }
+</env-confirm-dialog>

@@ -61,6 +61,12 @@ export const routes: Routes = [
     data: { hasSidebar: true },
   },
   {
+    path: 'habits',
+    loadComponent: () => import('@envello/feature-tasks').then(m => m.HabitsComponent),
+    canActivate: [authGuard],
+    data: { hasSidebar: true },
+  },
+  {
     path: 'meetings',
     loadComponent: () => import('@envello/feature-meetings').then(m => m.MeetingsComponent),
     canActivate: [authGuard],

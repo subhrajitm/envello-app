@@ -4,7 +4,7 @@ import { ActivatedRoute } from '@angular/router';
 import { StoreService, Task, NotificationService, FileStorageService, AiService, ThemeService, UserPreferencesService, AppPreferences, ContextService, RecentActivityService } from '@envello/core';
 import { SidebarNavItem, AiAssistantPanelComponent, AiPanelMessage, EmptyStateComponent, ConfirmDialogComponent, BadgeComponent, type BadgeVariant, ChipComponent } from '@envello/ui';
 
-type TaskViewFilter = 'inbox' | 'today' | 'upcoming' | 'completed' | 'monitor' | 'habits';
+type TaskViewFilter = 'inbox' | 'today' | 'upcoming' | 'completed' | 'monitor';
 type ViewMode = 'list' | 'thumbnails' | 'timeline';
 type TaskListItem =
   | { kind: 'header'; label: string; count: number; accent: string }
@@ -320,8 +320,6 @@ export class TasksComponent implements OnInit, OnDestroy {
     this.store.tasks().filter(t => t.labels?.includes('⚡ monitor'))
   );
 
-  habitTasks = computed(() => this.store.tasks().filter(t => t.isHabit && !t.deleted_at));
-
   sidebarItems = computed<SidebarNavItem[]>(() => [
     {
       id: 'inbox',
@@ -353,12 +351,6 @@ export class TasksComponent implements OnInit, OnDestroy {
       label: 'Smart Monitor',
       count: this.monitorTasks().filter(t => t.status !== 'COMPLETED').length
     },
-    {
-      id: 'habits',
-      icon: 'local_fire_department',
-      label: 'Habits',
-      count: this.habitTasks().length
-    }
   ]);
 
   /**
@@ -386,17 +378,6 @@ export class TasksComponent implements OnInit, OnDestroy {
     if (view === 'monitor')   return 'Smart Monitor';
     return 'Inbox';
   });
-
-  // Habit modal state
-  showNewHabitModal = signal(false);
-
-  openNewHabitDialog() {
-    this.openNewTaskDialog();
-    // pre-set as habit
-    this.newTaskRecurring.set(true);
-    this.newTaskRecurringPattern.set('daily');
-    this.showNewHabitModal.set(true);
-  }
 
   /**
    * Compact summary line shown under the title.
@@ -487,7 +468,6 @@ export class TasksComponent implements OnInit, OnDestroy {
     this.showDatePicker.set(false);
     this.datePickerPosition.set(null);
     this.showNewTaskReminderPicker.set(false);
-    this.showNewHabitModal.set(false);
   }
 
   private hasUnsavedNewTaskData(): boolean {
@@ -698,9 +678,6 @@ export class TasksComponent implements OnInit, OnDestroy {
       dependencies: this.newTaskDependencies().length > 0 ? this.newTaskDependencies() : undefined,
       description: this.newTaskDescription() || undefined,
       createdAt: new Date().toISOString(),
-      isHabit: this.showNewHabitModal() || undefined,
-      streak: this.showNewHabitModal() ? 0 : undefined,
-      completionLog: this.showNewHabitModal() ? [] : undefined,
     };
 
     try {
@@ -908,8 +885,8 @@ export class TasksComponent implements OnInit, OnDestroy {
     return result;
   });
 
-  // Inbox/Today/Upcoming/Completed views
-  inboxTasks = computed(() => this.store.tasks());
+  // Inbox/Today/Upcoming/Completed views — habits are excluded from all task views
+  inboxTasks = computed(() => this.store.tasks().filter(t => !t.isHabit));
 
   viewTasks = computed(() => {
     const view = this.selectedView();
@@ -944,8 +921,6 @@ export class TasksComponent implements OnInit, OnDestroy {
       base = this.store.tasks().filter(t => t.status === 'COMPLETED');
     } else if (view === 'monitor') {
       base = this.monitorTasks();
-    } else if (view === 'habits') {
-      base = this.habitTasks();
     } else {
       // inbox
       base = this.inboxTasks();
@@ -2441,28 +2416,6 @@ export class TasksComponent implements OnInit, OnDestroy {
   dismissError() {
     this.showError.set(false);
     setTimeout(() => this.errorMessage.set(null), 300);
-  }
-
-  logHabitToday(task: Task, event: Event) {
-    event.stopPropagation();
-    this.store.logHabitCompletion(task.id);
-  }
-
-  isLoggedToday(task: Task): boolean {
-    const today = new Date().toISOString().slice(0, 10);
-    return task.completionLog?.includes(today) ?? false;
-  }
-
-  habitHeatmapCells(task: Task): { date: string; done: boolean }[] {
-    const cells: { date: string; done: boolean }[] = [];
-    const log = new Set(task.completionLog ?? []);
-    for (let i = 27; i >= 0; i--) {
-      const d = new Date();
-      d.setDate(d.getDate() - i);
-      const key = d.toISOString().slice(0, 10);
-      cells.push({ date: key, done: log.has(key) });
-    }
-    return cells;
   }
 
   ngOnDestroy() {

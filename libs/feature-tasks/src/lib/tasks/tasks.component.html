@@ -155,39 +155,8 @@
 
     <div class="tasks-main-content">
 
-        <!-- Habits View -->
-        @if (selectedView() === 'habits') {
-        <div class="habits-container">
-            <div class="habits-header">
-                <button class="habits-new-btn" (click)="openNewHabitDialog()">
-                    <span class="material-symbols-outlined">add</span> New Habit
-                </button>
-            </div>
-            <div class="habits-grid">
-                @for (task of habitTasks(); track task.id) {
-                <div class="habit-card" [class.habit-done]="isLoggedToday(task)">
-                    <div class="habit-card-top">
-                        <button class="habit-check" (click)="logHabitToday(task, $event)" [class.checked]="isLoggedToday(task)">
-                            <span class="material-symbols-outlined">{{ isLoggedToday(task) ? 'check_circle' : 'radio_button_unchecked' }}</span>
-                        </button>
-                        <span class="habit-title">{{ task.title }}</span>
-                        <span class="habit-streak">🔥 {{ task.streak ?? 0 }}</span>
-                    </div>
-                    <div class="habit-log">
-                        @for (cell of habitHeatmapCells(task); track cell.date) {
-                        <div class="habit-cell" [class.habit-cell--done]="cell.done" [title]="cell.date"></div>
-                        }
-                    </div>
-                </div>
-                } @empty {
-                <div class="habits-empty">No habits yet. Add one to start tracking your streaks.</div>
-                }
-            </div>
-        </div>
-        }
-
         <!-- Task List / Data Grid + Thumbnails -->
-        @if (viewMode() === 'list' && selectedView() !== 'habits') {
+        @if (viewMode() === 'list') {
         <div class="tasks-list-container">
             <div class="list-body" 
                  [class.virtual-scroll-container]="virtualScrollEnabled() && filteredTasks().length > 50"
@@ -408,7 +377,7 @@
                 }
             </div>
         </div>
-        } @else if (viewMode() === 'thumbnails' && selectedView() !== 'habits') {
+        } @else if (viewMode() === 'thumbnails') {
         <!-- Thumbnails / Card View -->
         <div class="tasks-thumbnails-container">
             @if(filteredTasks().length === 0) {

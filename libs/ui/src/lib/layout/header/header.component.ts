@@ -119,6 +119,7 @@ export class HeaderComponent implements OnInit, OnDestroy {
   private readonly navItemDefs: NavItem[] = [
     { id: 'tasks',         label: 'Tasks',         icon: 'checklist',    route: 'tasks' },
     { id: 'goals',         label: 'Goals',          icon: 'flag',         route: 'goals' },
+    { id: 'habits',        label: 'Habits',         icon: 'local_fire_department', route: 'habits' },
     { id: 'meetings',      label: 'Meetings',       icon: 'calendar_month', route: 'meetings' },
     { id: 'daily-notes',   label: 'Notes',          icon: 'note',         route: 'daily-notes' },
     { id: 'knowledge',     label: 'Knowledge',      icon: 'hub',          route: 'knowledge' },
